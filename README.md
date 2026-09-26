@@ -41,7 +41,7 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 - **Práctica** — sin vidas; elige nivel
 - **Maratón** — 20 preguntas mezcladas
 - **Cronómetro** — tiempo por pregunta (elige nivel)
-- **Boss** — desafío difícil por mundo
+- **Boss** — desafío difícil por mundo (requiere el mundo desbloqueado en Aventura)
 
 ## Controles
 

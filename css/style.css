@@ -751,3 +751,14 @@ kbd {
   font-size: 0.85rem;
  font-family: var(--mono, monospace); font-size: 0.85rem; color: var(--accent, #00ffc8); }
 .levels-sub { color: var(--muted, #8aa0c0); margin: 0 0 0.5rem; }
+
+/* El atributo hidden siempre gana sobre reglas display de componentes */
+[hidden] { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -36,11 +36,12 @@
     refreshMenu();
     UI.showScreen("screen-menu");
     UI.updateMuteButton();
-    TechAudio.unlock();
   }
 
   function bindEvents() {
+    // Los navegadores solo permiten iniciar audio tras un gesto del usuario (clic, toque o tecla)
     document.addEventListener("pointerdown", () => TechAudio.unlock(), { passive: true });
+    document.addEventListener("keydown", () => TechAudio.unlock());
 
     document.body.addEventListener("click", (e) => {
       const t = e.target.closest("[data-action]");
@@ -49,33 +50,50 @@
     });
 
     document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       const playOn = document.getElementById("screen-play")?.classList.contains("active");
       const fbOn = document.getElementById("screen-feedback")?.classList.contains("active");
+      // Al escribir en el campo de texto, las letras no son atajos (p. ej. "chmod" no debe usar pista ni silenciar)
+      const typing = e.target instanceof HTMLElement && e.target.matches("input, textarea, [contenteditable]");
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
 
-      if (e.key === "Escape" && (playOn || fbOn)) confirmQuit();
+      if (key === "Escape" && (playOn || fbOn)) {
+        e.preventDefault();
+        confirmQuit();
+        return;
+      }
 
-      if (playOn && !state.answered && /^[1-4]$/.test(e.key)) {
-        const btn = document.querySelector(`#options .option-btn[data-index="${+e.key - 1}"]`);
+      if (key === "Enter") {
+        if (playOn) {
+          // Un botón de opción enfocado con Tab conserva su activación nativa con Enter
+          if (e.target instanceof HTMLButtonElement && e.target.id !== "btn-submit") return;
+          e.preventDefault();
+          submitAnswer();
+        } else if (fbOn) {
+          // preventDefault evita que el botón enfocado reciba un segundo clic y salte una pregunta
+          e.preventDefault();
+          TechAudio.playClick();
+          advance();
+        }
+        return;
+      }
+
+      if (typing) return;
+
+      if (playOn && !state.answered && /^[1-4]$/.test(key)) {
+        const btn = document.querySelector(`#options .option-btn[data-index="${+key - 1}"]`);
         if (btn && !btn.disabled) btn.click();
       }
 
-      if (e.key === "Enter") {
-        if (playOn) {
-          const sub = document.querySelector("#btn-submit:not([disabled])");
-          if (sub && !sub.hidden) sub.click();
-        }
-        if (fbOn) document.querySelector("#btn-next-feedback")?.click();
-      }
-
-      if ((e.key === "h" || e.key === "H") && playOn && !state.practice) {
+      if (key === "h" && playOn && !state.practice) {
         document.querySelector("#btn-hint:not([disabled])")?.click();
       }
 
-      if (e.key === "m" || e.key === "M") onAction("mute");
+      if (key === "m") onAction("mute");
 
       if (playOn && !state.answered) {
-        if (e.key === "v" || e.key === "V") document.querySelector('.tf-btn[data-val="true"]')?.click();
-        if (e.key === "f" || e.key === "F") document.querySelector('.tf-btn[data-val="false"]')?.click();
+        if (key === "v") document.querySelector('.tf-btn[data-val="true"]')?.click();
+        if (key === "f") document.querySelector('.tf-btn[data-val="false"]')?.click();
       }
     });
   }
@@ -235,8 +253,9 @@
 
     UI.$("#world-grid").innerHTML = WORLDS.map((w, i) => {
       if (worldPickMode === "boss" && !(w.boss && w.boss.length)) return "";
-      const open =
-        worldPickMode !== "campaign" || Progress.isUnlocked(w.id) || i === 0;
+      // Práctica y Cronómetro abren todo; Aventura y Boss requieren el mundo desbloqueado
+      const needsUnlock = worldPickMode === "campaign" || worldPickMode === "boss";
+      const open = !needsUnlock || Progress.isUnlocked(w.id) || i === 0;
       const pct = Progress.worldProgressPct(w.id);
       const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
       const stars = Array.from({ length: maxL }, (_, i) => Progress.isLevelCleared(w.id, i + 1) ? "⭐" : "☆").join("");
@@ -297,7 +316,7 @@
     state.timed = !!opts.timed;
     state.worldId = opts.worldId || null;
     state.level = opts.level != null ? opts.level : null;
-    state.questions = opts.questions;
+    state.questions = opts.questions.map(prepareQuestion);
     state.qIndex = 0;
     state.lives = opts.practice ? 99 : GAME_CONFIG.maxLives;
     state.score = 0;
@@ -313,6 +332,18 @@
     Progress.recordGameStart();
     UI.showScreen("screen-play");
     showQuestion();
+  }
+
+  const CHOICE_TYPES = ["mc", "identify", "scenario"];
+
+  /** Copia la pregunta y baraja sus opciones para que la correcta no quede siempre en la misma posición. */
+  function prepareQuestion(q) {
+    if (!CHOICE_TYPES.includes(q.type) || !Array.isArray(q.options)) return q;
+    const order = UI.shuffle(q.options.map((_, i) => i));
+    return Object.assign({}, q, {
+      options: order.map((i) => q.options[i]),
+      answer: order.indexOf(q.answer)
+    });
   }
 
   function questionsFor(worldId, level) {
@@ -375,6 +406,10 @@
   function beginBoss(worldId) {
     const w = getWorldById(worldId);
     if (!w || !w.boss) return;
+    if (!Progress.isUnlocked(worldId)) {
+      UI.toast("Mundo bloqueado. Desbloquéalo en Aventura.");
+      return;
+    }
     startRun({ mode: "boss", timed: true, worldId, questions: w.boss.slice() });
   }
 
@@ -458,7 +493,7 @@
     }
     if (submitBtn) submitBtn.disabled = false;
 
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") {
+    if (CHOICE_TYPES.includes(q.type)) {
       submitBtn.hidden = true;
       renderChoices(area, q.options);
     } else if (q.type === "tf") {
@@ -471,14 +506,9 @@
         <input id="fill-input" class="fill-input" type="text" autocomplete="off" spellcheck="false"
           placeholder="Escribe aquí…" aria-label="Respuesta" />
         <p class="fill-tip">Mayúsculas flexibles · Enter para enviar</p>`;
+      // Enter se maneja en el listener global de teclado
       const input = UI.$("#fill-input");
       setTimeout(() => input && input.focus(), 40);
-      input.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") {
-          ev.preventDefault();
-          submitAnswer();
-        }
-      });
     } else if (q.type === "match") {
       submitBtn.hidden = false;
       renderMatch(area, q);
@@ -653,7 +683,7 @@
     box.hidden = false;
     let tip = "Pista activa.";
 
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") {
+    if (CHOICE_TYPES.includes(q.type)) {
       const wrong = q.options.map((_, i) => i).filter((i) => i !== q.answer);
       const elim = wrong[Math.floor(Math.random() * wrong.length)];
       tip = "Pista: elimina «" + q.options[elim] + "».";
@@ -669,6 +699,9 @@
       tip = "Pista: empieza con «" + ans.slice(0, Math.min(4, ans.length)) + "…»";
     } else if (q.type === "match") {
       tip = "Pista: «" + q.pairs[0].left + "» ↔ «" + q.pairs[0].right + "».";
+      Object.keys(state.matchSelections).forEach((k) => {
+        if (state.matchSelections[k] === 0) delete state.matchSelections[k];
+      });
       state.matchSelections[0] = 0;
       paintMatch();
     } else if (q.type === "order") {
@@ -692,7 +725,7 @@
   }
 
   function correctLabel(q) {
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") return q.options[q.answer];
+    if (CHOICE_TYPES.includes(q.type)) return q.options[q.answer];
     if (q.type === "tf") return q.answer ? "Verdadero" : "Falso";
     if (q.type === "fill") return q.answer;
     if (q.type === "match") return q.pairs.map((p) => p.left + " → " + p.right).join("; ");
@@ -724,11 +757,13 @@
     finishRound(ok, q.answer ? "Verdadero" : "Falso");
   }
 
-  function norm(s) { return s.trim().toLowerCase().replace(/\s+/g, " "); }
+  function norm(s) { return String(s).trim().toLowerCase().replace(/\s+/g, " "); }
 
   function gradeFill(raw) {
     const q = currentQ();
-    const accept = (q.accept || [q.answer]).map(norm);
+    let accept = q.accept || [q.answer];
+    if (typeof accept === "string") accept = accept.split("|");
+    accept = accept.map(norm);
     finishRound(accept.includes(norm(raw)), q.answer);
   }
 
@@ -736,7 +771,7 @@
     const q = currentQ();
     const n = q.pairs.length;
     if (Object.keys(state.matchSelections).length < n) {
-      alert("Empareja todos los ítems antes de comprobar.");
+      UI.toast("Empareja todos los ítems antes de comprobar.");
       return;
     }
     let ok = true;
@@ -781,7 +816,6 @@
         GAME_CONFIG.pointsCorrect +
         (state.streak > 1 ? GAME_CONFIG.pointsStreakBonus * (state.streak - 1) : 0);
       if (state.mode === "boss") gained = Math.round(gained * 1.5);
-      if (state.hintUsedThisQ) gained = Math.max(20, gained - GAME_CONFIG.pointsHintPenalty);
       if (state.timed && state.timeLeft > 0) gained += Math.min(50, state.timeLeft * 2);
       state.score += gained;
       if (state.streak >= 5) grant("streak5");
@@ -834,6 +868,8 @@
   }
 
   function advance() {
+    // Evita avanzar dos veces (clic + Enter) o desde fuera de la pantalla de resultado
+    if (!state.answered || !UI.$("#screen-feedback")?.classList.contains("active")) return;
     if (!state.practice && state.lives <= 0) {
       endGame(false);
       return;
@@ -846,6 +882,14 @@
     UI.showScreen("screen-play");
     showQuestion();
   }
+
+  const MODE_LABELS = {
+    campaign: "Aventura",
+    practice: "Práctica",
+    marathon: "Maratón",
+    timer: "Cronómetro",
+    boss: "Boss"
+  };
 
   function endGame(victory) {
     clearTimer();
@@ -892,11 +936,11 @@
     const acc = totalAns ? Math.round((state.correctCount / totalAns) * 100) : 0;
     UI.setText(
       "#end-summary",
-      (world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "") + "\\n" : state.mode === "marathon" ? "Maratón mixta\\n" : "") +
-        "Modo: " + state.mode +
-        "\\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "") +
-        "\\nAciertos: " + state.correctCount + "/" + totalAns + " (" + acc + "%)" +
-        "\\nMejor racha: " + state.bestStreakRun +
+      (world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "") + "\n" : state.mode === "marathon" ? "Maratón mixta\n" : "") +
+        "Modo: " + (MODE_LABELS[state.mode] || state.mode) +
+        "\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "") +
+        "\nAciertos: " + state.correctCount + "/" + totalAns + " (" + acc + "%)" +
+        "\nMejor racha: " + state.bestStreakRun +
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
@@ -939,7 +983,7 @@
         <li><strong>Maratones ganadas:</strong> ${s.marathonWins}</li>
         <li><strong>Cronómetro ganados:</strong> ${s.timerWins}</li>
         <li><strong>Boss (partidas ganadas):</strong> ${s.bossWins}</li>
-        <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * 3}</li>
+        <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * Progress.levelsPerWorld()}</li>
         <li><strong>Récord puntos:</strong> ${UI.getHighScore()}</li>
       </ul>`
     );
