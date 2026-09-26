@@ -42,6 +42,9 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 - **Maratón** — 20 preguntas mezcladas
 - **Cronómetro** — tiempo por pregunta (elige nivel)
 - **Boss** — desafío difícil por mundo (requiere el mundo desbloqueado en Aventura)
+- **Repasar errores** — practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista
+
+Al terminar una partida puedes desplegar la lista de preguntas falladas con su respuesta correcta. En **Stats** hay un botón para reiniciar todo el progreso (conserva la preferencia de sonido).
 
 ## Controles
 
@@ -84,8 +87,9 @@ tech-quest/
 | `techQuestBossWins` | Bosses derrotados |
 | `techQuestCompletedWorlds` | Mundos completados (nivel 5) |
 | `techQuestLevelClears` | Niveles 1–5 completados por mundo |
+| `techQuestMistakes` | Preguntas falladas pendientes de repaso |
 
-No hay claves nuevas de storage: se reutiliza `techQuestLevelClears` ahora con niveles `"4"` y `"5"`.
+`techQuestLevelClears` guarda los niveles `"1"` a `"5"` de cada mundo.
 
 ## Config
 

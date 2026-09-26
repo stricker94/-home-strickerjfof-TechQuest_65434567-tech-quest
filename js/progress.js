@@ -135,6 +135,35 @@ const Progress = (() => {
 
   function allWorldsCompleted() { return WORLDS.every((w) => getCompleted()[w.id] || allLevelsCleared(w.id)); }
 
+  // Preguntas falladas pendientes de repaso: { idPregunta: timestamp }
+  const MISTAKES_KEY = "techQuestMistakes";
+
+  function getMistakes() { return parse(MISTAKES_KEY, {}); }
+
+  function addMistake(id) {
+    if (!id) return;
+    const m = getMistakes();
+    m[id] = Date.now();
+    save(MISTAKES_KEY, m);
+  }
+
+  function removeMistake(id) {
+    const m = getMistakes();
+    if (!m[id]) return false;
+    delete m[id];
+    save(MISTAKES_KEY, m);
+    return true;
+  }
+
+  /** Borra progreso, logros, estadísticas y récord; conserva la preferencia de sonido. */
+  function resetAll() {
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("techQuest") && k !== GAME_CONFIG.storageMuted)
+        .forEach((k) => localStorage.removeItem(k));
+    } catch (_) {}
+  }
+
   function defaultStats() {
     return {
       gamesPlayed: 0, gamesWon: 0, correct: 0, wrong: 0, bestStreak: 0,
@@ -171,6 +200,7 @@ const Progress = (() => {
     getAchievements, unlockAchievement,
     getBossWins, markBossWin, allBossesBeaten,
     getCompleted, markWorldCompleted, allWorldsCompleted,
-    getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordGameEnd
+    getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordGameEnd,
+    getMistakes, addMistake, removeMistake, resetAll
   };
 })();

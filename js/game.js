@@ -21,11 +21,13 @@
     matchSelections: {},
     orderItems: [],
     hintUsedThisQ: false,
+    hintDebt: 0,
     correctCount: 0,
     wrongCount: 0,
     timeLeft: 0,
     timerId: null,
-    pendingAchievements: []
+    pendingAchievements: [],
+    missed: []
   };
 
   let worldPickMode = "campaign";
@@ -123,6 +125,19 @@
         TechAudio.playClick();
         beginMarathon();
         break;
+      case "review":
+        TechAudio.playClick();
+        beginReview();
+        break;
+      case "reset-progress":
+        TechAudio.playClick();
+        if (confirm("¿Borrar todo tu progreso, logros, estadísticas y récord? Esto no se puede deshacer.")) {
+          Progress.resetAll();
+          renderStats();
+          refreshMenu();
+          UI.toast("Progreso reiniciado.");
+        }
+        break;
       case "timer":
         TechAudio.playClick();
         worldPickMode = "timer";
@@ -214,6 +229,7 @@
 
   function retry() {
     if (state.mode === "marathon") beginMarathon();
+    else if (state.mode === "review") beginReview();
     else if (state.mode === "boss") beginBoss(state.worldId);
     else if (state.mode === "timer") beginTimer(state.worldId, state.level);
     else if (state.practice) beginPractice(state.worldId, state.level);
@@ -232,6 +248,10 @@
     UI.setText("#menu-highscore", String(UI.getHighScore()));
     UI.setText("#menu-total-q", String(countQuestions()));
     UI.setText("#menu-worlds", String(WORLDS.length));
+    const pendingReview = pendingMistakeQuestions().length;
+    UI.setText("#menu-review-count", String(pendingReview));
+    const reviewBtn = UI.$("#btn-review");
+    if (reviewBtn) reviewBtn.disabled = pendingReview === 0;
     const unlocked = Progress.getAchievements();
     UI.setText("#menu-ach-count", Object.keys(unlocked).length + " / " + ACHIEVEMENTS.length);
     const wrap = UI.$("#menu-badges");
@@ -331,6 +351,7 @@
     state.correctCount = 0;
     state.wrongCount = 0;
     state.pendingAchievements = [];
+    state.missed = [];
     Progress.recordGameStart();
     UI.showScreen("screen-play");
     showQuestion();
@@ -405,6 +426,32 @@
     startRun({ mode: "marathon", worldId: null, questions: qs });
   }
 
+  /** Preguntas (incluidas las de boss) cuyo id sigue en la lista de errores por repasar. */
+  function pendingMistakeQuestions() {
+    const pending = Progress.getMistakes();
+    const out = [];
+    WORLDS.forEach((w) => {
+      w.questions.concat(w.boss || []).forEach((q) => {
+        if (q.id && pending[q.id]) out.push(q);
+      });
+    });
+    return out;
+  }
+
+  function beginReview() {
+    const qs = pendingMistakeQuestions();
+    if (!qs.length) {
+      UI.toast("No tienes errores pendientes. ¡Bien hecho!");
+      refreshMenu();
+      return;
+    }
+    startRun({
+      mode: "review",
+      practice: true,
+      questions: UI.shuffle(qs).slice(0, GAME_CONFIG.marathonCount)
+    });
+  }
+
   function beginBoss(worldId) {
     const w = getWorldById(worldId);
     if (!w || !w.boss) return;
@@ -470,6 +517,7 @@
   function showQuestion() {
     state.answered = false;
     state.hintUsedThisQ = false;
+    state.hintDebt = 0;
     state.matchSelections = {};
 
     const q = currentQ();
@@ -675,7 +723,10 @@
     state.hintsLeft--;
     state.hintsUsedRun++;
     state.hintUsedThisQ = true;
-    state.score = Math.max(0, state.score - GAME_CONFIG.pointsHintPenalty);
+    // La pista cuesta pointsHintPenalty una sola vez: lo que no alcance a cubrir el marcador se descuenta al acertar
+    const paidNow = Math.min(state.score, GAME_CONFIG.pointsHintPenalty);
+    state.score -= paidNow;
+    state.hintDebt = GAME_CONFIG.pointsHintPenalty - paidNow;
     Progress.recordHint();
     UI.updateHUD(hud());
     const hintBtn = UI.$("#btn-hint");
@@ -807,6 +858,13 @@
     if (hint) hint.disabled = true;
 
     Progress.recordAnswer(ok);
+    const q = currentQ();
+    // Lo fallado se guarda para el modo Repasar errores; acertarlo después lo quita de la lista
+    if (ok) Progress.removeMistake(q.id);
+    else {
+      Progress.addMistake(q.id);
+      state.missed.push({ q: q.q, correct: correctText });
+    }
     let gained = 0;
 
     if (ok) {
@@ -820,6 +878,7 @@
         (state.streak > 1 ? GAME_CONFIG.pointsStreakBonus * (state.streak - 1) : 0);
       if (state.mode === "boss") gained = Math.round(gained * 1.5);
       if (state.timed && state.timeLeft > 0) gained += Math.min(50, state.timeLeft * 2);
+      gained = Math.max(0, gained - state.hintDebt);
       state.score += gained;
       if (state.streak >= 5) grant("streak5");
       if (state.streak >= 10) grant("streak10");
@@ -831,7 +890,7 @@
     }
 
     UI.updateHUD(hud());
-    showFeedback(ok, gained, correctText, currentQ().explain, timedOut);
+    showFeedback(ok, gained, correctText, q.explain, timedOut);
   }
 
   function showFeedback(ok, gained, correctText, explain, timedOut) {
@@ -889,6 +948,7 @@
   const MODE_LABELS = {
     campaign: "Aventura",
     practice: "Práctica",
+    review: "Repaso de errores",
     marathon: "Maratón",
     timer: "Cronómetro",
     boss: "Boss"
@@ -947,6 +1007,7 @@
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
+    renderMissed();
 
     const unlockEl = UI.$("#end-unlock");
     if (unlockEl) {
@@ -972,6 +1033,23 @@
     else TechAudio.playGameOver();
   }
 
+  function renderMissed() {
+    const box = UI.$("#end-mistakes");
+    if (!box) return;
+    if (!state.missed.length) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML =
+      `<summary>Repasa lo que fallaste (${state.missed.length})</summary><ol>` +
+      state.missed
+        .map((m) => `<li><span class="mistake-q">${UI.escapeHtml(m.q)}</span><span class="mistake-a">✔ ${UI.escapeHtml(m.correct)}</span></li>`)
+        .join("") +
+      "</ol>";
+  }
+
   function renderStats() {
     const s = Progress.getStats();
     const total = s.correct + s.wrong;
@@ -987,6 +1065,7 @@
         <li><strong>Cronómetro ganados:</strong> ${s.timerWins}</li>
         <li><strong>Boss (partidas ganadas):</strong> ${s.bossWins}</li>
         <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * Progress.levelsPerWorld()}</li>
+        <li><strong>Errores por repasar:</strong> ${pendingMistakeQuestions().length}</li>
         <li><strong>Récord puntos:</strong> ${UI.getHighScore()}</li>
       </ul>`
     );

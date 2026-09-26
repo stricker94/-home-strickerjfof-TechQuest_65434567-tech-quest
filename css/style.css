@@ -762,3 +762,11 @@ kbd {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Repaso de errores al final de la partida */
+.end-mistakes { text-align: left; max-width: 36rem; margin: 1rem auto 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem; }
+.end-mistakes summary { cursor: pointer; font-weight: 600; color: var(--text); }
+.end-mistakes ol { margin: 0.6rem 0 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.end-mistakes li { display: flex; flex-direction: column; gap: 0.15rem; }
+.end-mistakes .mistake-q { color: var(--muted); }
+.end-mistakes .mistake-a { color: var(--ok); font-family: var(--mono); font-size: 0.9rem; word-break: break-word; }
