@@ -91,7 +91,7 @@
     { id: "prL2d", level: 2, type: "mc", q: "SNMP en impresoras de red sirve para…", options: ["Monitorear estado (tóner, bandejas, errores)", "Reemplazar al cable USB siempre", "Cifrar el disco del PC", "Compilar el kernel"], answer: 0, explain: "Muchas consolas de flota leen OID SNMP del dispositivo." },
     { id: "prL2e", level: 2, type: "tf", q: "Un print server puede desplegar drivers a clientes vía point-and-print (con políticas adecuadas).", answer: true, explain: "En dominio facilita estandarizar modelos; revisa restricciones de seguridad modernas." },
     { id: "prL3a", level: 3, type: "mc", q: "AirPrint tipicamente se apoya en…", options: ["mDNS/Bonjour + IPP", "Solo LPT1", "Solo RDP", "Solo WEP"], answer: 0, explain: "Dispositivos Apple descubren la impresora y hablan IPP." },
-    { id: "prL3b", level: 3, type: "scenario", q: "Print server imprime a 9100 pero clientes SMB ven acceso denegado. Enfoque:", options: ["Permisos del share/seguridad de impresora + grupos", "Solo cambiar tóner", "Subir la resolución del monitor", "Desactivar Spooler del server"], answer: 0, explain: "Capa de red al dispositivo OK; falla autorización SMB/NTFS/share." },
+    { id: "prL3b", level: 3, type: "scenario", q: "Print server imprime a 9100 pero clientes SMB ven acceso denegado. Enfoque:", options: ["Permisos del share/seguridad de impresora + grupos", "Solo cambiar tóner", "Subir la resolución del monitor", "Desactivar Spooler del server"], answer: 0, explain: "Capa de red al dispositivo OK; falla la autorización SMB: permisos de seguridad de la impresora compartida y pertenencia a grupos." },
     { id: "prL3c", level: 3, type: "match", q: "Empareja PDL/idea:", pairs: [
       { left: "PCL", right: "Lenguaje típico HP / amplio en oficina" },
       { left: "PostScript", right: "Lenguaje Adobe; artes gráficas" },
@@ -99,7 +99,7 @@
       { left: "Raw 9100", right: "Bytes al puerto sin cola compleja" }
     ], explain: "Mismatch de PDL = basura en página." },
     { id: "prL3d", level: 3, type: "fill", q: "Puerto LPR/LPD clásico (número):", answer: "515", accept: ["515"], explain: "515/tcp LPR. IPP=631, raw=9100." },
-    { id: "prL3e", level: 3, type: "order", q: "Incidente: flota offline tras cambio de VLAN. Ordena:", items: ["Confirmar gateway/máscara nueva en impresoras", "Actualizar puertos TCP/IP o DNS de clientes", "Probar ping y 9100/631 desde print server", "Página de prueba y comunicar a usuarios"], answer: [0, 1, 2, 3], explain: "Cambio de L3 rompe puertos antiguos; actualiza inventario." }
+    { id: "prL3e", level: 3, type: "order", q: "Incidente: flota offline tras cambio de VLAN. Ordena:", items: ["Confirmar gateway/máscara nueva en impresoras", "Probar ping y 9100/631 desde print server", "Actualizar puertos TCP/IP o DNS con las IP ya verificadas", "Página de prueba y comunicar a usuarios"], answer: [0, 1, 2, 3], explain: "Cambio de L3 rompe puertos antiguos: valida conectividad en la nueva red, luego actualiza puertos/DNS e inventario, y confirma con página de prueba." }
   ]);
 
   add("networks", [

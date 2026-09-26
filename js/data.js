@@ -330,7 +330,7 @@ const WORLDS = [
           "Probar página de prueba / reinstalar driver"
         ],
         answer: [0, 1, 2, 3],
-        explain: "De lo físico a lo lógico: cable/papel → cola → driver → red."
+        explain: "De lo físico a lo lógico: alimentación y conexión (USB/red) → impresora predeterminada → cola/Spooler → página de prueba/driver."
       },
       {
         id: "pr04",
@@ -729,13 +729,13 @@ const WORLDS = [
         type: "order",
         q: "Ordena la depuración mínima de un bug:",
         items: [
-          "Reproducir el error",
-          "Leer el mensaje / stack trace",
+          "Reproducir el error de forma consistente",
+          "Leer el stack trace/logs de esa reproducción",
           "Aislar la causa (hipótesis)",
           "Corregir y verificar"
         ],
         answer: [0, 1, 2, 3],
-        explain: "Sin reproducir, no sabes si lo arreglaste. Los mensajes de error son pistas valiosas."
+        explain: "Reproducirlo de forma consistente te da logs/stack trace fiables y una forma de comprobar el arreglo; luego aislas la causa, corriges y verificas con la misma reproducción."
       }
     ]
   }

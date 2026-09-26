@@ -536,8 +536,15 @@
     "type": "fill",
     "q": "Protocolo moderno preferido de impresión en IP (sigla):",
     "answer": "IPP",
-    "accept": ["IPP","ipp"],
-    "explain": "Internet Printing Protocol (a menudo 631)."
+    "accept": [
+      "IPP",
+      "ipp",
+      "IPPS",
+      "IPP/IPPS",
+      "IPP Everywhere",
+      "Internet Printing Protocol"
+    ],
+    "explain": "Internet Printing Protocol (a menudo 631); IPPS es IPP sobre TLS."
   },
   {
     "id": "prL4e",
@@ -721,15 +728,15 @@
     "id": "prL5g",
     "level": 5,
     "type": "tf",
-    "q": "Una ACL en el switch que bloquee SMB desde VLAN de usuarios a impresoras directas puede forzar uso del print server.",
+    "q": "Una ACL en el switch que bloquee la impresión directa (RAW 9100, LPR 515, IPP 631, WSD) desde la VLAN de usuarios hacia las impresoras, y solo la permita desde el print server, puede forzar el uso del print server.",
     "answer": true,
-    "explain": "Diseño intencional de caminos de impresión."
+    "explain": "Los clientes que imprimen directo usan RAW 9100, LPR 515, IPP 631 o WSD, no SMB (SMB es cliente → print server). Si solo el print server alcanza esos puertos, todo trabajo pasa por sus colas."
   },
   {
     "id": "prL5h",
     "level": 5,
     "type": "scenario",
-    "q": "Impresora multifunción escanea a \\share y falla tras endurecer SMB. Causa probable:",
+    "q": "Impresora multifunción escanea a \\\\servidor\\share y falla tras endurecer SMB. Causa probable:",
     "options": [
       "SMBv1 deshabilitado / firma SMB / credenciales del dispositivo",
       "Falta de papel solo",
@@ -1074,13 +1081,13 @@
     "type": "mc",
     "q": "Big-O de buscar en hash map promedio:",
     "options": [
-      "O(1) amortizado",
+      "O(1) en promedio",
       "O(n!)",
       "O(n³) siempre",
       "O(log log log) fijo"
     ],
     "answer": 0,
-    "explain": "Peor caso puede degradar; promedio excelente."
+    "explain": "Búsqueda en hash map: O(1) en promedio; con muchas colisiones el peor caso degrada a O(n). 'Amortizado' se usa para la inserción (por el redimensionamiento ocasional)."
   },
   {
     "id": "pgL4b",
@@ -1211,10 +1218,13 @@
     "id": "pgL5c",
     "level": 5,
     "type": "fill",
-    "q": "Formato de intercambio muy usado en APIs web (sigla):",
+    "q": "Formato de texto con pares clave-valor entre llaves { }, el más usado hoy en APIs REST (sigla):",
     "answer": "JSON",
-    "accept": ["JSON","json"],
-    "explain": "JavaScript Object Notation."
+    "accept": [
+      "JSON",
+      "json"
+    ],
+    "explain": "JSON = JavaScript Object Notation. XML también se usa (p. ej., SOAP), pero en APIs REST domina JSON."
   },
   {
     "id": "pgL5d",
@@ -1248,11 +1258,11 @@
     "id": "pgL5f",
     "level": 5,
     "type": "order",
-    "q": "Ordena code review útil:",
+    "q": "Ordena el flujo de un code review útil:",
     "items": [
-      "CI verde",
-      "Diff pequeño claro",
-      "Comentarios de diseño/riesgos",
+      "Autor abre PR con un diff pequeño y claro",
+      "Esperar a que el CI esté en verde",
+      "Revisor comenta diseño/riesgos (no solo estilo)",
       "Aprobar o pedir cambios"
     ],
     "answer": [
@@ -1261,7 +1271,7 @@
       2,
       3
     ],
-    "explain": "Reviews no son cacería de estilo solo."
+    "explain": "Primero un PR pequeño y claro; el CI en verde filtra fallos automáticos antes de gastar tiempo humano; la revisión se centra en diseño/riesgos, no solo estilo, y termina en aprobar o pedir cambios."
   },
   {
     "id": "pgL5g",
