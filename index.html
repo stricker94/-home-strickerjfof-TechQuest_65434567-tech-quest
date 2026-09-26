@@ -88,7 +88,7 @@
 
     <!-- JUEGO -->
     <section id="screen-play" class="screen" aria-label="Partida">
-      <div class="hud" role="status" aria-live="polite">
+      <div class="hud">
         <div class="hud-world" id="hud-world">—</div>
         <div class="hud-stats">
           <span id="hud-lives-wrap">Vidas <strong id="hud-lives">❤️❤️❤️</strong></span>
@@ -116,8 +116,10 @@
     <section id="screen-feedback" class="screen" aria-label="Resultado">
       <div class="panel feedback-center">
         <span id="feedback-icon" aria-hidden="true">✅</span>
-        <h2 id="feedback-title">¡Correcto!</h2>
-        <p id="feedback-detail"></p>
+        <div role="status" aria-live="polite" aria-atomic="true">
+          <h2 id="feedback-title">¡Correcto!</h2>
+          <p id="feedback-detail"></p>
+        </div>
         <p id="feedback-explain" class="explain-box"></p>
         <p id="feedback-ach" class="ach-toast" hidden></p>
         <div class="btn-row">
@@ -133,10 +135,11 @@
         <h2 id="end-title">¡Completado!</h2>
         <p id="end-summary" class="end-summary"></p>
         <p id="end-unlock" class="unlock-banner" hidden></p>
+        <p id="end-ach" class="ach-toast" hidden></p>
         <p class="pill" style="display:inline-block">Récord local: <strong id="end-highscore">0</strong></p>
         <details id="end-mistakes" class="end-mistakes" hidden></details>
         <div class="btn-row">
-          <button type="button" class="btn btn-primary" data-action="play">Elegir mundo</button>
+          <button type="button" class="btn btn-primary" data-action="pick-again">Elegir mundo</button>
           <button type="button" class="btn" id="btn-retry" data-action="retry">Reintentar</button>
           <button type="button" class="btn" data-action="menu">Menú</button>
         </div>

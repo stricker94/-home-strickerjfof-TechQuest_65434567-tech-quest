@@ -22,6 +22,7 @@
     orderItems: [],
     hintUsedThisQ: false,
     hintDebt: 0,
+    shownAt: 0,
     correctCount: 0,
     wrongCount: 0,
     timeLeft: 0,
@@ -32,6 +33,11 @@
 
   let worldPickMode = "campaign";
   let selectedWorldForLevels = null;
+  // Cómo llegó el foco al elemento actual: "pointer" (clic/toque) o "keyboard" (Tab)
+  let navMode = "pointer";
+  // Tiempo mínimo tras mostrar una pregunta antes de aceptar clics de respuesta (evita que el
+  // segundo clic de un doble clic en "Continuar" o en un nivel responda la pregunta nueva)
+  const ANSWER_CLICK_GUARD_MS = 350;
 
   function init() {
     bindEvents();
@@ -42,8 +48,11 @@
 
   function bindEvents() {
     // Los navegadores solo permiten iniciar audio tras un gesto del usuario (clic, toque o tecla)
-    document.addEventListener("pointerdown", () => TechAudio.unlock(), { passive: true });
-    document.addEventListener("keydown", () => TechAudio.unlock());
+    document.addEventListener("pointerdown", () => { navMode = "pointer"; TechAudio.unlock(); }, { passive: true });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") navMode = "keyboard";
+      TechAudio.unlock();
+    });
 
     document.body.addEventListener("click", (e) => {
       const t = e.target.closest("[data-action]");
@@ -52,9 +61,15 @@
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const playOn = document.getElementById("screen-play")?.classList.contains("active");
       const fbOn = document.getElementById("screen-feedback")?.classList.contains("active");
+      if (e.repeat) {
+        // Mantener Enter pulsado no debe activar de forma nativa "Continuar" y saltarse el resultado
+        if (e.key === "Enter" && (playOn || fbOn)) e.preventDefault();
+        return;
+      }
+      const focusedBtn = e.target instanceof HTMLButtonElement ? e.target : null;
       // Al escribir en el campo de texto, las letras no son atajos (p. ej. "chmod" no debe usar pista ni silenciar)
       const typing = e.target instanceof HTMLElement && e.target.matches("input, textarea, [contenteditable]");
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
@@ -67,13 +82,15 @@
 
       if (key === "Enter") {
         if (playOn) {
-          // Un botón de opción (o de acción como Pista/Salir) enfocado con Tab conserva su activación nativa con Enter;
-          // en emparejar/ordenar el foco queda en los ítems, así que ahí Enter sí envía la respuesta
-          const focusedBtn = e.target instanceof HTMLButtonElement ? e.target : null;
-          if (focusedBtn && (focusedBtn.closest("#options") || focusedBtn.closest(".play-actions"))) return;
+          // Enter activa el botón enfocado (opciones, ▲/▼, ítems de emparejar, Pista, Sonido…), salvo cuando
+          // el foco quedó en un ítem de emparejar/ordenar por un clic: ahí Enter envía la respuesta
+          const pointerOnItem = navMode === "pointer" && focusedBtn && focusedBtn.closest(".match-board, #order-list");
+          if (focusedBtn && focusedBtn.id !== "btn-submit" && !pointerOnItem) return;
           e.preventDefault();
           submitAnswer();
         } else if (fbOn) {
+          // Otro botón elegido con Tab (p. ej. Sonido) conserva su Enter nativo
+          if (focusedBtn && focusedBtn.id !== "btn-next-feedback" && navMode === "keyboard") return;
           // preventDefault evita que el botón enfocado reciba un segundo clic y salte una pregunta
           e.preventDefault();
           TechAudio.playClick();
@@ -189,6 +206,15 @@
         if (worldPickMode === "practice") beginPractice(id, level);
         else if (worldPickMode === "timer") beginTimer(id, level);
         else beginCampaign(id, level);
+        break;
+      }
+      case "pick-again": {
+        // "Elegir mundo" en la pantalla final vuelve al selector del modo que se acaba de jugar
+        TechAudio.playClick();
+        const again = { practice: "practice", timer: "timer", boss: "boss" };
+        worldPickMode = again[state.mode] || "campaign";
+        renderWorlds();
+        UI.showScreen("screen-worlds");
         break;
       }
       case "back-worlds":
@@ -519,6 +545,7 @@
     state.hintUsedThisQ = false;
     state.hintDebt = 0;
     state.matchSelections = {};
+    state.shownAt = performance.now();
 
     const q = currentQ();
     UI.updateHUD(hud());
@@ -583,6 +610,11 @@
     })[t] || t;
   }
 
+  /** true si el clic llega demasiado pronto tras mostrar la pregunta (segundo clic de un doble clic). */
+  function tooSoon(ev) {
+    return ev.detail > 0 && performance.now() - state.shownAt < ANSWER_CLICK_GUARD_MS;
+  }
+
   function renderChoices(area, options) {
     const wrap = document.createElement("div");
     wrap.id = "options";
@@ -593,8 +625,8 @@
       btn.className = "option-btn";
       btn.dataset.index = String(i);
       btn.innerHTML = `<span class="opt-key">${i + 1}</span><span class="opt-text">${UI.escapeHtml(opt)}</span>`;
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         gradeChoice(i);
       });
       wrap.appendChild(btn);
@@ -612,8 +644,8 @@
       btn.className = "option-btn tf-btn";
       btn.dataset.val = val;
       btn.innerHTML = `<span class="opt-key">${key}</span><span class="opt-text">${label}</span>`;
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         gradeTF(val === "true");
       });
       wrap.appendChild(btn);
@@ -637,8 +669,8 @@
       <div class="match-links" id="match-links"></div>`;
     let pending = null;
     area.querySelectorAll(".match-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         TechAudio.playClick();
         const side = btn.dataset.side;
         const i = +btn.dataset.i;
@@ -693,22 +725,28 @@
           <span class="order-num">${idx + 1}</span>
           <span class="order-text">${UI.escapeHtml(item.text)}</span>
           <span class="order-controls">
-            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir" ${idx === 0 ? "disabled" : ""}>▲</button>
-            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar" ${idx === state.orderItems.length - 1 ? "disabled" : ""}>▼</button>
+            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir: ${UI.escapeHtml(item.text)}" ${idx === 0 ? "disabled" : ""}>▲</button>
+            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar: ${UI.escapeHtml(item.text)}" ${idx === state.orderItems.length - 1 ? "disabled" : ""}>▼</button>
           </span>`;
         list.appendChild(li);
       });
       list.querySelectorAll("[data-dir]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (state.answered) return;
+        btn.addEventListener("click", (ev) => {
+          if (state.answered || tooSoon(ev)) return;
           TechAudio.playClick();
+          const dir = +btn.dataset.dir;
           const idx = +btn.dataset.idx;
-          const j = idx + +btn.dataset.dir;
+          const j = idx + dir;
           if (j < 0 || j >= state.orderItems.length) return;
           const tmp = state.orderItems[idx];
           state.orderItems[idx] = state.orderItems[j];
           state.orderItems[j] = tmp;
           paint();
+          // paint() reconstruye los botones: devuelve el foco al ítem movido para no perder el lugar con teclado
+          const next =
+            list.querySelector(`[data-dir="${dir}"][data-idx="${j}"]:not([disabled])`) ||
+            list.querySelector(`[data-idx="${j}"]:not([disabled])`);
+          if (next) next.focus();
         });
       });
     }
@@ -911,22 +949,28 @@
       );
     }
     UI.setText("#feedback-explain", explain || "");
-    const ach = UI.$("#feedback-ach");
-    if (ach) {
-      if (state.pendingAchievements.length) {
-        ach.hidden = false;
-        ach.textContent =
-          "¡Logro! " +
-          state.pendingAchievements
-            .map((id) => {
-              const a = ACHIEVEMENTS.find((x) => x.id === id);
-              return a ? a.icon + " " + a.name : id;
-            })
-            .join(" · ");
-        state.pendingAchievements = [];
-      } else ach.hidden = true;
-    }
+    showPendingAchievements("#feedback-ach");
     UI.$("#btn-next-feedback")?.focus();
+  }
+
+  /** Muestra (y vacía) los logros obtenidos desde la última vez; los toasts solo dejan ver el último. */
+  function showPendingAchievements(sel) {
+    const el = UI.$(sel);
+    if (!el) return;
+    if (!state.pendingAchievements.length) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    el.textContent =
+      "¡Logro! " +
+      state.pendingAchievements
+        .map((id) => {
+          const a = ACHIEVEMENTS.find((x) => x.id === id);
+          return a ? a.icon + " " + a.name : id;
+        })
+        .join(" · ");
+    state.pendingAchievements = [];
   }
 
   function advance() {
@@ -1007,6 +1051,7 @@
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
+    showPendingAchievements("#end-ach");
     renderMissed();
 
     const unlockEl = UI.$("#end-unlock");

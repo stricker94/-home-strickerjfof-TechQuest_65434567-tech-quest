@@ -770,3 +770,7 @@ kbd {
 .end-mistakes li { display: flex; flex-direction: column; gap: 0.15rem; }
 .end-mistakes .mistake-q { color: var(--muted); }
 .end-mistakes .mistake-a { color: var(--ok); font-family: var(--mono); font-size: 0.9rem; word-break: break-word; }
+
+/* Palabras largas (rutas, a/b/c) no deben desbordar los botones ni empujar ▲/▼ fuera de la pantalla */
+.opt-text, .order-text, .match-item { min-width: 0; overflow-wrap: anywhere; }
+.order-item { grid-template-columns: auto minmax(0, 1fr) auto; }
