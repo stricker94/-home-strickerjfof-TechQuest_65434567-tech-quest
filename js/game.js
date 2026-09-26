@@ -65,8 +65,10 @@
 
       if (key === "Enter") {
         if (playOn) {
-          // Un botón de opción enfocado con Tab conserva su activación nativa con Enter
-          if (e.target instanceof HTMLButtonElement && e.target.id !== "btn-submit") return;
+          // Un botón de opción (o de acción como Pista/Salir) enfocado con Tab conserva su activación nativa con Enter;
+          // en emparejar/ordenar el foco queda en los ítems, así que ahí Enter sí envía la respuesta
+          const focusedBtn = e.target instanceof HTMLButtonElement ? e.target : null;
+          if (focusedBtn && (focusedBtn.closest("#options") || focusedBtn.closest(".play-actions"))) return;
           e.preventDefault();
           submitAnswer();
         } else if (fbOn) {
