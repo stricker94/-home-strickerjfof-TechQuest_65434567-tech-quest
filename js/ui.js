@@ -91,14 +91,13 @@ const UI = (() => {
   }
 
   function getHighScore() {
-    try { return parseInt(localStorage.getItem(GAME_CONFIG.storageKey) || "0", 10) || 0; }
-    catch (_) { return 0; }
+    return Math.max(0, parseInt(Progress.readRaw(GAME_CONFIG.storageKey) || "0", 10) || 0);
   }
 
   function saveHighScore(score) {
     const prev = getHighScore();
     if (score > prev) {
-      try { localStorage.setItem(GAME_CONFIG.storageKey, String(score)); } catch (_) {}
+      Progress.writeRaw(GAME_CONFIG.storageKey, String(score));
       return true;
     }
     return false;

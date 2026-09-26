@@ -2,18 +2,49 @@
  * Tech Quest — Progreso, logros, estadísticas y niveles
  */
 const Progress = (() => {
+  // Copia en memoria: si el navegador bloquea localStorage o no deja escribir, el progreso
+  // se conserva al menos durante la sesión en lugar de perderse en cada lectura.
+  const mem = {};
+  let storageWritable = true;
+
+  function readRaw(key) {
+    if (!storageWritable && key in mem) return mem[key];
+    try {
+      return localStorage.getItem(key);
+    } catch (_) {
+      return key in mem ? mem[key] : null;
+    }
+  }
+
+  function writeRaw(key, raw) {
+    mem[key] = raw;
+    try {
+      localStorage.setItem(key, raw);
+      storageWritable = true;
+    } catch (_) {
+      storageWritable = false;
+    }
+  }
+
+  function removeRaw(key) {
+    delete mem[key];
+    try { localStorage.removeItem(key); } catch (_) {}
+  }
+
+  function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
+
+  /** Lee un objeto guardado; un valor ausente, corrupto o que no sea objeto (null, [], 5…) da el fallback. */
   function parse(key, fallback) {
     try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
+      const v = JSON.parse(readRaw(key));
+      return isObj(v) ? v : fallback;
     } catch (_) {
       return fallback;
     }
   }
+
   function save(key, val) {
-    try {
-      localStorage.setItem(key, JSON.stringify(val));
-    } catch (_) {}
+    writeRaw(key, JSON.stringify(val));
   }
 
   const LEVELS_KEY = GAME_CONFIG.storageLevels || "techQuestLevelClears";
@@ -62,7 +93,7 @@ const Progress = (() => {
 
   function markLevelCleared(worldId, level) {
     const c = getLevelClears();
-    if (!c[worldId]) c[worldId] = {};
+    if (!isObj(c[worldId])) c[worldId] = {};
     c[worldId][String(level)] = Date.now();
     save(LEVELS_KEY, c);
     const maxL = levelsPerWorld();
@@ -157,11 +188,11 @@ const Progress = (() => {
 
   /** Borra progreso, logros, estadísticas y récord; conserva la preferencia de sonido. */
   function resetAll() {
-    try {
-      Object.keys(localStorage)
-        .filter((k) => k.startsWith("techQuest") && k !== GAME_CONFIG.storageMuted)
-        .forEach((k) => localStorage.removeItem(k));
-    } catch (_) {}
+    let keys = Object.keys(mem);
+    try { keys = keys.concat(Object.keys(localStorage)); } catch (_) {}
+    keys
+      .filter((k) => k.startsWith("techQuest") && k !== GAME_CONFIG.storageMuted)
+      .forEach(removeRaw);
   }
 
   function defaultStats() {
@@ -201,6 +232,7 @@ const Progress = (() => {
     getBossWins, markBossWin, allBossesBeaten,
     getCompleted, markWorldCompleted, allWorldsCompleted,
     getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordGameEnd,
-    getMistakes, addMistake, removeMistake, resetAll
+    getMistakes, addMistake, removeMistake, resetAll,
+    readRaw, writeRaw
   };
 })();

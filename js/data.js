@@ -52,7 +52,16 @@ const WORLDS = [
         type: "fill",
         q: "Escribe el comando para crear un directorio llamado 'proyectos':",
         answer: "mkdir proyectos",
-        accept: ["mkdir proyectos", "mkdir ./proyectos"],
+        accept: [
+          "mkdir proyectos",
+          "mkdir ./proyectos",
+          "mkdir proyectos/",
+          "mkdir -p proyectos",
+          "mkdir -p ./proyectos",
+          "mkdir -p proyectos/",
+          "mkdir 'proyectos'",
+          "mkdir \"proyectos\""
+        ],
         explain: "mkdir crea directorios. mkdir -p crea rutas anidadas si no existen."
       },
       {
@@ -203,7 +212,7 @@ const WORLDS = [
           "Verificar que el estado sea En ejecución"
         ],
         answer: [0, 1, 2, 3],
-        explain: "También puedes usar Restart-Service NombreEnPowerShell."
+        explain: "También puedes usar Restart-Service <Nombre> en PowerShell (por ejemplo, Restart-Service Spooler)."
       },
       {
         id: "wn06",
@@ -249,10 +258,10 @@ const WORLDS = [
       {
         id: "wn10",
         type: "fill",
-        q: "Comando para ver rutas DNS y liberar/renovar DHCP (libera):",
+        q: "Comando para liberar la concesión (lease) DHCP del adaptador:",
         answer: "ipconfig /release",
-        accept: ["ipconfig /release", "ipconfig /release *"],
-        explain: "Después suele usarse ipconfig /renew. /flushdns limpia la caché DNS."
+        accept: ["ipconfig /release", "ipconfig /release *", "ipconfig -release"],
+        explain: "Después suele usarse ipconfig /renew para pedir una nueva concesión. /flushdns limpia la caché DNS y route print muestra las rutas."
       },
       {
         id: "wn11",

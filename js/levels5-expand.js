@@ -55,7 +55,27 @@
     "type": "fill",
     "q": "Comando para ver uso de disco por directorio (humano):",
     "answer": "du -h",
-    "accept": ["du -h","du -sh","du -h --max-depth=1"],
+    "accept": [
+      "du -h",
+      "du -h .",
+      "du -sh",
+      "du -hs",
+      "du -s -h",
+      "du -h -s",
+      "du -sh .",
+      "du -sh *",
+      "du -hs *",
+      "du -sh ./*",
+      "du -sh */",
+      "du -h --max-depth=1",
+      "du -h --max-depth 1",
+      "du -h --max-depth=1 .",
+      "du -h -d 1",
+      "du -h -d1",
+      "du -hd1",
+      "du -hd 1",
+      "du -h -d 1 ."
+    ],
     "explain": "du resume uso de disco; -h legible, -s resumen."
   },
   {
@@ -92,10 +112,10 @@
     "type": "order",
     "q": "Ordena endurecer SSH básico:",
     "items": [
-      "Desactivar root login por password",
-      "Usar claves SSH",
-      "Cambiar/limitar Puerto y AllowUsers",
-      "Reiniciar sshd y probar otra sesión"
+      "Generar un par de claves (ssh-keygen)",
+      "Copiar la clave pública (ssh-copy-id) y probar login",
+      "Desactivar password y root login; limitar AllowUsers",
+      "Reiniciar sshd y probar en otra sesión"
     ],
     "answer": [
       0,
@@ -103,7 +123,7 @@
       2,
       3
     ],
-    "explain": "Nunca cortes tu única sesión sin probar en paralelo."
+    "explain": "Primero asegura y prueba el acceso por clave; solo entonces desactiva contraseñas/root en sshd_config. Nunca cortes tu única sesión sin probar en paralelo."
   },
   {
     "id": "lxL4g",
@@ -209,9 +229,9 @@
     "type": "order",
     "q": "Ordena investigación de alto load average:",
     "items": [
-      "uptime / top / htop",
-      "Identificar CPU vs IO wait",
-      "Revisar iostat/vmstat y procesos",
+      "uptime / top / htop (load y %wa)",
+      "Identificar si es CPU o I/O wait",
+      "Profundizar: iostat/iotop (I/O) o pidstat/perf (CPU)",
       "Aplicar fix (kill, tune, hardware)"
     ],
     "answer": [
@@ -220,7 +240,7 @@
       2,
       3
     ],
-    "explain": "Load alto no siempre es CPU: mira wa%."
+    "explain": "Load alto no siempre es CPU: mira %wa y procesos en estado D; según el caso, profundiza con la herramienta adecuada antes de actuar."
   },
   {
     "id": "lxL5g",
@@ -242,7 +262,7 @@
       "Cable HDMI"
     ],
     "answer": 0,
-    "explain": "soft/timeo/intr y monitoreo del export ayudan."
+    "explain": "Con montajes hard, si el servidor NFS o la red caen, los procesos quedan en estado D reintentando sin fin. Revisa servidor, red y export. soft (con timeo/retrans) devuelve error en vez de colgar, pero puede corromper datos: úsalo solo para datos no críticos. intr se ignora desde el kernel 2.6.25; solo SIGKILL interrumpe."
   }
 ]);
 
@@ -253,13 +273,13 @@
     "type": "mc",
     "q": "¿Qué es WinRM?",
     "options": [
-      "Remoting de administración de Windows ( foreman de PowerShell Remoting )",
+      "Administración remota de Windows (WS-Management, transporte de PowerShell Remoting)",
       "Un antivirus",
       "Un protocolo de impresión LPT",
       "Una VLAN"
     ],
     "answer": 0,
-    "explain": "WinRM habilita sesiones remotas seguras si está bien endurecido."
+    "explain": "WinRM (Windows Remote Management) implementa WS-Management y es la base de PowerShell Remoting (Enter-PSSession/Invoke-Command). Endurécelo: HTTPS 5986, firewall y cuentas limitadas."
   },
   {
     "id": "wnL4b",
@@ -287,10 +307,17 @@
     "id": "wnL4d",
     "level": 4,
     "type": "fill",
-    "q": "Consola para ver políticas resultantes (gpresult HTML):",
-    "answer": "gpresult /h",
-    "accept": ["gpresult /h","gpresult /h report.html"],
-    "explain": "gpresult /h archivo.html genera informe."
+    "q": "Comando para exportar a HTML el conjunto de directivas resultante (RSoP) al archivo report.html:",
+    "answer": "gpresult /h report.html",
+    "accept": [
+      "gpresult /h report.html",
+      "gpresult /h report.html /f",
+      "gpresult /f /h report.html",
+      "gpresult.exe /h report.html",
+      "gpresult /h .\\report.html",
+      "gpresult /h \"report.html\""
+    ],
+    "explain": "gpresult /h <archivo>.html genera el informe RSoP en HTML (la opción /h exige nombre de archivo; /f sobrescribe si ya existe). gpresult /r da un resumen en consola; rsop.msc es la consola gráfica legacy."
   },
   {
     "id": "wnL4e",
@@ -337,10 +364,10 @@
     "type": "order",
     "q": "Ordena troubleshooting de trust de dominio:",
     "items": [
-      "Verificar DNS hacia DC",
-      "Probar nltest / secure channel",
-      "Revisar hora (Kerberos)",
-      "Resetear cuenta de máquina si aplica"
+      "Verificar DNS hacia el DC (el equipo localiza el DC del dominio)",
+      "Con el DC localizado, comparar la hora (w32tm; Kerberos tolera ~5 min)",
+      "Probar el canal seguro (nltest /sc_verify:<dominio> o Test-ComputerSecureChannel)",
+      "Reparar/resetear la cuenta de máquina si el canal falla"
     ],
     "answer": [
       0,
@@ -348,7 +375,7 @@
       2,
       3
     ],
-    "explain": "La mayoría de joins fallan por DNS/hora."
+    "explain": "Primero localiza el DC (DNS) y valida la hora contra él; después prueba el canal seguro y, si falla, repáralo (Test-ComputerSecureChannel -Repair o netdom resetpwd)."
   },
   {
     "id": "wnL4h",
@@ -1379,7 +1406,7 @@
     "q": "Shift-left en soporte significa…",
     "options": [
       "Empoderar N1/self-service/KB para resolver antes",
-      ".Mover todo a N3 siempre",
+      "Mover todo a N3 siempre",
       "Eliminar monitoreo",
       "Ocultar errores"
     ],
@@ -1390,7 +1417,7 @@
     "id": "suL5b",
     "level": 5,
     "type": "scenario",
-    "q": "Métricas muestran MTTR alto pero FCR bajo. Interpreta:",
+    "q": "Métricas muestran MTTR alto y FCR bajo. Interpreta:",
     "options": [
       "Se reabre mucho / poca resolución real en primer contacto",
       "Que todo está perfecto",
@@ -1398,7 +1425,7 @@
       "Que STP falló"
     ],
     "answer": 0,
-    "explain": "FCR = first contact resolution."
+    "explain": "FCR (first contact resolution) bajo = muchos tickets requieren escalar o recontactar/reabrir, lo que alarga el MTTR."
   },
   {
     "id": "suL5c",
@@ -1460,7 +1487,7 @@
     "id": "suL5g",
     "level": 5,
     "type": "tf",
-    "q": "Documentar workarounds en la KB evita que cada agente reinventé la rueda.",
+    "q": "Documentar workarounds en la KB evita que cada agente reinvente la rueda.",
     "answer": true,
     "explain": "Incluye fecha y validez."
   },
@@ -1792,8 +1819,8 @@
     "q": "Ordena RMA de disco en RAID:",
     "items": [
       "Identificar disco fallido (beacon)",
-      "Verificar backup/health array",
-      "Reemplazar hot-spare/disco",
+      "Con el disco ya localizado, confirmar backup y estado del array antes de extraerlo",
+      "Sustituir el disco fallido por uno compatible",
       "Monitorear rebuild"
     ],
     "answer": [
@@ -2188,15 +2215,15 @@
       "id": "cl21",
       "level": 3,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja la estrategia de DR:",
       "pairs": [
         {
           "left": "Warm standby",
-          "right": "Copia parcialmente lista"
+          "right": "Copia completa pero reducida, siempre activa"
         },
         {
           "left": "Pilot light",
-          "right": "Mínimo core listo para crecer"
+          "right": "Core/datos replicados encendidos; app apagada"
         },
         {
           "left": "Multi-site active",
@@ -2207,7 +2234,7 @@
           "right": "Recuperar desde respaldos"
         }
       ],
-      "explain": "DR strategies."
+      "explain": "DR de menor a mayor costo (y menor RTO): backup & restore < pilot light < warm standby < multi-site activo."
     },
     {
       "id": "cl22",
@@ -2338,12 +2365,12 @@
       "id": "cl31",
       "level": 4,
       "type": "order",
-      "q": "Ordena landing zone básica:",
+      "q": "Ordena el montaje de una landing zone básica:",
       "items": [
-        "Cuentas/suscripciones separadas",
-        "Red + identidad central",
-        "Guardrails (policies)",
-        "Workloads en cuentas hijas"
+        "Crear la organización/tenant (cuenta de gestión)",
+        "Crear cuentas separadas (prod, dev, seguridad)",
+        "Aplicar guardrails (policies) a esas cuentas",
+        "Desplegar workloads en las cuentas hijas"
       ],
       "answer": [
         0,
@@ -2351,7 +2378,7 @@
         2,
         3
       ],
-      "explain": "Aísla prod/dev y seguridad."
+      "explain": "Primero la estructura (org → cuentas aisladas), luego las reglas (guardrails) y al final los workloads, que caen en cuentas ya gobernadas."
     },
     {
       "id": "cl32",
@@ -2501,12 +2528,12 @@
       "id": "clB3",
       "level": 5,
       "type": "order",
-      "q": "BOSS: Compromiso de CI/CD cloud:",
+      "q": "BOSS: Se filtraron los secrets de tu pipeline CI/CD. Ordena la respuesta:",
       "items": [
-        "Revocar secrets del pipeline",
-        "Auditar deploys recientes",
-        "Reconstruir desde fuentes firmadas",
-        "Endurecer OIDC/roles"
+        "Revocar/rotar YA los secrets expuestos (contener)",
+        "Auditar deploys recientes (medir alcance)",
+        "Reconstruir y redeployar desde fuentes firmadas",
+        "Postmortem: migrar a OIDC y roles mínimos"
       ],
       "answer": [
         0,
@@ -2514,7 +2541,7 @@
         2,
         3
       ],
-      "explain": "Supply chain."
+      "explain": "Contener → medir alcance → recuperar desde fuentes confiables → lecciones aprendidas (supply chain)."
     },
     {
       "id": "clB4",
@@ -2585,7 +2612,12 @@
       "type": "fill",
       "q": "Palabra SQL para insertar filas:",
       "answer": "INSERT",
-      "accept": ["INSERT","insert"],
+      "accept": [
+        "INSERT",
+        "insert",
+        "INSERT INTO",
+        "insert into"
+      ],
       "explain": "INSERT INTO ... VALUES ..."
     },
     {
@@ -2680,7 +2712,12 @@
       "type": "fill",
       "q": "Palabra SQL para borrar filas:",
       "answer": "DELETE",
-      "accept": ["DELETE","delete"],
+      "accept": [
+        "DELETE",
+        "delete",
+        "DELETE FROM",
+        "delete from"
+      ],
       "explain": "DELETE FROM t WHERE ..."
     },
     {
@@ -2728,10 +2765,10 @@
       "type": "order",
       "q": "Ordena consulta segura de actualización:",
       "items": [
-        "BEGIN/transacción",
-        "SELECT de verificación",
+        "BEGIN (abrir transacción)",
         "UPDATE con WHERE",
-        "COMMIT o ROLLBACK"
+        "SELECT para revisar las filas modificadas",
+        "COMMIT si es correcto o ROLLBACK si no"
       ],
       "answer": [
         0,
@@ -2739,7 +2776,7 @@
         2,
         3
       ],
-      "explain": "Verifica el conteo afectado."
+      "explain": "Dentro de la transacción ejecutas el UPDATE, revisas con SELECT (y el conteo de filas afectadas) que el cambio sea el esperado y solo entonces confirmas (COMMIT) o deshaces (ROLLBACK). Tip: antes del BEGIN puedes correr un SELECT con el mismo WHERE para previsualizar."
     },
     {
       "id": "db16",
@@ -2831,10 +2868,10 @@
       "type": "order",
       "q": "Ordena backup lógico básico:",
       "items": [
-        "pg_dump/mysqldump o equivalente",
-        "Copiar archivo a offsite",
-        "Probar restore en lab",
-        "Documentar RPO"
+        "Ejecutar pg_dump/mysqldump o equivalente",
+        "Copiar el archivo a almacenamiento offsite",
+        "Restaurar desde la copia offsite en un lab",
+        "Documentar resultado y tiempo de restore"
       ],
       "answer": [
         0,
@@ -2842,7 +2879,7 @@
         2,
         3
       ],
-      "explain": "Backup ≠ archivo copiado sin prueba."
+      "explain": "Backup ≠ archivo copiado sin prueba: restaura desde la copia offsite (la que usarías en un desastre) y documenta el resultado y el tiempo real (tu RTO). El RPO se define antes, porque determina cada cuánto respaldar."
     },
     {
       "id": "db23",
@@ -3119,10 +3156,10 @@
       "type": "order",
       "q": "BOSS: Sospecha de inyección SQL activa:",
       "items": [
-        "WAF/bloqueos + logs",
-        "Parchear código parametrizado",
-        "Auditar datos tocados",
-        "Rotar secretos DB"
+        "Contener: WAF/bloquear endpoint y preservar logs",
+        "Parchear el código con consultas parametrizadas",
+        "Reprobar el payload de los logs: debe fallar",
+        "Cierre: rotar secretos, auditar datos, postmortem"
       ],
       "answer": [
         0,
@@ -3130,7 +3167,7 @@
         2,
         3
       ],
-      "explain": "App + datos."
+      "explain": "Primero contienes y preservas evidencia; luego corriges la causa con consultas parametrizadas y confirmas con el payload real que ya no funciona; al cerrar rotas credenciales, evalúas qué datos se tocaron (posible notificación) y documentas. Si hay indicios de credenciales robadas, rótalas ya durante la contención."
     },
     {
       "id": "dbB4",
