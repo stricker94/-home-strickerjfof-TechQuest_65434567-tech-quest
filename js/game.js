@@ -452,7 +452,8 @@
       state.mode === "boss" ? GAME_CONFIG.bossTimerSeconds : GAME_CONFIG.timerSeconds;
     UI.updateHUD(hud());
     state.timerId = setInterval(() => {
-      if (state.answered) return;
+      // Pausa el reloj si la pestaña está oculta, para no perder por cambiar de ventana
+      if (state.answered || document.hidden) return;
       state.timeLeft--;
       if (state.timeLeft > 0 && state.timeLeft <= 5) {
         if (state.timeLeft <= 3) TechAudio.playUrgentTick();
