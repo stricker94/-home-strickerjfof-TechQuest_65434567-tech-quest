@@ -787,8 +787,12 @@
     } else if (q.type === "tf") {
       tip = "Pista: revisa la definición estándar del concepto.";
     } else if (q.type === "fill") {
-      const ans = (q.accept && q.accept[0]) || q.answer;
-      tip = "Pista: empieza con «" + ans.slice(0, Math.min(4, ans.length)) + "…»";
+      // Revela como mucho la mitad: con respuestas cortas (p. ej. "53", "DNS") no regala la respuesta
+      const ans = String(q.answer);
+      const n = ans.length <= 2 ? 0 : ans.length <= 4 ? 1 : Math.min(4, Math.floor(ans.length / 2));
+      tip = n
+        ? "Pista: empieza con «" + ans.slice(0, n) + "…» (" + ans.length + " caracteres)."
+        : "Pista: la respuesta tiene " + ans.length + " caracteres.";
     } else if (q.type === "match") {
       tip = "Pista: «" + q.pairs[0].left + "» ↔ «" + q.pairs[0].right + "».";
       Object.keys(state.matchSelections).forEach((k) => {

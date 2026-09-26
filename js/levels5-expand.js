@@ -830,7 +830,24 @@
     "type": "fill",
     "q": "Protocolo para evitar bucles en switches L2 (sigla):",
     "answer": "STP",
-    "accept": ["STP","RSTP","MSTP","stp"],
+    "accept": [
+      "STP",
+      "RSTP",
+      "MSTP",
+      "PVST",
+      "PVST+",
+      "RPVST",
+      "RPVST+",
+      "Rapid PVST",
+      "Rapid PVST+",
+      "Rapid-PVST",
+      "Rapid-PVST+",
+      "Spanning Tree",
+      "Spanning Tree Protocol",
+      "802.1D",
+      "802.1w",
+      "802.1s"
+    ],
     "explain": "Spanning Tree Protocol (y variantes)."
   },
   {
@@ -878,10 +895,10 @@
     "type": "order",
     "q": "Ordena diseñar Wi‑Fi empresarial básico:",
     "items": [
-      "Site survey / canales",
-      "SSID + seguridad WPA2/3-Enterprise",
-      "VLANs/SSID mapping",
-      "AAA (RADIUS) y monitoreo"
+      "Site survey: cobertura y plan de canales",
+      "Instalar APs donde indicó el survey (PoE + trunk de VLANs)",
+      "Configurar y difundir el SSID WPA2/3-Enterprise (802.1X con RADIUS) en su VLAN",
+      "Validar cobertura/roaming y monitorear RF; ajustar potencia/canales"
     ],
     "answer": [
       0,
@@ -889,7 +906,7 @@
       2,
       3
     ],
-    "explain": "Evita canales solapados y PSK único gigante."
+    "explain": "Planear → desplegar → configurar → operar. El survey evita canales solapados; 802.1X/RADIUS evita una PSK única compartida por todos."
   },
   {
     "id": "netL4h",
@@ -959,10 +976,15 @@
     "id": "netL5c",
     "level": 5,
     "type": "fill",
-    "q": "Puerto HTTPS por defecto (número):",
-    "answer": "443",
-    "accept": ["443"],
-    "explain": "TLS en 443; HTTP 80."
+    "q": "Puerto TCP que usa BGP para establecer sesiones entre routers (número):",
+    "answer": "179",
+    "accept": [
+      "179",
+      "tcp 179",
+      "tcp/179",
+      "179/tcp"
+    ],
+    "explain": "BGP usa TCP 179. Si un firewall lo bloquea, la sesión con el vecino nunca pasa a Established."
   },
   {
     "id": "netL5d",
@@ -999,9 +1021,9 @@
     "q": "Ordena troubleshooting \"no ruta a impresora VLAN\":",
     "items": [
       "Verificar IP/máscara/gateway del cliente",
-      "Traceroute/ping al gateway y a la impresora",
-      "Revisar ACL/firewall inter-VLAN",
-      "Revisar ARP/MAC en switch de acceso"
+      "Ping al gateway del cliente",
+      "Traceroute a la impresora para ver en qué salto se corta",
+      "Donde se corta: revisar ACL/firewall inter-VLAN y ARP/MAC de la impresora"
     ],
     "answer": [
       0,
@@ -1009,7 +1031,7 @@
       2,
       3
     ],
-    "explain": "Capa por capa."
+    "explain": "Del cliente hacia afuera: configuración local → primer salto (gateway) → ruta completa → política (ACL) y L2 (ARP/MAC) en el punto donde se corta."
   },
   {
     "id": "netL5g",
