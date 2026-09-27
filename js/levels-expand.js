@@ -61,16 +61,16 @@
 
   add("windows", [
     { id: "wnL1a", level: 1, type: "mc", q: "¿Qué atajo abre el Administrador de tareas?", options: ["Ctrl+Shift+Esc", "Ctrl+S", "Alt+F4", "Win+L"], answer: 0, explain: "Ctrl+Shift+Esc abre Task Manager directamente." },
-    { id: "wnL1b", level: 1, type: "tf", q: "Win+I abre Configuración de Windows.", answer: true, explain: "Win+I es el atajo moderno a Settings." },
+    { id: "wnL1b", level: 1, type: "tf", q: "Win+L abre Configuración de Windows.", answer: false, explain: "Falso: Win+L bloquea la sesión. Configuración se abre con Win+I." },
     { id: "wnL1c", level: 1, type: "fill", q: "Comando para listar archivos en cmd:", answer: "dir", accept: ["dir", "dir /w"], explain: "dir es el equivalente aproximado a ls." },
-    { id: "wnL1d", level: 1, type: "identify", q: "¿Dónde ves adaptadores e IP rápidamente?", options: ["ipconfig", "notepad", "mspaint", "calc"], answer: 0, explain: "ipconfig /all da detalle completo." },
+    { id: "wnL1d", level: 1, type: "identify", q: "¿Qué comando muestra la versión y compilación (build) de Windows en una ventana?", options: ["winver", "mspaint", "notepad", "calc"], answer: 0, explain: "winver abre 'Acerca de Windows' con versión y build. Para más detalle: systeminfo." },
     { id: "wnL2a", level: 2, type: "mc", q: "¿Qué hace sfc /scannow?", options: ["Verifica e intenta reparar archivos de sistema", "Formatea el disco", "Crea usuarios", "Instala drivers de red"], answer: 0, explain: "System File Checker. Útil tras corrupción de componentes." },
     { id: "wnL2b", level: 2, type: "scenario", q: "Un servicio crítico está detenido. Herramienta GUI clásica:", options: ["services.msc", "paint", "solitaire", "magnifier"], answer: 0, explain: "También: Get-Service / Restart-Service en PowerShell." },
     { id: "wnL2c", level: 2, type: "order", q: "Ordena liberar y renovar DHCP:", items: ["Abrir cmd/PowerShell como admin si hace falta", "ipconfig /release", "ipconfig /renew", "ipconfig /all para verificar"], answer: [0, 1, 2, 3], explain: "Release suelta el lease; renew pide uno nuevo." },
-    { id: "wnL2d", level: 2, type: "fill", q: "Cmdlet para listar procesos:", answer: "Get-Process", accept: ["Get-Process", "get-process"], explain: "Get-Process lista procesos; Stop-Process los termina." },
+    { id: "wnL2d", level: 2, type: "fill", q: "Cmdlet de PowerShell para leer el contenido de un archivo de texto:", answer: "Get-Content", accept: ["Get-Content", "gc"], explain: "Get-Content lee archivos (alias gc, cat, type). Con -Tail 20 -Wait sigue un log en vivo." },
     { id: "wnL3a", level: 3, type: "mc", q: "El canal seguro con el DC falla tras cambiar la hora mucho. Relacionado con…", options: ["Kerberos sensible al skew de tiempo", "Solo el color del tema", "El Spooler siempre", "Cat6"], answer: 0, explain: "Sincroniza hora (NTP) antes de reintentar join/login de dominio." },
     { id: "wnL3b", level: 3, type: "scenario", q: "GPO no aplica. ¿Chequeo útil?", options: ["gpresult / gpupdate y Event Viewer", "Solo reiniciar impresora", "Cambiar wallpaper", "Desinstalar .NET siempre"], answer: 0, explain: "gpupdate /force y gpresult /h report.html ayudan a diagnosticar." },
-    { id: "wnL3c", level: 3, type: "tf", q: "BitLocker cifra volúmenes para proteger datos en reposo.", answer: true, explain: "Útil en laptops. Guarda claves de recuperación de forma segura." },
+    { id: "wnL3c", level: 3, type: "tf", q: "BitLocker cifra el tráfico de red entre el equipo y el servidor.", answer: false, explain: "Falso: BitLocker cifra volúmenes (datos en reposo), no el tráfico de red; para eso están TLS, IPsec o una VPN. Guarda la clave de recuperación de forma segura." },
     { id: "wnL3d", level: 3, type: "match", q: "Empareja herramienta y uso:", pairs: [
       { left: "diskmgmt.msc", right: "Administrar discos/particiones" },
       { left: "devmgmt.msc", right: "Administrador de dispositivos" },
@@ -81,13 +81,13 @@
 
   add("printers", [
     { id: "prL1a", level: 1, type: "mc", q: "Si la impresora no enciende, lo primero es revisar…", options: ["Alimentación y cable de corriente", "El color del tema de Windows", "La versión de Python", "El canal Wi‑Fi 14"], answer: 0, explain: "Siempre empieza por lo físico: corriente, cable, interruptor." },
-    { id: "prL1b", level: 1, type: "tf", q: "Una página de prueba ayuda a saber si el fallo es de la impresora o de un documento.", answer: true, explain: "Si la prueba sale y Word no, mira driver/app." },
+    { id: "prL1b", level: 1, type: "tf", q: "Si la página de prueba de la impresora sale bien, el problema está seguro en el hardware de la impresora.", answer: false, explain: "Falso: si la página de prueba sale bien, la impresora funciona; el fallo suele estar en el documento, la aplicación o el driver." },
     { id: "prL1c", level: 1, type: "identify", q: "Indicador típico de papel atascado:", options: ["Mensaje/LED de jam o paper jam", "Solo 'toner OK'", "IP 0.0.0.0 siempre", "Puntuación alta en el juego"], answer: 0, explain: "Abre tapas y retira papel en el sentido del paso sin forzar." },
     { id: "prL1d", level: 1, type: "mc", q: "USB vs red para una sola persona en casa: suele ser más simple…", options: ["USB directo al PC", "Siempre fibra dedicada", "Solo LPR legacy", "Solo puerto 3389"], answer: 0, explain: "USB es plug-and-play. Red brilla cuando hay varios usuarios." },
-    { id: "prL1e", level: 1, type: "fill", q: "Nombre del servicio de cola en Windows (inglés corto frecuente):", answer: "Spooler", accept: ["Spooler", "Print Spooler", "spooler"], explain: "Print Spooler gestiona la cola." },
+    { id: "prL1e", level: 1, type: "fill", q: "Desde Win+R, para abrir Dispositivos e impresoras escribe: control ______", answer: "printers", accept: ["printers", "control printers"], explain: "control printers abre Dispositivos e impresoras (en versiones recientes puede llevar a Configuración → Impresoras y escáneres)." },
     { id: "prL2a", level: 2, type: "mc", q: "WSD en impresión Windows significa a grandes rasgos…", options: ["Web Services for Devices (descubrimiento)", "Windows Super Driver", "Wide Subnet DHCP", "Wired Serial Dongle"], answer: 0, explain: "WSD ayuda a descubrir dispositivos; a veces se prefiere puerto TCP/IP estándar por estabilidad." },
     { id: "prL2b", level: 2, type: "scenario", q: "Cola en 'Error - imprimiendo' eternamente. Paso frecuente:", options: ["Reiniciar Spooler y limpiar trabajos atascados", "Formatear el DC", "Cambiar MTU a 9000 siempre", "Desactivar IPv4"], answer: 0, explain: "Spooler + carpeta de spool + driver correcto resuelven muchos atascos lógicos." },
-    { id: "prL2c", level: 2, type: "order", q: "Ordena agregar impresora TCP/IP:", items: ["Obtener IP de la impresora", "Ping a la IP", "Crear puerto TCP/IP o IPP", "Instalar driver y página de prueba"], answer: [0, 1, 2, 3], explain: "Valida red antes de pelear con drivers." },
+    { id: "prL2c", level: 2, type: "order", q: "Ordena cómo compartir una impresora desde un print server Windows:", items: ["Instalar la impresora y su driver en el servidor", "Activar 'Compartir esta impresora' con un nombre", "Ajustar permisos en la pestaña Seguridad", "Conectar desde el cliente a \\\\servidor\\impresora"], answer: [0, 1, 2, 3], explain: "Primero la impresora funciona en el servidor, luego se comparte, se definen quién puede usarla y al final los clientes se conectan a la cola compartida." },
     { id: "prL2d", level: 2, type: "mc", q: "SNMP en impresoras de red sirve para…", options: ["Monitorear estado (tóner, bandejas, errores)", "Reemplazar al cable USB siempre", "Cifrar el disco del PC", "Compilar el kernel"], answer: 0, explain: "Muchas consolas de flota leen OID SNMP del dispositivo." },
     { id: "prL2e", level: 2, type: "tf", q: "Un print server puede desplegar drivers a clientes vía point-and-print (con políticas adecuadas).", answer: true, explain: "En dominio facilita estandarizar modelos; revisa restricciones de seguridad modernas." },
     { id: "prL3a", level: 3, type: "mc", q: "AirPrint tipicamente se apoya en…", options: ["mDNS/Bonjour + IPP", "Solo LPT1", "Solo RDP", "Solo WEP"], answer: 0, explain: "Dispositivos Apple descubren la impresora y hablan IPP." },
@@ -104,10 +104,10 @@
 
   add("networks", [
     { id: "netL1a", level: 1, type: "mc", q: "¿Qué dispositivo suele conectar PCs en la misma LAN a nivel de tramas?", options: ["Switch", "Monitor", "Impresora solo USB", "Teclado"], answer: 0, explain: "El switch reenvía frames en la LAN (capa 2)." },
-    { id: "netL1b", level: 1, type: "tf", q: "192.168.0.0/16 es un rango típico de direcciones privadas.", answer: true, explain: "También 10.0.0.0/8 y 172.16.0.0/12 (RFC 1918)." },
+    { id: "netL1b", level: 1, type: "tf", q: "8.8.8.0/24 es un rango de direcciones privadas (RFC 1918).", answer: false, explain: "Falso: 8.8.8.0/24 es público (DNS de Google). Los rangos privados RFC 1918 son 10.0.0.0/8, 172.16.0.0/12 y 192.168.0.0/16." },
     { id: "netL1c", level: 1, type: "fill", q: "Comando Windows para probar eco ICMP a 1.1.1.1:", answer: "ping 1.1.1.1", accept: ["ping 1.1.1.1", "ping.exe 1.1.1.1", "ping -4 1.1.1.1", "ping -n 4 1.1.1.1", "ping /n 4 1.1.1.1", "ping 1.1.1.1 -n 4", "ping -t 1.1.1.1", "ping /t 1.1.1.1", "ping 1.1.1.1 -t", "ping 1.1.1.1 /t", "Test-Connection 1.1.1.1", "Test-Connection -ComputerName 1.1.1.1", "Test-Connection -TargetName 1.1.1.1", "Test-NetConnection 1.1.1.1"], explain: "ping verifica conectividad básica (si ICMP no está filtrado)." },
-    { id: "netL1d", level: 1, type: "mc", q: "HTTPS cifra el tráfico web usando típicamente TLS sobre el puerto…", options: ["443", "21", "25", "9100"], answer: 0, explain: "443/tcp. El candado indica cifrado, no inmunidad total." },
-    { id: "netL1e", level: 1, type: "identify", q: "¿Qué resuelve nombres a IP?", options: ["DNS", "Spooler", "BIOS", "GPU"], answer: 0, explain: "Sin DNS navegas por IP numérica." },
+    { id: "netL1d", level: 1, type: "mc", q: "¿Qué puerto TCP usa SSH por defecto?", options: ["22", "23", "80", "3389"], answer: 0, explain: "SSH usa 22/tcp. El 23 es Telnet (sin cifrar), el 80 HTTP y el 3389 RDP." },
+    { id: "netL1e", level: 1, type: "identify", q: "¿Qué identifica a la tarjeta de red dentro de la LAN (capa 2)?", options: ["Dirección MAC", "Dirección IP", "Máscara de subred", "Puerto TCP"], answer: 0, explain: "La MAC (48 bits, p. ej. 00:1A:2B:…) identifica la interfaz en la LAN; la IP es lógica (capa 3) y puede cambiar." },
     { id: "netL2a", level: 2, type: "mc", q: "¿Cuántos hosts útiles aprox. en /26?", options: ["62", "254", "6", "1022"], answer: 0, explain: "2^(32-26)-2 = 62." },
     { id: "netL2b", level: 2, type: "scenario", q: "Dos PCs con IP 192.168.1.10/24 y 192.168.2.10/24 no se hacen ping. ¿Por qué típico?", options: ["Están en subredes distintas sin router entre ellas", "Falta tóner", "Cat5e no existe", "RDP bloquea ping siempre"], answer: 0, explain: "Misma capa L2 no basta si la máscara las separa en redes L3 distintas." },
     { id: "netL2c", level: 2, type: "order", q: "Ordena las primeras 4 capas del modelo OSI (de abajo hacia arriba):", items: ["Física", "Enlace de datos", "Red", "Transporte"], answer: [0, 1, 2, 3], explain: "1 Física (cable/señal), 2 Enlace de datos (MAC, switch), 3 Red (IP, router), 4 Transporte (TCP/UDP, puertos)." },
@@ -127,22 +127,29 @@
 
   add("programming", [
     { id: "pgL1a", level: 1, type: "mc", q: "¿Qué es un string?", options: ["Una secuencia de caracteres/texto", "Un cable de red", "Un tipo de tóner", "Una VLAN"], answer: 0, explain: "En JS: 'hola' o \"hola\"." },
-    { id: "pgL1b", level: 1, type: "tf", q: "HTML estructura el contenido de una página web.", answer: true, explain: "CSS estiliza; JS añade comportamiento." },
+    { id: "pgL1b", level: 1, type: "tf", q: "CSS define la estructura del contenido de una página web.", answer: false, explain: "Falso: HTML estructura el contenido; CSS lo estiliza y JS añade comportamiento." },
     { id: "pgL1c", level: 1, type: "fill", q: "Etiqueta HTML de enlace (apertura):", answer: "<a>", accept: ["<a>", "<a></a>", "a"], explain: "<a href='...'>texto</a>." },
     { id: "pgL1d", level: 1, type: "mc", q: "Un bucle while se repite…", options: ["Mientras la condición sea verdadera", "Solo una vez siempre", "Nunca", "Solo en DNS"], answer: 0, explain: "Evita condiciones que nunca se vuelven false." },
     { id: "pgL2a", level: 2, type: "mc", q: "¿Qué hace return en una función?", options: ["Devuelve un valor y sale de la función", "Formatea el disco", "Abre el Spooler", "Crea una VLAN"], answer: 0, explain: "Sin return, muchas funciones devuelven undefined (JS)." },
     { id: "pgL2b", level: 2, type: "scenario", q: "Tu código falla solo a veces. Buena práctica:", options: ["Reproducir, aislar, escribir prueba, luego fix", "Ignorar", "Borrar el repo", "Apagar el firewall del ISP"], answer: 0, explain: "Los bugs intermitentes necesitan evidencia y tests." },
     { id: "pgL2c", level: 2, type: "fill", q: "En JS, igualdad estricta:", answer: "===", accept: ["==="], explain: "=== compara valor y tipo." },
-    { id: "pgL2d", level: 2, type: "order", q: "Ordena un commit limpio:", items: ["Revisar git status/diff", "git add archivos relevantes", "git commit -m \"mensaje claro\"", "git push si hay remoto"], answer: [0, 1, 2, 3], explain: "Mensajes claros ayudan al equipo futuro (tú incluido)." },
+    { id: "pgL2d", level: 2, type: "order", q: "Ordena los pasos para escribir una función y comprobarla:", items: ["Definir qué recibe y qué devuelve", "Escribir el cuerpo de la función", "Llamarla con datos de prueba", "Comparar el resultado con lo esperado"], answer: [0, 1, 2, 3], explain: "Primero el contrato (entradas y salida), luego la implementación, y al final se prueba con datos conocidos, comparando con el resultado esperado." },
     { id: "pgL3a", level: 3, type: "mc", q: "Una race condition ocurre cuando…", options: ["El resultado depende del orden/tiempo de ejecución concurrente", "Falta papel", "El DNS es /24", "El monitor está en 60 Hz"], answer: 0, explain: "Locks, colas y diseño cuidadoso mitigan carreras." },
     { id: "pgL3b", level: 3, type: "tf", q: "Las pruebas automatizadas reducen regresiones al cambiar código.", answer: true, explain: "CI ejecuta tests en cada cambio." },
     { id: "pgL3c", level: 3, type: "scenario", q: "API devuelve 500 intermitente. ¿Dónde mirar primero?", options: ["Logs del servidor, métricas y trazas de la request", "Solo el CSS", "El tambor de la impresora", "El salvapantallas"], answer: 0, explain: "Correlaciona request-id entre gateway y app." },
-    { id: "pgL3d", level: 3, type: "match", q: "Empareja:", pairs: [
-      { left: "try/catch", right: "Manejo de excepciones" },
-      { left: "JSON", right: "Formato de datos muy usado en APIs" },
-      { left: "REST", right: "Estilo de API sobre HTTP" },
-      { left: "SQL injection", right: "Ataque por entradas no sanitizadas" }
-    ], explain: "Fundamentos de backend y seguridad de apps." }
+    {
+      id: "pgL3d",
+      level: 3,
+      type: "match",
+      q: "Empareja el concepto de programación con su definición:",
+      pairs: [
+        { left: "try/catch", right: "Manejo de excepciones" },
+        { left: "JSON", right: "Formato de datos muy usado en APIs" },
+        { left: "REST", right: "Estilo de API sobre HTTP" },
+        { left: "SQL injection", right: "Ataque por entradas no sanitizadas" }
+      ],
+      explain: "Fundamentos de backend y seguridad de apps."
+    }
   ]);
 
   add("support", [
@@ -153,18 +160,25 @@
     { id: "suL2a", level: 2, type: "scenario", q: "Usuario dice 'nada funciona'. Mejor pregunta:", options: ["¿Desde cuándo? ¿Qué app/URL? ¿Solo tu PC u otros?", "¿Reinstalamos Windows ya?", "¿Me das tu MFA seed?", "¿Borramos System32?"], answer: 0, explain: "Acota alcance antes de actuar." },
     { id: "suL2b", level: 2, type: "order", q: "Ordena el flujo de un escalamiento útil a N2:", items: ["Confirmar el síntoma y medir el impacto", "Aplicar los pasos N1 del runbook/KB", "Confirmar que excede N1 (alcance, permisos o SLA)", "Escalar a N2 con resumen, pasos, logs y contacto"], answer: [0, 1, 2, 3], explain: "Primero acota el problema y agota lo que N1 puede resolver; si excede tu alcance o el SLA, escala con un handoff completo (síntoma, pasos probados, evidencia, contacto) para no duplicar trabajo." },
     { id: "suL2c", level: 2, type: "mc", q: "Un workaround es…", options: ["Solución temporal mientras llega el fix definitivo", "Ignorar el ticket", "Borrar evidencias", "Dar admin a todos"], answer: 0, explain: "Documenta el workaround en el ticket/KB." },
-    { id: "suL2d", level: 2, type: "tf", q: "Prometer ETA imposible daña la confianza.", answer: true, explain: "Mejor rangos honestos y updates." },
+    { id: "suL2d", level: 2, type: "tf", q: "Prometer un ETA optimista, aunque sea imposible, mejora la confianza del usuario.", answer: false, explain: "Falso: un ETA incumplido daña la confianza. Mejor rangos honestos y actualizaciones periódicas." },
     { id: "suL2e", level: 2, type: "mc", q: "Una KB (knowledge base) bien escrita sirve para…", options: ["Resolver casos repetidos más rápido y con consistencia", "Ocultar incidentes", "Dar admin a todos", "Desactivar logs"], answer: 0, explain: "Documenta pasos verificados y causas conocidas." },
     { id: "suL3a", level: 3, type: "mc", q: "En un major incident, N1 prioriza…", options: ["Comunicación, bridge y runbook / escalación", "Cambiar wallpapers VIP", "Silencio total", "Experimentos sin registro"], answer: 0, explain: "Restaurar servicio + comunicar status." },
     { id: "suL3b", level: 3, type: "scenario", q: "Change falló en prod. Siguiente paso típico:", options: ["Ejecutar rollback según plan y avisar", "Seguir cambiando a ciegas", "Borrar backups", "Culpar al usuario final"], answer: 0, explain: "Todo change serio trae rollback." },
-    { id: "suL3c", level: 3, type: "match", q: "Empareja:", pairs: [
-      { left: "Incidente", right: "Interrupción no planificada del servicio" },
-      { left: "Problema", right: "Causa raíz / investigación más profunda" },
-      { left: "Request", right: "Petición de servicio estándar" },
-      { left: "CAB", right: "Comité de cambios / aprobaciones" }
-    ], explain: "Vocabulario ITIL básico en help desk." },
+    {
+      id: "suL3c",
+      level: 3,
+      type: "match",
+      q: "Empareja el término de ITIL con su significado:",
+      pairs: [
+        { left: "Incidente", right: "Interrupción no planificada del servicio" },
+        { left: "Problema", right: "Causa raíz / investigación más profunda" },
+        { left: "Request", right: "Petición de servicio estándar" },
+        { left: "CAB", right: "Comité de cambios / aprobaciones" }
+      ],
+      explain: "Vocabulario ITIL básico en help desk."
+    },
     { id: "suL3d", level: 3, type: "fill", q: "Sigla de autenticación multifactor (inglés):", answer: "MFA", accept: ["MFA", "mfa", "2FA", "2fa"], explain: "MFA/2FA añade un segundo factor además de la contraseña." },
-    { id: "suL3e", level: 3, type: "tf", q: "Después de un major incident conviene una retrospectiva / post-mortem sin culpas.", answer: true, explain: "Las lecciones aprendidas evitan repeticiones." }
+    { id: "suL3e", level: 3, type: "tf", q: "Un post-mortem debe centrarse en encontrar al culpable del incidente.", answer: false, explain: "Falso: el post-mortem es sin culpas (blameless): busca causas y mejoras del sistema y del proceso para que no se repita." }
   ]);
 
   // ——— Nuevo mundo: Ciberseguridad ———
@@ -182,7 +196,7 @@
       { id: "sec04", level: 1, type: "identify", q: "Señal típica de phishing por correo:", options: ["Urgencia + enlace sospechoso + remitente raro", "Firma digital válida siempre", "Solo texto sin links de RRHH legítimo", "Adjunto .txt de README interno"], answer: 0, explain: "Verifica dominio, hover del link y canales oficiales." },
       { id: "sec05", level: 1, type: "fill", q: "Término corto en inglés (contracción de 'malicious software') para software malicioso:", answer: "malware", accept: ["malware", "Malware"], explain: "Malware incluye virus, troyanos, ransomware, spyware…" },
       { id: "sec06", level: 1, type: "mc", q: "Actualizar el sistema y apps ayuda a…", options: ["Cerrar vulnerabilidades conocidas", "Borrar la RAM físicamente", "Cambiar la VLAN sola", "Imprimir más rápido siempre"], answer: 0, explain: "Parches corrigen fallos explotables." },
-      { id: "sec07", level: 1, type: "tf", q: "HTTPS ayuda a cifrar el tráfico entre tu navegador y el sitio.", answer: true, explain: "No garantiza que el sitio sea confiable al 100%, pero protege en tránsito." },
+      { id: "sec07", level: 1, type: "tf", q: "HTTPS garantiza que el sitio web es legítimo y seguro.", answer: false, explain: "Falso: HTTPS cifra el tráfico en tránsito, pero un sitio de phishing también puede tener un certificado válido. Revisa bien el dominio." },
       { id: "sec08", level: 1, type: "scenario", q: "Te llaman 'de TI' pidiendo tu contraseña. ¿Qué haces?", options: ["No la des; verifica por canal oficial", "Se la dictas", "La envías por WhatsApp", "La pegas en un foro"], answer: 0, explain: "Soporte legítimo no pide tu password." },
       { id: "sec09", level: 1, type: "mc", q: "Un antivirus/EDR sirve para…", options: ["Detectar y bloquear amenazas en el endpoint", "Reemplazar backups", "Sustituir al firewall perimetral siempre", "Asignar IPs"], answer: 0, explain: "Defensa en profundidad: endpoint + red + identidad." },
       { id: "sec10", level: 1, type: "order", q: "Ordena reacción ante correo sospechoso:", items: ["Detectar señales (remitente, urgencia, enlace raro)", "No hacer clic ni abrir adjuntos", "Reportar a seguridad/TI", "Borrar o cuarentenar según política"], answer: [0, 1, 2, 3], explain: "Detecta, no interactúes, reporta (antes de borrar, para que TI pueda analizarlo) y luego elimina. Si ya interactuaste, cambia tu password de inmediato." },
@@ -201,7 +215,7 @@
       { id: "sec17", level: 2, type: "mc", q: "2FA por SMS es mejor que nada, pero más fuerte suele ser…", options: ["App TOTP / llave FIDO2", "La misma password en todos lados", "Preguntas 'nombre de tu perro' solo", "Desactivar MFA"], answer: 0, explain: "SIM swap debilita SMS; preferir app o hardware key." },
       { id: "sec18", level: 2, type: "order", q: "Ordena endurecimiento básico de cuenta cloud (primero protege el acceso, luego limpia lo existente y al final monitorea):", items: ["Password única fuerte", "Activar MFA", "Cerrar sesiones/dispositivos desconocidos", "Activar alertas de login sospechoso"], answer: [0, 1, 2, 3], explain: "Protege credenciales (password + MFA), cierra sesiones/dispositivos desconocidos y deja alertas para lo que venga. Identidad es el nuevo perímetro." },
       { id: "sec19", level: 2, type: "scenario", q: "Extensión del navegador pide leer todos los datos de todos los sitios. Riesgo:", options: ["Puede robar cookies/sesiones; desconfía", "Siempre es seguro", "Mejora el cable Cat6", "Es obligatorio en DHCP"], answer: 0, explain: "Revisa permisos y reputación." },
-      { id: "sec20", level: 2, type: "tf", q: "Mantener backups probados ayuda a recuperarte de ransomware.", answer: true, explain: "Un backup no probado puede fallar en el peor momento." },
+      { id: "sec20", level: 2, type: "tf", q: "Tener backups basta, aunque nunca se haya probado restaurarlos.", answer: false, explain: "Falso: un backup no probado puede fallar justo durante un ransomware. Prueba restauraciones y guarda copias offline o inmutables." },
       // L3
       { id: "sec21", level: 3, type: "mc", q: "Un attack surface amplio significa…", options: ["Más puntos por donde pueden atacarte", "Más FPS", "Mejor calidad de impresión", "Más VLANs automáticamente seguras"], answer: 0, explain: "Reduce servicios expuestos y parchea." },
       { id: "sec22", level: 3, type: "scenario", q: "Sospechas de token OAuth robado. Acción típica:", options: ["Revocar sesiones/tokens, rotar secretos, revisar logs", "Ignorar", "Publicar el token", "Desactivar TLS"], answer: 0, explain: "Contención de identidad + forense ligero." },
@@ -214,7 +228,7 @@
         { left: "Hardening", right: "Desactivar servicios innecesarios" },
         { left: "Patching", right: "Aplicar actualizaciones de seguridad" }
       ], explain: "Controles preventivos clave." },
-      { id: "sec27", level: 3, type: "tf", q: "Exponer RDP a Internet sin protección extra es una mala práctica.", answer: true, explain: "Usa VPN, NLA, MFA y bloqueo de fuerza bruta." },
+      { id: "sec27", level: 3, type: "tf", q: "Exponer RDP (3389) directo a Internet es seguro si la contraseña es larga.", answer: false, explain: "Falso: un RDP expuesto recibe fuerza bruta y exploits constantes. Ponlo detrás de una VPN o gateway, con NLA y MFA, y bloquea los intentos repetidos." },
       { id: "sec28", level: 3, type: "scenario", q: "Empleado reenvió nómina a Gmail personal. Riesgo principal:", options: ["Fuga de datos / violación de política", "Mejor backup", "Más velocidad DNS", "Mejor PCL"], answer: 0, explain: "DLP y concienciación mitigan shadow IT." },
       { id: "sec29", level: 3, type: "mc", q: "Un hash de password se usa para…", options: ["Almacenar verificadores sin guardar la clave en claro", "Imprimir más rápido", "Asignar VLANs", "Medir latencia ópticamente"], answer: 0, explain: "Con salt + algoritmo moderno (bcrypt/argon2)." },
       { id: "sec30", level: 3, type: "identify", q: "Framework común de gestión de riesgos/controles en empresas:", options: ["ISO 27001 / NIST CSF (ejemplos)", "Solo PCL", "Solo Cat3", "Solo WEP"], answer: 0, explain: "Ayudan a organizar controles y auditorías." }
@@ -237,7 +251,7 @@
     description: "CPU, RAM, discos, BIOS/UEFI, fuentes, puertos y fallos.",
     questions: [
       { id: "hw01", level: 1, type: "mc", q: "La CPU es…", options: ["El procesador principal del sistema", "Solo la memoria USB", "El tóner", "Un tipo de cable HDMI"], answer: 0, explain: "Central Processing Unit: ejecuta instrucciones." },
-      { id: "hw02", level: 1, type: "tf", q: "La RAM es memoria volátil: se pierde al apagar.", answer: true, explain: "Los datos permanentes van en disco/SSD." },
+      { id: "hw02", level: 1, type: "tf", q: "La RAM conserva los datos aunque apagues el equipo.", answer: false, explain: "Falso: la RAM es volátil y se borra al apagar. Lo permanente va en el disco o SSD." },
       { id: "hw03", level: 1, type: "mc", q: "SSD frente a HDD típico:", options: ["SSD más rápido y sin platos mecánicos", "HDD siempre más rápido que SSD", "SSD solo sirve para imprimir", "HDD no almacena datos"], answer: 0, explain: "SSD usa memoria flash; HDD platos magnéticos." },
       { id: "hw04", level: 1, type: "identify", q: "Conector de video digital común en monitores modernos:", options: ["HDMI / DisplayPort", "RJ-11 solo", "PS/2 video", "Centronics"], answer: 0, explain: "HDMI y DP dominan; VGA es analógico legacy." },
       { id: "hw05", level: 1, type: "fill", q: "Sigla de la memoria de acceso aleatorio:", answer: "RAM", accept: ["RAM", "ram"], explain: "Random Access Memory." },
@@ -249,7 +263,7 @@
       { id: "hw11", level: 2, type: "mc", q: "UEFI es…", options: ["Firmware moderno que reemplaza al BIOS clásico en muchos PCs", "Un antivirus", "Un protocolo de impresión", "Una VLAN"], answer: 0, explain: "Ofrece GUI, Secure Boot, GPT, etc." },
       { id: "hw12", level: 2, type: "scenario", q: "PC pita en POST y no arranca. Los beeps suelen indicar…", options: ["Error de hardware según código del fabricante (a menudo RAM/GPU)", "Éxito total", "Actualización de Office", "Falta de papel"], answer: 0, explain: "Consulta la tabla de beep codes de la motherboard." },
       { id: "hw13", level: 2, type: "mc", q: "NVMe se conecta típicamente por…", options: ["Slot M.2 PCIe", "Puerto PS/2", "LPT1", "RJ-11"], answer: 0, explain: "NVMe es mucho más rápido que SATA SSD en muchos casos." },
-      { id: "hw14", level: 2, type: "tf", q: "Mezclar sticks de RAM de velocidades distintas puede forzar la velocidad más baja.", answer: true, explain: "Ideales: mismo kit matched." },
+      { id: "hw14", level: 2, type: "tf", q: "Al mezclar módulos de RAM de distinta velocidad, todos funcionan a la velocidad del más rápido.", answer: false, explain: "Falso: normalmente todos bajan a la velocidad del más lento. Lo ideal es un kit de módulos iguales." },
       { id: "hw15", level: 2, type: "fill", q: "Sigla del firmware de arranque clásico anterior a UEFI:", answer: "BIOS", accept: ["BIOS", "bios"], explain: "Basic Input/Output System." },
       { id: "hw16", level: 2, type: "match", q: "Empareja puerto:", pairs: [
         { left: "RJ-45", right: "Red Ethernet" },
@@ -272,7 +286,7 @@
         { left: "No detecta NVMe", right: "Modo M.2/BIOS o slot deshabilitado" }
       ], explain: "Divide por etapa: POST vs OS vs carga." },
       { id: "hw26", level: 3, type: "order", q: "Ordena diagnóstico 'no enciende' (0 LEDs):", items: ["Verificar cable/corriente/switch PSU", "Probar outlet y cable conocido buenos", "Puenteo de power switch / PSU tester", "Probar PSU o board mínima (CPU/RAM)"], answer: [0, 1, 2, 3], explain: "Descarta alimentación antes de condenar el board." },
-      { id: "hw27", level: 3, type: "tf", q: "Actualizar BIOS/UEFI tiene riesgos; hazlo con energía estable y archivo correcto.", answer: true, explain: "Brickear el firmware es real si se interrumpe." },
+      { id: "hw27", level: 3, type: "tf", q: "Si se va la luz durante una actualización de BIOS/UEFI, no pasa nada: se reanuda sola.", answer: false, explain: "Falso: interrumpir el flasheo puede dejar la placa inservible (brick). Hazlo con energía estable (UPS) y el archivo correcto para tu modelo; algunas placas tienen BIOS dual o recuperación." },
       { id: "hw28", level: 3, type: "scenario", q: "Tras agregar GPU potente, el PC reinicia al jugar. Causa probable:", options: ["PSU al límite / cables PCIe de potencia insuficientes", "DNS malo", "Spooler caído", "Cat5e"], answer: 0, explain: "Revisa wattage, rieles y conectores nativos (evitar daisy-chain dudoso)." },
       { id: "hw29", level: 3, type: "mc", q: "AHCI vs RAID en SATA (idea):", options: ["AHCI para discos individuales típicos; RAID según arreglo", "RAID solo para impresoras", "AHCI es un tipo de phishing", "Son conectores HDMI"], answer: 0, explain: "Cambiar modo tras instalar el SO puede impedir el boot." },
       { id: "hw30", level: 3, type: "identify", q: "Herramienta para probar memoria RAM en Windows (incluida):", options: ["Diagnóstico de memoria de Windows / mdsched", "mspaint", "Notepad solo", "services.msc únicamente"], answer: 0, explain: "También MemTest86 en entornos más exhaustivos." }

@@ -129,7 +129,7 @@
     "id": "lxL4g",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el comando de Linux con su uso:",
     "pairs": [
       {
         "left": "crontab -e",
@@ -154,9 +154,9 @@
     "id": "lxL4h",
     "level": 4,
     "type": "tf",
-    "q": "Un bind mount puede montar un directorio existente en otra ruta.",
-    "answer": true,
-    "explain": "Útil en contenedores y reorganización sin mover datos."
+    "q": "Un bind mount copia el contenido de un directorio a otra ruta.",
+    "answer": false,
+    "explain": "Falso: un bind mount no copia nada; muestra el mismo directorio en otra ruta, así que un cambio se ve en ambas. Útil en contenedores."
   },
   {
     "id": "lxL5a",
@@ -246,9 +246,9 @@
     "id": "lxL5g",
     "level": 5,
     "type": "tf",
-    "q": "AppArmor/SELinux pueden denegar accesos aunque los permisos Unix parezcan correctos.",
-    "answer": true,
-    "explain": "Revisa logs de AVC/denied al depurar."
+    "q": "Si los permisos Unix (rwx) son correctos, AppArmor/SELinux nunca pueden denegar el acceso.",
+    "answer": false,
+    "explain": "Falso: SELinux/AppArmor (MAC) se evalúan además de los permisos Unix y pueden denegar aunque rwx lo permita. Revisa los logs AVC/denied."
   },
   {
     "id": "lxL5h",
@@ -337,7 +337,7 @@
     "id": "wnL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja la consola de Windows (.msc) con su función:",
     "pairs": [
       {
         "left": "rsop.msc",
@@ -381,9 +381,9 @@
     "id": "wnL4h",
     "level": 4,
     "type": "tf",
-    "q": "Hyper-V puede hospedar VMs en ediciones Pro/Enterprise adecuadas.",
-    "answer": true,
-    "explain": "Requiere virtualización en firmware habilitada."
+    "q": "Hyper-V viene incluido en Windows 10/11 Home.",
+    "answer": false,
+    "explain": "Falso: Hyper-V requiere Windows Pro, Enterprise o Education y la virtualización habilitada en el firmware. Home no lo incluye."
   },
   {
     "id": "wnL5a",
@@ -564,7 +564,7 @@
     "id": "prL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el término de impresión con su descripción:",
     "pairs": [
       {
         "left": "PCL",
@@ -608,9 +608,9 @@
     "id": "prL4h",
     "level": 4,
     "type": "tf",
-    "q": "Una impresora en modo \"offline\" en el cliente puede deberse a SNMP/status o puerto incorrecto.",
-    "answer": true,
-    "explain": "Revisa puerto, snmp y cola pausada."
+    "q": "Una impresora que aparece 'offline' en el cliente siempre está apagada.",
+    "answer": false,
+    "explain": "Falso: 'offline' en el cliente puede deberse al estado SNMP, a un puerto TCP/IP incorrecto o a una cola pausada. Revisa eso antes de ir al equipo."
   },
   {
     "id": "prL4i",
@@ -868,7 +868,7 @@
     "id": "netL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el protocolo de red con su función:",
     "pairs": [
       {
         "left": "OSPF",
@@ -912,9 +912,9 @@
     "id": "netL4h",
     "level": 4,
     "type": "tf",
-    "q": "Un mirror/SPAN port copia tráfico para IDS o análisis.",
-    "answer": true,
-    "explain": "Cuidado con oversubscription del puerto destino."
+    "q": "Un puerto SPAN/mirror bloquea el tráfico sospechoso como un IPS en línea.",
+    "answer": false,
+    "explain": "Falso: SPAN solo copia tráfico hacia un IDS o analizador; no está en línea y no bloquea nada. Cuida la sobresuscripción del puerto destino."
   },
   {
     "id": "netL4i",
@@ -1037,9 +1037,9 @@
     "id": "netL5g",
     "level": 5,
     "type": "tf",
-    "q": "BFD detecta fallos de forwarding más rápido que hellos lentos solos.",
-    "answer": true,
-    "explain": "Bidirectional Forwarding Detection."
+    "q": "BFD reemplaza al protocolo de enrutamiento y anuncia las rutas.",
+    "answer": false,
+    "explain": "Falso: BFD no anuncia rutas; solo detecta rápido los fallos de forwarding y avisa a OSPF/BGP para que reconverjan antes que con sus hellos."
   },
   {
     "id": "netL5h",
@@ -1160,7 +1160,7 @@
     "id": "pgL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el tipo de prueba o herramienta con su propósito:",
     "pairs": [
       {
         "left": "Unit test",
@@ -1204,9 +1204,9 @@
     "id": "pgL4h",
     "level": 4,
     "type": "tf",
-    "q": "SQL injection se mitiga con consultas parametrizadas/ORM cuidadoso.",
-    "answer": true,
-    "explain": "Nunca concatenes input crudo."
+    "q": "Escapar comillas a mano basta para evitar SQL injection; no hacen falta consultas parametrizadas.",
+    "answer": false,
+    "explain": "Falso: el escape manual falla con codificaciones y casos borde. La defensa correcta son las consultas parametrizadas (o un ORM usado con cuidado)."
   },
   {
     "id": "pgL5a",
@@ -1299,9 +1299,9 @@
     "id": "pgL5g",
     "level": 5,
     "type": "tf",
-    "q": "Semantic versioning MAJOR.MINOR.PATCH comunica breaking changes en MAJOR.",
-    "answer": true,
-    "explain": "Ej: 2.0.0 rompe respecto a 1.x."
+    "q": "En semantic versioning, un cambio incompatible (breaking change) se indica subiendo PATCH.",
+    "answer": false,
+    "explain": "Falso: en MAJOR.MINOR.PATCH un breaking change sube MAJOR (2.0.0); funciones compatibles suben MINOR y correcciones suben PATCH."
   },
   {
     "id": "pgL5h",
@@ -1383,7 +1383,7 @@
     "id": "suL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el término de soporte con su significado:",
     "pairs": [
       {
         "left": "P1",
@@ -1427,9 +1427,9 @@
     "id": "suL4h",
     "level": 4,
     "type": "tf",
-    "q": "Un major incident bridge debe tener un facilitator y canal único de verdad.",
-    "answer": true,
-    "explain": "Evita ruido en 10 chats."
+    "q": "En un major incident conviene que cada equipo coordine en su propio chat, sin un facilitador.",
+    "answer": false,
+    "explain": "Falso: un bridge de major incident necesita un facilitador (incident commander) y un canal único de verdad; diez chats en paralelo generan ruido y contradicciones."
   },
   {
     "id": "suL5a",
@@ -1519,9 +1519,9 @@
     "id": "suL5g",
     "level": 5,
     "type": "tf",
-    "q": "Documentar workarounds en la KB evita que cada agente reinvente la rueda.",
-    "answer": true,
-    "explain": "Incluye fecha y validez."
+    "q": "Cerrar un ticket sin confirmar con el usuario que quedó resuelto es buena práctica para cumplir el SLA.",
+    "answer": false,
+    "explain": "Falso: cerrar sin confirmar genera reaperturas y mala experiencia. Confirma la solución (o aplica la política de cierre automático tras avisar) y documenta."
   },
   {
     "id": "suL5h",
@@ -1603,7 +1603,7 @@
     "id": "secL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja la herramienta de seguridad con su función:",
     "pairs": [
       {
         "left": "SIEM",
@@ -1647,9 +1647,9 @@
     "id": "secL4h",
     "level": 4,
     "type": "tf",
-    "q": "Un CASB ayuda a visibilidad/control de SaaS shadow IT.",
-    "answer": true,
-    "explain": "Cloud Access Security Broker."
+    "q": "Un CASB sirve para cifrar los discos de los portátiles.",
+    "answer": false,
+    "explain": "Falso: un CASB (Cloud Access Security Broker) da visibilidad y control sobre el uso de SaaS (shadow IT, DLP). El cifrado de discos es BitLocker o FileVault."
   },
   {
     "id": "secL5a",
@@ -1778,9 +1778,9 @@
     "id": "hwL4b",
     "level": 4,
     "type": "tf",
-    "q": "Un RAID 5 tolera falla de un disco; RAID 6 de dos (típico).",
-    "answer": true,
-    "explain": "Rebuilds largos aumentan riesgo."
+    "q": "RAID 5 tolera la falla de dos discos a la vez.",
+    "answer": false,
+    "explain": "Falso: RAID 5 tolera un disco y RAID 6 tolera dos. Si falla un segundo disco durante el rebuild de un RAID 5, se pierde el arreglo."
   },
   {
     "id": "hwL4c",
@@ -1823,7 +1823,7 @@
     "id": "hwL4f",
     "level": 4,
     "type": "match",
-    "q": "Empareja:",
+    "q": "Empareja el término de almacenamiento o memoria con su descripción:",
     "pairs": [
       {
         "left": "SAS",
@@ -2077,9 +2077,9 @@
       "id": "cl08",
       "level": 1,
       "type": "tf",
-      "q": "Debes seguir teniendo buenas contraseñas y MFA en servicios cloud.",
-      "answer": true,
-      "explain": "La seguridad compartida no elimina tu responsabilidad."
+      "q": "En la nube el proveedor se encarga de todo, así que ya no necesitas contraseñas fuertes ni MFA.",
+      "answer": false,
+      "explain": "Falso: con la responsabilidad compartida, las identidades y los accesos siguen siendo tuyos. Usa contraseñas fuertes y MFA."
     },
     {
       "id": "cl09",
@@ -2144,7 +2144,7 @@
       "id": "cl14",
       "level": 2,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja el modelo de servicio cloud con lo que ofrece:",
       "pairs": [
         {
           "left": "SaaS",
@@ -2291,9 +2291,9 @@
       "id": "cl23",
       "level": 3,
       "type": "tf",
-      "q": "IAM roles con privilegios mínimos son preferibles a access keys de larga vida en VMs.",
-      "answer": true,
-      "explain": "Usa roles de instancia/workload identity."
+      "q": "Guardar access keys de larga vida en una VM es preferible a usar roles IAM.",
+      "answer": false,
+      "explain": "Falso: las keys de larga vida se filtran y no rotan solas. Usa roles de instancia o workload identity con privilegios mínimos."
     },
     {
       "id": "cl24",
@@ -2327,9 +2327,9 @@
       "id": "cl26",
       "level": 4,
       "type": "tf",
-      "q": "Security Groups suelen ser stateful (permites in y vuelve la respuesta).",
-      "answer": true,
-      "explain": "NACLs a veces son stateless según cloud."
+      "q": "Los Security Groups son stateless: debes permitir por separado el tráfico de respuesta.",
+      "answer": false,
+      "explain": "Falso: los Security Groups son stateful (la respuesta a un tráfico permitido vuelve sola). Las NACL de AWS sí son stateless."
     },
     {
       "id": "cl27",
@@ -2372,7 +2372,7 @@
       "id": "cl30",
       "level": 4,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja el término de red cloud con su significado:",
       "pairs": [
         {
           "left": "Egress",
@@ -2579,9 +2579,9 @@
       "id": "clB4",
       "level": 5,
       "type": "tf",
-      "q": "BOSS: El shared responsibility no te exime de cifrar y parchear tu OS en IaaS.",
-      "answer": true,
-      "explain": "En IaaS parcheas guest."
+      "q": "BOSS: En IaaS el proveedor parchea por ti el sistema operativo de tus VMs.",
+      "answer": false,
+      "explain": "Falso: en IaaS el proveedor cubre hardware, red e hipervisor; el SO invitado, sus parches y el cifrado de tus datos son responsabilidad tuya."
     },
     {
       "id": "clB5",
@@ -2698,9 +2698,9 @@
       "id": "db08",
       "level": 1,
       "type": "tf",
-      "q": "UPDATE modifica filas existentes; INSERT agrega nuevas.",
-      "answer": true,
-      "explain": "UPDATE ... SET ... WHERE ..."
+      "q": "UPDATE agrega filas nuevas a una tabla e INSERT modifica las existentes.",
+      "answer": false,
+      "explain": "Falso: es al revés. INSERT agrega filas nuevas; UPDATE ... SET ... WHERE modifica las existentes."
     },
     {
       "id": "db09",
@@ -2770,7 +2770,7 @@
       "id": "db14",
       "level": 2,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja la sentencia SQL con su acción:",
       "pairs": [
         {
           "left": "SELECT",
@@ -2814,9 +2814,9 @@
       "id": "db16",
       "level": 2,
       "type": "tf",
-      "q": "CREATE TABLE define la estructura de una nueva tabla.",
-      "answer": true,
-      "explain": "DDL vs DML."
+      "q": "DROP TABLE define la estructura de una tabla nueva.",
+      "answer": false,
+      "explain": "Falso: DROP TABLE elimina una tabla. La estructura de una tabla nueva se define con CREATE TABLE (DDL)."
     },
     {
       "id": "db17",
@@ -2873,7 +2873,7 @@
       "id": "db21",
       "level": 3,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja el concepto de bases de datos con su definición:",
       "pairs": [
         {
           "left": "OLTP",
@@ -2917,9 +2917,9 @@
       "id": "db23",
       "level": 3,
       "type": "tf",
-      "q": "Una transacción ACID o todo se confirma o se revierte.",
-      "answer": true,
-      "explain": "Atomicity Consistency Isolation Durability."
+      "q": "En una transacción ACID, si falla un paso se confirman igualmente los pasos que sí funcionaron.",
+      "answer": false,
+      "explain": "Falso: por la atomicidad (la A de ACID), o se confirma todo o se revierte todo."
     },
     {
       "id": "db24",
@@ -2953,9 +2953,9 @@
       "id": "db26",
       "level": 4,
       "type": "tf",
-      "q": "Una réplica de lectura puede servir consultas SELECT para aliviar el primario.",
-      "answer": true,
-      "explain": "Ojo con lag y escrituras."
+      "q": "Una réplica de lectura acepta escrituras y las copia al primario.",
+      "answer": false,
+      "explain": "Falso: la réplica de lectura solo sirve consultas (SELECT); las escrituras van al primario. Ojo con el lag de replicación."
     },
     {
       "id": "db27",
@@ -2998,7 +2998,7 @@
       "id": "db30",
       "level": 4,
       "type": "match",
-      "q": "Empareja:",
+      "q": "Empareja la tarea de mantenimiento de BD con su propósito:",
       "pairs": [
         {
           "left": "VACUUM (PG idea)",

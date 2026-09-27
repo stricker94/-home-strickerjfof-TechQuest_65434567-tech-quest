@@ -373,10 +373,17 @@ const WORLDS = [
       {
         id: "pr07",
         type: "fill",
-        q: "Nombre del servicio de cola de impresión en Windows (inglés):",
-        answer: "Print Spooler",
-        accept: ["print spooler", "Print Spooler", "Spooler", "spooler"],
-        explain: "Nombre para mostrar: Print Spooler. Nombre corto a veces Spooler."
+        q: "Tipo de impresora que usa cartuchos de tinta líquida en lugar de tóner:",
+        answer: "inyección de tinta",
+        accept: [
+          "inyección de tinta",
+          "inyeccion de tinta",
+          "de inyección de tinta",
+          "inyección",
+          "inyeccion",
+          "inkjet"
+        ],
+        explain: "Las de inyección de tinta (inkjet) usan tinta líquida; las láser usan tóner en polvo y un tambor."
       },
       {
         id: "pr08",
