@@ -4,6 +4,8 @@ Juego educativo interactivo de IT/tecnología en **español (México)**, creado 
 
 Abre `index.html` en un navegador moderno. **No requiere** npm, build ni CDN.
 
+Guía paso a paso (fusionar cambios, jugar, añadir o corregir preguntas): [INSTRUCCIONES.md](INSTRUCCIONES.md).
+
 ## Niveles (5 por mundo)
 
 Cada mundo tiene **5 niveles** con desbloqueo en cascada:
@@ -63,6 +65,9 @@ Al terminar una partida puedes desplegar la lista de preguntas falladas con su r
 tech-quest/
 ├── index.html
 ├── README.md
+├── INSTRUCCIONES.md         # Guía paso a paso
+├── herramientas/
+│   └── validar-preguntas.js # node herramientas/validar-preguntas.js
 ├── css/style.css
 └── js/
     ├── data.js              # Mundos base + logros + config
