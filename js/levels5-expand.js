@@ -34,9 +34,9 @@
     "q": "¿Qué hace `nice -n 10 comando`?",
     "options": [
       "Ejecuta el comando con menor prioridad de CPU",
-      "Borra el proceso",
-      "Monta NFS",
-      "Cambia el hostname"
+      "Ejecuta el comando con mayor prioridad de CPU",
+      "Limita el comando a usar como máximo el 10% de CPU",
+      "Ejecuta el comando en segundo plano tras 10 segundos"
     ],
     "answer": 0,
     "explain": "nice ajusta la prioridad; valores altos = menos prioridad."
@@ -85,9 +85,9 @@
     "q": "Disco al 100% en /. Mejor primer paso:",
     "options": [
       "Identificar qué crece (du/ncdu) y limpiar logs/tmp con cuidado",
-      "rm -rf /",
-      "Desactivar swap siempre",
-      "chmod 777 /var"
+      "Reiniciar el servidor para que se vacíe el disco solo",
+      "Ejecutar fsck sobre / montado para recuperar bloques",
+      "Borrar todo /var/lib para ganar espacio de inmediato"
     ],
     "answer": 0,
     "explain": "Mide antes de borrar; prioriza logs rotados y caches."
@@ -99,9 +99,9 @@
     "q": "`setfacl` se usa para…",
     "options": [
       "Listas de control de acceso extendidas (ACL)",
-      "Solo montar ISO",
-      "Configurar DNS",
-      "Imprimir"
+      "Atributos inmutables de archivos (como chattr +i)",
+      "Contextos de seguridad SELinux de los archivos",
+      "Capacidades POSIX de binarios (como setcap)"
     ],
     "answer": 0,
     "explain": "Las ACL permiten permisos más granulares que ugo clásico."
@@ -165,9 +165,9 @@
     "q": "En cgroups v2, ¿qué controlas típicamente?",
     "options": [
       "Límites de CPU/memoria/IO por grupo de procesos",
-      "Solo el wallpaper",
-      "Solo el Spooler",
-      "Solo Cat6"
+      "Espacios de nombres de red y PID aislados por proceso",
+      "Reglas de firewall de paquetes por grupo de usuarios",
+      "Permisos de archivos para los grupos de /etc/group"
     ],
     "answer": 0,
     "explain": "cgroups aíslan recursos; base de contenedores."
@@ -179,9 +179,9 @@
     "q": "Kernel panic recurrente tras update. Acción seria:",
     "options": [
       "Boot a kernel anterior, revisar logs, revertir módulo/driver",
-      "Borrar /boot entero",
-      "Desactivar SELinux a ciegas siempre",
-      "Formatear sin backup"
+      "Poner kernel.panic=0 en sysctl para ignorar el panic",
+      "Reinstalar GRUB en el disco y arrancar el mismo kernel",
+      "Ampliar la swap y /boot para que el kernel no falle"
     ],
     "answer": 0,
     "explain": "Conserva kernels previos en GRUB."
@@ -202,9 +202,9 @@
     "q": "`chroot` sirve para…",
     "options": [
       "Cambiar la raíz aparente del proceso (jaula ligera)",
-      "Cifrar discos",
-      "Asignar VLANs",
-      "Calibrar monitores"
+      "Ejecutar un comando con privilegios de root temporalmente",
+      "Cambiar el propietario de archivos al usuario root",
+      "Aislar por completo el proceso con namespaces y cgroups"
     ],
     "answer": 0,
     "explain": "Útil en recovery; no es sandbox completo como namespaces."
@@ -257,9 +257,9 @@
     "q": "NFS mounts cuelgan el shell al listar. Sospecha:",
     "options": [
       "Servidor NFS/red caída y opciones hard sin timeout adecuado",
-      "Falta de tóner",
-      "DNS de impresora",
-      "Cable HDMI"
+      "Mapeo de UID/GID incorrecto entre cliente y servidor",
+      "Montaje con la opción ro (solo lectura) en fstab",
+      "Falta de inodos libres en el sistema de archivos local"
     ],
     "answer": 0,
     "explain": "Con montajes hard, si el servidor NFS o la red caen, los procesos quedan en estado D reintentando sin fin. Revisa servidor, red y export. soft (con timeo/retrans) devuelve error en vez de colgar, pero puede corromper datos: úsalo solo para datos no críticos. intr se ignora desde el kernel 2.6.25; solo SIGKILL interrumpe."
@@ -274,9 +274,9 @@
     "q": "¿Qué es WinRM?",
     "options": [
       "Administración remota de Windows (WS-Management, transporte de PowerShell Remoting)",
-      "Un antivirus",
-      "Un protocolo de impresión LPT",
-      "Una VLAN"
+      "Replicación de archivos entre controladores de dominio (DFS-R, sucesor de FRS)",
+      "Escritorio remoto gráfico de Windows (sesiones RDP sobre el puerto TCP 3389)",
+      "Gestión de derechos (Rights Management, cifrado de documentos con AD RMS)"
     ],
     "answer": 0,
     "explain": "WinRM (Windows Remote Management) implementa WS-Management y es la base de PowerShell Remoting (Enter-PSSession/Invoke-Command). Endurécelo: HTTPS 5986, firewall y cuentas limitadas."
@@ -296,9 +296,9 @@
     "q": "Perfil de usuario se corrompe (login con perfil temporal). Acción típica:",
     "options": [
       "Renombrar/backup del perfil viejo y recrear según procedimiento",
-      "Borrar SAM a ciegas",
-      "Desinstalar TCP/IP",
-      "Cambiar solo el tema"
+      "Borrar la base SAM para que el perfil se regenere solo",
+      "Restablecer la pila TCP/IP con netsh int ip reset",
+      "Quitar al usuario del grupo Administradores y reiniciar"
     ],
     "answer": 0,
     "explain": "Documenta SID y carpetas antes de tocar."
@@ -326,9 +326,9 @@
     "q": "AppLocker / WDAC sirven para…",
     "options": [
       "Controlar qué ejecutables/scripts pueden correr",
-      "Asignar IPs",
-      "Calibrar color",
-      "Gestionar tóner"
+      "Cifrar el disco completo con clave en el TPM",
+      "Bloquear puertos de red entrantes por aplicación",
+      "Bloquear la sesión del equipo tras un tiempo inactivo"
     ],
     "answer": 0,
     "explain": "Reduce malware y software no autorizado."
@@ -392,9 +392,9 @@
     "q": "Un Blue Screen con DRIVER_IRQL suele apuntar a…",
     "options": [
       "Driver en modo kernel fallando",
-      "Falta de papel",
-      "Phishing solo",
-      "Cable Cat3"
+      "Aplicación de usuario sin responder",
+      "Perfil de usuario dañado",
+      "Certificado TLS caducado"
     ],
     "answer": 0,
     "explain": "Actualiza/rollback drivers; Memory Diagnostic también."
@@ -406,9 +406,9 @@
     "q": "Autenticación NTLM lateral se abusa en la red. Mitigación:",
     "options": [
       "Restringir NTLM, privilegiar Kerberos, LAPS, segmentar admin",
-      "Dar Domain Admin a todos",
-      "Desactivar logs",
-      "Exponer RDP abierto"
+      "Usar la misma clave de admin local en todos los equipos",
+      "Forzar NTLMv1 en todo el dominio y desactivar Kerberos",
+      "Desactivar la auditoría de inicios de sesión"
     ],
     "answer": 0,
     "explain": "Tiering de administración reduce movimiento lateral."
@@ -429,9 +429,9 @@
     "q": "Credential Guard protege…",
     "options": [
       "Secretos de autenticación aislándolos con VBS",
-      "La cola de impresión únicamente",
-      "Solo el wallpaper",
-      "DHCP scopes"
+      "El arranque verificando la firma del bootloader",
+      "Los datos del disco cifrándolos con el TPM",
+      "La cola de impresión frente a drivers de terceros"
     ],
     "answer": 0,
     "explain": "Parte del stack de seguridad basado en virtualización."
@@ -443,9 +443,9 @@
     "q": "Herramienta para capturar tráfico en Windows (Microsoft):",
     "options": [
       "netsh trace / Message Analyzer legacy / pktmon",
-      "mspaint",
-      "Notepad",
-      "calc"
+      "tracert / pathping / Test-NetConnection",
+      "wevtutil / Get-WinEvent / Visor de eventos",
+      "Monitor de rendimiento / Monitor de recursos / typeperf"
     ],
     "answer": 0,
     "explain": "pktmon es moderno en Windows 10+."
@@ -484,9 +484,9 @@
     "q": "Impresión vía servidor falla solo a un OU. Sospecha:",
     "options": [
       "GPO/deploy de impresoras o permisos de cola en ese OU",
-      "Falta de HDMI",
-      "Cat6 del monitor",
-      "BIOS de la impresora térmica"
+      "Tóner agotado en la impresora compartida",
+      "Puerto 9100 bloqueado en el firewall de la impresora",
+      "Spooler detenido en el servidor de impresión central"
     ],
     "answer": 0,
     "explain": "Revisa Point and Print / Deployed Printers."
@@ -501,9 +501,9 @@
     "q": "Un print server centralizado tipicamente…",
     "options": [
       "Hospeda colas compartidas y drivers para muchos clientes",
-      "Solo imprime PDFs locales sin red",
-      "Reemplaza al DHCP",
-      "Es un tipo de phishing"
+      "Solo imprime PDFs locales, sin compartir por la red",
+      "Asigna las IPs de las impresoras en lugar del servidor DHCP",
+      "Sustituye el firmware de cada impresora de la red"
     ],
     "answer": 0,
     "explain": "Reduce caos de drivers en cada PC."
@@ -523,9 +523,9 @@
     "q": "Usuarios de VLAN de invitados no deben alcanzar impresoras corporativas. Control:",
     "options": [
       "ACL/firewall entre VLANs + no publicar colas allí",
-      "Poner impresoras en VLAN guest",
-      "Abrir todo el 445",
-      "Desactivar spooler en el server"
+      "Mover las impresoras a la VLAN de invitados con IP fija",
+      "Abrir el puerto 445 entre VLANs para todos",
+      "Ocultar el SSID de la red de invitados"
     ],
     "answer": 0,
     "explain": "Segmentación + least privilege."
@@ -553,9 +553,9 @@
     "q": "Branch Office Direct Printing (idea)…",
     "options": [
       "Evita que el trabajo dé la vuelta al data center; imprime más cerca",
-      "Obliga a USB siempre",
-      "Elimina drivers",
-      "Cifra solo el tóner"
+      "Centraliza todos los trabajos en el data center para auditarlos",
+      "Exige un print server físico dedicado en cada sucursal",
+      "Elimina la necesidad de drivers en los clientes de la sucursal"
     ],
     "answer": 0,
     "explain": "Útil en WAN lentas con Windows print features."
@@ -619,9 +619,9 @@
     "q": "¿Qué es una impresora \"universal driver\"?",
     "options": [
       "Driver que cubre muchas series reduciendo paquetes",
-      "Un cable USB-C",
-      "Un protocolo DNS",
-      "Una GPO de firewall"
+      "Firmware único que se instala en impresoras de cualquier marca",
+      "Driver genérico de Windows que solo imprime texto plano",
+      "Protocolo que traduce PCL a PostScript en la red"
     ],
     "answer": 0,
     "explain": "Aún así valida modelos críticos."
@@ -632,10 +632,10 @@
     "type": "scenario",
     "q": "Trabajos se quedan en \"Imprimiendo\" en el server pero la impresora no recibe. Chequeos:",
     "options": [
-      "Puerto/IP, conectividad, cola pausada, driver crash, firewall 9100/IPP",
-      "Solo reiniciar Excel",
-      "Cambiar wallpaper",
-      "Actualizar antimalware del monitor"
+      "IP/puerto, red, cola pausada, driver caído, firewall 9100/IPP",
+      "Nivel de tóner, contador del tambor y papel en la bandeja",
+      "Licencias de Office, versión de Excel y fuentes instaladas",
+      "Resolución DPI, perfil de color y orientación del papel"
     ],
     "answer": 0,
     "explain": "Divide cliente vs server vs dispositivo."
@@ -647,9 +647,9 @@
     "q": "PrintNightmare (idea general) explotaba…",
     "options": [
       "Fallos en el Spooler / Point and Print para ejecución remota",
-      "Solo el color del tóner",
-      "DHCP",
-      "HDMI"
+      "Fallos en SMBv1 (EternalBlue) para propagarse como gusano",
+      "Un desbordamiento en el firmware de la impresora vía puerto 9100",
+      "Contraseñas por defecto del panel web de las impresoras"
     ],
     "answer": 0,
     "explain": "Parchea, restringe Point and Print, least privilege."
@@ -660,10 +660,10 @@
     "type": "scenario",
     "q": "Empresa quiere pull-print / follow-me printing. Beneficio:",
     "options": [
-      "Libera en el dispositivo tras autenticarse; menos documentos olvidados",
-      "Imprime más lento siempre",
-      "Elimina la red",
-      "Quita MFA"
+      "Se libera en el equipo tras autenticarse; menos documentos olvidados",
+      "Imprime de inmediato en la impresora más cercana, sin autenticar",
+      "Elimina la necesidad de drivers y de print server en la empresa",
+      "Permite imprimir sin red usando USB en cada puesto"
     ],
     "answer": 0,
     "explain": "Mejora confidencialidad física."
@@ -684,9 +684,9 @@
     "q": "En un entorno con print server + clientes Windows, \"Package Point and Print\" ayuda a…",
     "options": [
       "Distribuir drivers empaquetados de forma más controlada",
-      "Asignar VLANs automáticamente",
-      "Cifrar la PSU",
-      "Medir latencia óptica"
+      "Asignar automáticamente la IP de cada impresora del dominio",
+      "Empaquetar trabajos de impresión para enviarlos comprimidos",
+      "Desactivar el Spooler en clientes que no imprimen"
     ],
     "answer": 0,
     "explain": "Combínalo con políticas de seguridad actualizadas."
@@ -697,10 +697,10 @@
     "type": "identify",
     "q": "Log útil en Windows cuando la cola falla:",
     "options": [
-      "Event Viewer → PrintService / Microsoft-Windows-PrintService",
-      "Solo mspaint",
-      "Solo Calculator",
-      "Solo Disk Cleanup"
+      "Event Viewer → Microsoft-Windows-PrintService",
+      "Performance Monitor → % de tiempo de procesador",
+      "Resource Monitor → pestaña Disco",
+      "Disk Cleanup → Archivos temporales"
     ],
     "answer": 0,
     "explain": "Habilita log operacional de PrintService."
@@ -739,9 +739,9 @@
     "q": "Impresora multifunción escanea a \\\\servidor\\share y falla tras endurecer SMB. Causa probable:",
     "options": [
       "SMBv1 deshabilitado / firma SMB / credenciales del dispositivo",
-      "Falta de papel solo",
-      "Cable VGA",
-      "BIOS del mouse"
+      "Puerto 9100 cerrado / tóner bajo / driver PCL del servidor",
+      "Cola del Spooler pausada / driver PostScript en el server",
+      "Tambor agotado / bandeja vacía / contador de páginas lleno"
     ],
     "answer": 0,
     "explain": "Usa SMBv2+ y cuenta de servicio con mínimo privilegio."
@@ -753,9 +753,9 @@
     "q": "QoS para impresión en WAN saturada…",
     "options": [
       "Puede priorizar o limitar tráfico de colas críticas",
-      "Reemplaza al driver",
-      "Arregla el drum solo",
-      "Asigna IPv6 magicamente"
+      "Comprime los trabajos para que ocupen menos ancho de banda",
+      "Cifra los trabajos de impresión que cruzan la WAN",
+      "Aumenta el ancho de banda contratado del enlace WAN"
     ],
     "answer": 0,
     "explain": "No sustituye buen diseño de Branch printing."
@@ -795,9 +795,9 @@
     "q": "Una ACL extended en router típicamente filtra por…",
     "options": [
       "IPs, puertos y protocolo",
-      "Solo el color del LED",
-      "Solo el hostname NetBIOS",
-      "Solo el tóner"
+      "Solo la IP de origen",
+      "Solo la MAC de origen",
+      "Nombre NetBIOS del host"
     ],
     "answer": 0,
     "explain": "Controla tráfico L3/L4."
@@ -817,9 +817,9 @@
     "q": "Impresoras en VLAN 40; PCs en VLAN 20. ¿Qué permite imprimir?",
     "options": [
       "Enrutamiento inter-VLAN + ACL que permita puertos de impresión",
-      "Que compartan el mismo broadcast sin router",
-      "Desactivar Spanning Tree siempre",
-      "Usar solo NetBEUI"
+      "Desactivar Spanning Tree para que las tramas crucen VLANs",
+      "Un servidor DHCP común que dé IPs a las dos VLANs a la vez",
+      "Dar a las impresoras una IP de la VLAN 20 sin cambiar su VLAN"
     ],
     "answer": 0,
     "explain": "L3 + políticas."
@@ -857,9 +857,9 @@
     "q": "ECMP sirve para…",
     "options": [
       "Balancear rutas de igual costo",
-      "Cifrar discos",
-      "Calibrar monitores",
-      "Gestionar colas de print"
+      "Etiquetar tramas con el ID de VLAN",
+      "Priorizar tráfico de voz",
+      "Evitar bucles bloqueando puertos"
     ],
     "answer": 0,
     "explain": "Equal-Cost Multi-Path."
@@ -923,9 +923,9 @@
     "q": "DSCP/CoS se relacionan con…",
     "options": [
       "Marcado para QoS",
-      "Solo DHCP",
-      "Solo ARP",
-      "Solo DNS inverso"
+      "Asignación de IPs por DHCP",
+      "Cifrado de tramas en Wi‑Fi",
+      "Autenticación de puertos 802.1X"
     ],
     "answer": 0,
     "explain": "Prioriza voz/video vs best-effort."
@@ -937,9 +937,9 @@
     "q": "Usuarios se quejan de lentitud solo a un print server remoto. Herramientas:",
     "options": [
       "iperf/mtr/latency, QoS, ver si el path WAN satura",
-      "Solo reiniciar el mouse",
-      "Cambiar tema Windows",
-      "Actualizar tóner"
+      "Desfragmentar los discos de los PCs de los usuarios",
+      "Ampliar la RAM de los PCs cliente de la oficina",
+      "Borrar la caché del navegador en cada equipo"
     ],
     "answer": 0,
     "explain": "Mide RTT/pérdida antes de culpar la app."
@@ -951,9 +951,9 @@
     "q": "Un ataque de VLAN hopping (idea) intenta…",
     "options": [
       "Alcanzar otra VLAN abusando trunking/doble tagging",
-      "Robar solo el cable HDMI",
-      "Cambiar el SSID del café",
-      "Romper el drum"
+      "Desbordar la tabla CAM del switch con MACs falsas",
+      "Suplantar la MAC del gateway con ARP falsos",
+      "Agotar el pool DHCP con solicitudes masivas"
     ],
     "answer": 0,
     "explain": "Desactiva DTP innecesario; native VLAN careful."
@@ -965,9 +965,9 @@
     "q": "BGP neighbor down intermitente. Chequeos:",
     "options": [
       "Logs, timers, MTU/MSS, filtros de prefijos, IPsec si aplica",
-      "Reinstalar Office",
-      "Cambiar PSU del monitor",
-      "Desactivar STP en todo el core a ciegas"
+      "Reiniciar los PCs de los usuarios y vaciar su caché DNS",
+      "Desactivar STP en todo el core a ciegas y esperar",
+      "Renovar los leases DHCP de toda la red de usuarios"
     ],
     "answer": 0,
     "explain": "MTU mismatch es clásico con tunnels."
@@ -993,9 +993,9 @@
     "q": "Anycast DNS significa…",
     "options": [
       "Misma IP anunciada desde múltiples sitios; ruteo lleva al más cercano",
-      "Un solo servidor físico siempre",
-      "Solo IPv4 link-local",
-      "Impresoras en 9100"
+      "Un paquete se envía a todos los hosts de la subred a la vez",
+      "Un paquete se entrega a todos los miembros suscritos a un grupo",
+      "Varios nombres de dominio apuntan a la IP de un solo servidor"
     ],
     "answer": 0,
     "explain": "Mejora resiliencia y latencia."
@@ -1007,9 +1007,9 @@
     "q": "Técnica para segmentar microservicios en DC (moderno):",
     "options": [
       "Microsegmentación / Zero Trust network policies",
-      "Solo hubs 10BASE-T",
-      "Solo hubs Token Ring",
-      "Solo coax Thinnet obligatorio"
+      "Hubs 10BASE-T en cascada entre racks",
+      "Una única VLAN plana compartida por todo el DC",
+      "Token Ring con una MAU central por rack"
     ],
     "answer": 0,
     "explain": "Policies por identidad/workload."
@@ -1048,9 +1048,9 @@
     "q": "Captura muestra TCP retransmissions altos al print server. Implica:",
     "options": [
       "Congestión/pérdida en el path; revisar WAN/QoS/buffers",
-      "Que el driver PCL es \"feliz\"",
-      "Que falta tinta negra solo",
-      "Que DNS está perfecto siempre"
+      "Que el driver PCL del cliente está mal instalado",
+      "Que el servidor DNS tarda en responder a las consultas",
+      "Que el certificado TLS del print server caducó"
     ],
     "answer": 0,
     "explain": "Retransmissions = red o endpoint saturado."
@@ -1062,9 +1062,9 @@
     "q": "VXLAN se usa para…",
     "options": [
       "Overlay L2 sobre L3 en data centers",
-      "Reemplazar USB-C",
-      "Calibrar pantallas",
-      "Firmar drivers de audio"
+      "Cifrar enlaces WAN entre sucursales",
+      "Agregar varios puertos en un enlace lógico",
+      "Evitar bucles L2 bloqueando puertos"
     ],
     "answer": 0,
     "explain": "Extiende segmentos sobre underlay IP."
@@ -1126,9 +1126,9 @@
     "q": "API devuelve 500 intermitente. Primeros pasos:",
     "options": [
       "Logs, idempotencia, reintentos con backoff, métricas",
-      "Ignorar y hardcodear 200",
-      "Desactivar TLS",
-      "Borrar la base"
+      "Devolver siempre 200 aunque falle, para ocultar el error",
+      "Programar un reinicio del servidor cada hora y no investigar",
+      "Borrar la caché del navegador de los usuarios"
     ],
     "answer": 0,
     "explain": "Observabilidad antes de adivinar."
@@ -1149,9 +1149,9 @@
     "q": "CI/CD significa…",
     "options": [
       "Integración y entrega/despliegue continuos",
-      "Cable Internet Directo",
-      "Chip Interno de Disco",
-      "Control de Impresión Digital"
+      "Código Integrado y Compilación Distribuida",
+      "Control de Incidencias y Cambios Documentados",
+      "Compilación Incremental y Depuración Continua"
     ],
     "answer": 0,
     "explain": "Automatiza test y deploy."
@@ -1215,9 +1215,9 @@
     "q": "Un memory leak en un servicio largo causa…",
     "options": [
       "Uso de RAM creciente hasta OOM/lentitud",
-      "Mejor FPS siempre",
-      "IPs públicas extras",
-      "Más VLANs"
+      "Fuga de datos personales a servidores externos",
+      "Picos de CPU al arrancar que luego se estabilizan",
+      "Disco lleno por logs que nunca se rotan"
     ],
     "answer": 0,
     "explain": "Profiling y liberar recursos."
@@ -1229,9 +1229,9 @@
     "q": "Debes versionar una API pública. Mejor práctica:",
     "options": [
       "Versionado (/v1) y compatibilidad hacia atrás",
-      "Romper clientes sin aviso cada día",
-      "Reusar códigos de error al azar",
-      "Exponer secretos en URLs"
+      "Romper la API sin aviso y documentarlo después",
+      "Usar la misma URL y cambiar el formato sin versión",
+      "Reusar códigos de error con otro significado"
     ],
     "answer": 0,
     "explain": "Deprecation policy clara."
@@ -1255,9 +1255,9 @@
     "q": "Idempotencia en PUT/DELETE ayuda a…",
     "options": [
       "Reintentar sin duplicar efectos indeseados",
-      "Imprimir más rápido",
-      "Asignar DNS",
-      "Calibrar GPU"
+      "Cifrar la petición en tránsito",
+      "Comprimir la respuesta para ahorrar ancho de banda",
+      "Autenticar al cliente sin enviar credenciales"
     ],
     "answer": 0,
     "explain": "Clave en redes no confiables."
@@ -1268,10 +1268,10 @@
     "type": "identify",
     "q": "Patrón para desacoplar productores/consumidores:",
     "options": [
-      "Cola / message broker (p.ej. Rabbit/Kafka ideas)",
-      "Solo variables globales",
-      "Solo busy-wait",
-      "Solo GOTO"
+      "Cola de mensajes / broker (RabbitMQ, Kafka)",
+      "Llamadas HTTP síncronas directas entre servicios",
+      "Herencia de una clase base común a ambos",
+      "Espera activa (busy-wait) sobre un flag"
     ],
     "answer": 0,
     "explain": "Mejora resiliencia."
@@ -1310,9 +1310,9 @@
     "q": "Feature flag apagada en prod pero el bug sigue. Sospecha:",
     "options": [
       "Caché CDN/config no refrescada o flag mal cableada",
-      "Que git blame miente siempre",
-      "Que JSON no existe",
-      "Que HTTPS sobra"
+      "Que git blame atribuyó mal el autor del commit",
+      "Que los tests unitarios no se ejecutaron en CI",
+      "Que el certificado TLS del sitio caducó"
     ],
     "answer": 0,
     "explain": "Verifica evaluación real de la flag."
@@ -1327,9 +1327,9 @@
     "q": "Un runbook es…",
     "options": [
       "Procedimiento paso a paso para un incidente/cambio conocido",
-      "Un tipo de cable",
-      "Un antivirus",
-      "Una GPO de wallpaper"
+      "Registro cronológico de todas las acciones durante un incidente",
+      "Informe final que analiza la causa raíz tras un incidente",
+      "Calendario de guardias del equipo de soporte"
     ],
     "answer": 0,
     "explain": "Reduce improvisación bajo presión."
@@ -1349,9 +1349,9 @@
     "q": "VIP insiste en saltarse el proceso de change. Tú…",
     "options": [
       "Explicas riesgo, ofreces camino rápido formal, documentas",
-      "Haces el cambio oculto sin registro",
-      "Das Domain Admin",
-      "Borras logs"
+      "Haces el cambio sin registro para no retrasar al VIP",
+      "Le das permisos de admin para que lo haga él mismo",
+      "Rechazas el cambio sin explicación y cierras el ticket"
     ],
     "answer": 0,
     "explain": "Protege al negocio y a ti."
@@ -1372,9 +1372,9 @@
     "q": "CSAT mide…",
     "options": [
       "Satisfacción del cliente post-atención",
-      "Velocidad de CPU",
-      "Uso de RAM",
-      "Temperatura PSU"
+      "Tiempo medio de resolución (MTTR)",
+      "Porcentaje de tickets resueltos al primer contacto",
+      "Cumplimiento de los SLA pactados por servicio"
     ],
     "answer": 0,
     "explain": "Encuestas cortas tras resolver."
@@ -1438,9 +1438,9 @@
     "q": "Shift-left en soporte significa…",
     "options": [
       "Empoderar N1/self-service/KB para resolver antes",
-      "Mover todo a N3 siempre",
-      "Eliminar monitoreo",
-      "Ocultar errores"
+      "Escalar todos los tickets a N3 para resolverlos antes",
+      "Pasar la carga de N1 a proveedores externos (outsourcing)",
+      "Recortar el horario del service desk"
     ],
     "answer": 0,
     "explain": "Mejor experiencia y menor costo."
@@ -1452,9 +1452,9 @@
     "q": "Métricas muestran MTTR alto y FCR bajo. Interpreta:",
     "options": [
       "Se reabre mucho / poca resolución real en primer contacto",
-      "Que todo está perfecto",
-      "Que falta tinta",
-      "Que STP falló"
+      "Casi todo se resuelve en la primera llamada, sin escalar",
+      "Los SLA se cumplen holgadamente en todos los niveles",
+      "Hay muchos tickets nuevos, pero se cierran enseguida"
     ],
     "answer": 0,
     "explain": "FCR (first contact resolution) bajo = muchos tickets requieren escalar o recontactar/reabrir, lo que alarga el MTTR."
@@ -1475,9 +1475,9 @@
     "q": "Un post-mortem blameless busca…",
     "options": [
       "Aprender de fallas sin castigar personas",
-      "Culpar al junior",
-      "Borrar evidencias",
-      "Silenciar al cliente"
+      "Identificar al responsable para aplicar una sanción",
+      "Cerrar el incidente rápido sin analizar la causa",
+      "Ocultar el incidente a la dirección"
     ],
     "answer": 0,
     "explain": "Mejora sistemas y procesos."
@@ -1489,9 +1489,9 @@
     "q": "Canal preferido para anunciar outage masivo a usuarios:",
     "options": [
       "Status page / correo oficial / banner acordado",
-      "Rumores en pasillo solo",
-      "DM random",
-      "Cambiar wallpaper de servers"
+      "Mensajes privados a cada usuario que abra ticket",
+      "Publicación en redes sociales personales del técnico",
+      "Respuestas individuales en cada ticket duplicado"
     ],
     "answer": 0,
     "explain": "Un mensaje consistente."
@@ -1530,9 +1530,9 @@
     "q": "Proveedor SaaS caído; usuarios culpan a TI interna. Comunicación:",
     "options": [
       "Status claro, ETA si hay, workarounds, updates periódicos",
-      "Silencio total",
-      "Culpar a un usuario",
-      "Prometer 100% uptime falso"
+      "No comunicar nada hasta que el proveedor lo resuelva",
+      "Culpar públicamente al proveedor y cerrar los tickets",
+      "Prometer una ETA fija aunque el proveedor no la dé"
     ],
     "answer": 0,
     "explain": "Transparencia reduce tickets duplicados."
@@ -1547,9 +1547,9 @@
     "q": "Un SOC típicamente…",
     "options": [
       "Monitorea alertas de seguridad y coordina respuesta",
-      "Imprime carnets solo",
-      "Asigna VLANs de voz",
-      "Gestiona tóner"
+      "Gestiona las altas de usuarios y el inventario de equipos",
+      "Desarrolla y despliega las aplicaciones internas",
+      "Administra el cableado y los switches del edificio"
     ],
     "answer": 0,
     "explain": "Security Operations Center."
@@ -1569,9 +1569,9 @@
     "q": "Empleado reporta USB \"de RH\" en el baño. Acción:",
     "options": [
       "No conectar; reportar a seguridad física/TI",
-      "Probarlo en finanzas",
-      "Instalar drivers",
-      "Abrirlo en el DC"
+      "Abrirlo en tu equipo con el antivirus actualizado",
+      "Conectarlo en un PC de RH, ya que parece suyo",
+      "Formatearlo en tu PC y reutilizarlo"
     ],
     "answer": 0,
     "explain": "USB baiting."
@@ -1592,9 +1592,9 @@
     "q": "SPF/DKIM/DMARC ayudan a…",
     "options": [
       "Autenticar correo y reducir spoofing de dominio",
-      "Acelerar Wi‑Fi",
-      "Calibrar pantallas",
-      "Particionar discos"
+      "Cifrar el contenido del correo de extremo a extremo",
+      "Filtrar adjuntos con malware antes de entregarlos",
+      "Acelerar la entrega de correo"
     ],
     "answer": 0,
     "explain": "Endurece el email del dominio."
@@ -1658,9 +1658,9 @@
     "q": "La cadena supply-chain attack compromete…",
     "options": [
       "Dependencias/proveedores para llegar a ti",
-      "Solo el cable HDMI",
-      "Solo el color del tema",
-      "Solo el spooler local"
+      "Tu contraseña probando combinaciones por fuerza bruta",
+      "Tu sesión interceptando el tráfico de un Wi‑Fi público",
+      "Tu equipo mediante un USB abandonado"
     ],
     "answer": 0,
     "explain": "Verifica firmas y SBOMs."
@@ -1672,9 +1672,9 @@
     "q": "Detectas Cobalt Strike beacon. Contención:",
     "options": [
       "Aislar host, reset credenciales, cazar lateral movement",
-      "Ignorar",
-      "Publicar IoCs en redes sin contexto",
-      "Apagar el firewall de análisis"
+      "Borrar el binario del beacon y dar el incidente por cerrado",
+      "Reiniciar el host y seguir operando con normalidad",
+      "Pasar un antivirus completo y esperar su resultado"
     ],
     "answer": 0,
     "explain": "Preserva volatilidad si forense lo pide."
@@ -1695,9 +1695,9 @@
     "q": "Certificate pinning en apps móviles busca…",
     "options": [
       "Mitigar MITM con CAs no esperadas",
-      "Acelerar DNS",
-      "Mejorar PCL",
-      "Asignar VLANs"
+      "Cifrar los datos guardados en el teléfono",
+      "Renovar certificados sin publicar otra versión",
+      "Acelerar DNS con resolución local"
     ],
     "answer": 0,
     "explain": "Tiene trade-offs de rotación."
@@ -1750,9 +1750,9 @@
     "q": "Phishing captura session cookie. Mitigación moderna:",
     "options": [
       "Tokens de corta vida, binding, logout global, MFA step-up",
-      "Alargar la cookie a 1 año",
-      "Desactivar HTTPS",
-      "Compartir cookie en Slack"
+      "Alargar la vida de la cookie para evitar nuevos logins",
+      "Mover el token de sesión de la cookie a localStorage",
+      "Quitar HttpOnly para vigilar la cookie desde JavaScript"
     ],
     "answer": 0,
     "explain": "Session theft es real."
@@ -1767,9 +1767,9 @@
     "q": "IPMI/iLO/iDRAC permiten…",
     "options": [
       "Gestionar servidor out-of-band (consola remota, sensores)",
-      "Imprimir carteles",
-      "Asignar SSIDs",
-      "Calibrar color de apps"
+      "Balancear carga entre los servidores web del clúster",
+      "Virtualizar el servidor en varias máquinas invitadas",
+      "Cifrar los discos del servidor con claves del TPM"
     ],
     "answer": 0,
     "explain": "Red de management separada."
@@ -1789,9 +1789,9 @@
     "q": "Servidor reporta PSU redundancy lost. Acción:",
     "options": [
       "Reemplazar PSU fallida; verificar cableado y carga",
-      "Ignorar hasta incendio",
-      "Subir clocks",
-      "Quitar un disco"
+      "Ignorarlo: con una sola PSU funciona sin riesgo",
+      "Apagar el servidor y reinstalar el sistema operativo",
+      "Retirar discos para bajar el consumo de energía"
     ],
     "answer": 0,
     "explain": "Redundancia N+1 existe para usarse."
@@ -1812,9 +1812,9 @@
     "q": "ECC RAM detecta/corrige…",
     "options": [
       "Errores de memoria de bits",
-      "Errores de DNS",
-      "Atascos de papel",
-      "Phishing"
+      "Sectores defectuosos del disco duro",
+      "Errores de transmisión en la red Ethernet",
+      "Fallos de temperatura del procesador"
     ],
     "answer": 0,
     "explain": "Estándar en servers."
@@ -1878,9 +1878,9 @@
     "q": "Un U.2/U.3 NVMe en server se usa para…",
     "options": [
       "Almacenamiento rápido hot-swap en bahías",
-      "Solo audio",
-      "Solo Wi‑Fi",
-      "Solo LPT"
+      "Conectar tarjetas de red de 100 GbE al servidor",
+      "Refrigerar la CPU con un circuito líquido cerrado",
+      "Gestionar el servidor por consola remota fuera de banda"
     ],
     "answer": 0,
     "explain": "Alternativa a muchos M.2 internos."
@@ -1892,9 +1892,9 @@
     "q": "POST pasa pero no hay video en iGPU tras meter GPU. Chequeos:",
     "options": [
       "Cable al GPU correcto, PSU PCIe, monitor input, reseat",
-      "Reinstalar Excel",
-      "Cambiar VLAN",
-      "Actualizar tóner"
+      "Reinstalar Windows antes de revisar cualquier cable",
+      "Borrar la caché DNS y renovar la IP del equipo",
+      "Cambiar la pasta térmica de la CPU y su disipador"
     ],
     "answer": 0,
     "explain": "Muchas boards desactivan salida onboard."
@@ -1915,9 +1915,9 @@
     "q": "CXL (idea emergente) busca…",
     "options": [
       "Mejorar coherencia/expansión de memoria entre dispositivos",
-      "Reemplazar Ethernet",
-      "Ser un tipo de tóner",
-      "Sustituir DNS"
+      "Sustituir a Ethernet como red entre los centros de datos",
+      "Reemplazar SATA como interfaz de discos mecánicos",
+      "Estandarizar conectores de alimentación de las GPU"
     ],
     "answer": 0,
     "explain": "Tendencia en data centers modernos."
@@ -1929,9 +1929,9 @@
     "q": "Conector de alimentación CPU común de 8 pines:",
     "options": [
       "EPS 8-pin (ATX12V)",
-      "RJ-11",
-      "LPT",
-      "PS/2 mouse only"
+      "PCIe 8-pin (6+2)",
+      "ATX 24-pin principal",
+      "SATA de 15 pines"
     ],
     "answer": 0,
     "explain": "No confundir con PCIe 8-pin de GPU."
@@ -1970,9 +1970,9 @@
     "q": "Cluster pierde quorum tras un nodo. Diseño adecuado incluye…",
     "options": [
       "Quorum/witness y fencing correctos",
-      "Un solo switch sin redundancia siempre",
-      "DNS dinámico apagado",
-      "PSU única"
+      "Un número par de nodos sin testigo",
+      "Desactivar el heartbeat entre nodos",
+      "Un solo switch sin redundancia"
     ],
     "answer": 0,
     "explain": "Evita split-brain."
@@ -1993,9 +1993,9 @@
       "q": "La \"nube\" en IT suele significar…",
       "options": [
         "Servicios bajo demanda por Internet (cómputo/almacenamiento/apps)",
-        "Una nube del clima dentro del CPU",
-        "Solo USB",
-        "Solo impresoras locales"
+        "Servidores propios en tu oficina, mantenidos por tu equipo",
+        "Una red local (LAN) para compartir archivos en la oficina",
+        "Discos externos USB que se sincronizan entre equipos"
       ],
       "answer": 0,
       "explain": "Pay-as-you-go y elasticidad."
@@ -2015,9 +2015,9 @@
       "q": "IaaS te ofrece principalmente…",
       "options": [
         "Infraestructura virtual (VMs, redes, discos)",
-        "Solo una app empaquetada sin control",
-        "Solo el cable HDMI",
-        "Solo tóner"
+        "Una app terminada que solo usas desde el navegador",
+        "Un runtime gestionado donde solo subes tu código",
+        "Funciones que corren por evento sin gestionar servidores"
       ],
       "answer": 0,
       "explain": "Tú administras más la stack."
@@ -2038,9 +2038,9 @@
       "q": "Ejemplo típico de PaaS:",
       "options": [
         "Plataforma para desplegar apps sin gestionar todo el OS",
-        "Un hub 10/100",
-        "Una impresora LPT",
-        "Un cable coax"
+        "VMs donde tú instalas, parchas y administras el sistema operativo",
+        "Un correo web listo para usar, sin desplegar código propio",
+        "Servidores físicos dedicados que rentas por mes"
       ],
       "answer": 0,
       "explain": "Platform as a Service."
@@ -2052,9 +2052,9 @@
       "q": "Necesitas editar docs con el equipo en tiempo real. Suele ser:",
       "options": [
         "SaaS de documentos / colaboración",
-        "Montar un mainframe en casa obligatorio",
-        "Solo papel carbón",
-        "Solo FTP anónimo"
+        "Un servidor FTP compartido en la oficina",
+        "Correo con adjuntos que se reenvían",
+        "Una carpeta de red mapeada (SMB)"
       ],
       "answer": 0,
       "explain": "Colaboración cloud."
@@ -2066,9 +2066,9 @@
       "q": "Un beneficio común de la nube es…",
       "options": [
         "Escalar recursos según demanda",
-        "Que nunca hay que pagar",
-        "Que no requiere Internet nunca",
-        "Que elimina backups"
+        "Que siempre cuesta menos que on-premise",
+        "Que la seguridad es solo del proveedor",
+        "Que ya no hacen falta backups"
       ],
       "answer": 0,
       "explain": "Elasticidad; aún pagas y aseguras."
@@ -2087,10 +2087,10 @@
       "type": "mc",
       "q": "El modelo de responsabilidad compartida indica…",
       "options": [
-        "El proveedor asegura la nube; tú aseguras lo que pones en ella",
-        "Que nadie asegura nada",
-        "Que el ISP hace backups mágicos",
-        "Que MFA sobra"
+        "El proveedor asegura la nube; tú, lo que pones en ella",
+        "El proveedor responde por todo, incluidos tus datos y cuentas",
+        "Tú aseguras todo, incluido el hardware físico del datacenter",
+        "Cada cliente audita físicamente el datacenter del proveedor"
       ],
       "answer": 0,
       "explain": "Varía entre IaaS/PaaS/SaaS."
@@ -2110,9 +2110,9 @@
       "q": "Laptop robada con sync de OneDrive/Drive. Riesgo mitigable con:",
       "options": [
         "MFA, borrado remoto, cifrado de disco, revisión de sesiones",
-        "Nada; sync es inseguro siempre",
-        "Desactivar TLS",
-        "Publicar el password"
+        "Desinstalar OneDrive del resto de laptops de la empresa",
+        "Cambiar solo la contraseña del Wi‑Fi de la oficina",
+        "Confiar en la contraseña de Windows para proteger el disco"
       ],
       "answer": 0,
       "explain": "Identidad + device control."
@@ -2133,9 +2133,9 @@
       "q": "Un snapshot/AMI tipicamente sirve para…",
       "options": [
         "Capturar estado de disco/VM para backup o clon",
-        "Calibrar monitores",
-        "Asignar VLANs al tóner",
-        "Firmar USB"
+        "Balancear tráfico entre varias VMs de la misma zona",
+        "Medir en tiempo real el uso de CPU de la instancia",
+        "Cifrar el tráfico entre la VM y el usuario"
       ],
       "answer": 0,
       "explain": "No reemplaza estrategia de backup 3-2-1."
@@ -2199,9 +2199,9 @@
       "q": "RPO se refiere a…",
       "options": [
         "Cuántos datos puedes permitirte perder (punto de recuperación)",
-        "Velocidad del Wi‑Fi",
-        "Temperatura de CPU",
-        "Número de VLANs"
+        "Cuánto tiempo puede tardar el servicio en volver a estar operativo",
+        "Porcentaje de disponibilidad comprometido en el SLA",
+        "Frecuencia con que se prueban los planes de recuperación"
       ],
       "answer": 0,
       "explain": "Recovery Point Objective."
@@ -2213,9 +2213,9 @@
       "q": "Backup solo en la misma región que prod. Riesgo:",
       "options": [
         "Desastre regional te deja sin copia",
-        "Mejor RTO siempre",
-        "Más seguridad física mágica",
-        "Que el DNS sea perfecto"
+        "Mayor costo por transferir datos entre regiones",
+        "Restauraciones lentas por la latencia entre regiones",
+        "Que los backups no se puedan cifrar en esa región"
       ],
       "answer": 0,
       "explain": "Copia offsite/otra región."
@@ -2236,9 +2236,9 @@
       "q": "CDN sirve para…",
       "options": [
         "Acercar contenido estático a usuarios (caché perimetral)",
-        "Reemplazar la base de datos OLTP",
-        "Gestionar Spooler",
-        "Asignar IPs RFC1918 solo"
+        "Reemplazar la base de datos transaccional (OLTP)",
+        "Asignar IPs privadas RFC1918 a las VMs de la VPC",
+        "Resolver nombres de dominio internos de la empresa"
       ],
       "answer": 0,
       "explain": "Mejora latencia y offload de origen."
@@ -2302,9 +2302,9 @@
       "q": "Factura cloud explota por VMs olvidadas. Control:",
       "options": [
         "Tags, budgets/alerts, apagado automático, inventory",
-        "Ignorar billing",
-        "Dar admin a todos",
-        "Desactivar logs de costos"
+        "Desactivar el export de costos para ahorrar almacenamiento",
+        "Escalar las VMs olvidadas a un tamaño mayor",
+        "Aumentar la cuota de vCPU de la suscripción"
       ],
       "answer": 0,
       "explain": "FinOps básico."
@@ -2316,9 +2316,9 @@
       "q": "Un VPC/VNet es…",
       "options": [
         "Red virtual aislada en la nube",
-        "Una impresora virtual",
-        "Un antivirus",
-        "Un tipo de tóner"
+        "Un balanceador de carga administrado",
+        "Un bucket de almacenamiento de objetos",
+        "Una VPN de acceso remoto para usuarios"
       ],
       "answer": 0,
       "explain": "Subnets, route tables, security groups."
@@ -2338,9 +2338,9 @@
       "q": "Base de datos expuesta 0.0.0.0/0 en SG. Acción:",
       "options": [
         "Restringir a app subnets/bastion; rotar credenciales",
-        "Dejarlo por comodidad",
-        "Publicar en Twitter la IP",
-        "Desactivar TLS"
+        "Cambiar el puerto por defecto de la BD y dejar la regla",
+        "Mover la BD a una subred pública con IP elástica",
+        "Abrir también el puerto 22 para administrarla más fácil"
       ],
       "answer": 0,
       "explain": "Ataques automatizados escanean todo."
@@ -2361,9 +2361,9 @@
       "q": "Object lock / WORM en backups ayuda contra…",
       "options": [
         "Ransomware que intenta borrar/cifrar backups",
-        "Lentitud de DNS",
-        "Atascos de papel",
-        "Overclock"
+        "Latencia alta al leer backups remotos",
+        "Costos por guardar versiones antiguas",
+        "Cortes de red al subir backups grandes"
       ],
       "answer": 0,
       "explain": "Inmutabilidad."
@@ -2427,9 +2427,9 @@
       "q": "Chaos engineering busca…",
       "options": [
         "Probar resiliencia inyectando fallos de forma controlada",
-        "Romper prod sin plan",
-        "Eliminar monitoreo",
-        "Desactivar backups"
+        "Generar carga máxima para medir rendimiento",
+        "Aplicar cambios en producción sin pasar por revisión",
+        "Buscar vulnerabilidades con ataques simulados"
       ],
       "answer": 0,
       "explain": "Mejora confianza en el diseño."
@@ -2441,9 +2441,9 @@
       "q": "Key leaked en GitHub público. Respuesta:",
       "options": [
         "Rotar/revocar de inmediato, scrub history, auditar uso",
-        "Dejarla 30 días",
-        "Copiar a otro repo público",
-        "Desactivar MFA"
+        "Hacer privado el repositorio y seguir usando la misma key",
+        "Borrar el commit con la key y mantenerla activa",
+        "Esperar a que el proveedor detecte abuso y avise"
       ],
       "answer": 0,
       "explain": "Assume compromise."
@@ -2464,9 +2464,9 @@
       "q": "Un service mesh (idea) aporta…",
       "options": [
         "mTLS, retries, observabilidad entre microservicios",
-        "Mejor tóner",
-        "VLANs mágicas en impresoras",
-        "Overclock de RAM"
+        "Orquestar y programar contenedores en los nodos del cluster",
+        "Almacenar y versionar imágenes de contenedor en un registry",
+        "Compilar y empaquetar microservicios en el pipeline de CI"
       ],
       "answer": 0,
       "explain": "Sidecars/proxies."
@@ -2478,9 +2478,9 @@
       "q": "Patrón para secretos en cloud:",
       "options": [
         "Secrets Manager / Vault + rotación",
-        "Plaintext en imagen Docker",
-        "En el README público",
-        "En el wallpaper"
+        "ENV en el Dockerfile de la imagen",
+        "Archivo .env commiteado en el repo",
+        "Texto plano en un bucket compartido"
       ],
       "answer": 0,
       "explain": "Nunca hardcodees."
@@ -2519,9 +2519,9 @@
       "q": "Lift-and-shift de app monolítica a una sola VM enorme. Riesgo:",
       "options": [
         "Poco aprovechamiento cloud-native; SPOF y costo",
-        "Alta elasticidad automática garantizada",
-        "Zero ops para siempre",
-        "Backups innecesarios"
+        "Autoescalado horizontal garantizado sin cambiar la app",
+        "Cero operación: el proveedor parcha tu app y tu SO",
+        "Backups innecesarios por usar discos administrados"
       ],
       "answer": 0,
       "explain": "A veces es paso intermedio válido si se planifica."
@@ -2535,9 +2535,9 @@
       "q": "BOSS: Bucket público con PII. Contención:",
       "options": [
         "Bloquear acceso público, rotar datos/credenciales, forense de accesos",
-        "Dejarlo y monitorear likes",
-        "Borrar sin backup legal",
-        "Avisar solo por rumor"
+        "Borrar el bucket de inmediato, sin conservar logs ni copias legales",
+        "Renombrar el bucket para ocultarlo, manteniendo el acceso público",
+        "Esperar a confirmar abuso real antes de tocar permisos"
       ],
       "answer": 0,
       "explain": "Data exposure class-1."
@@ -2549,9 +2549,9 @@
       "q": "BOSS: Región cae. Tu app multi-AZ en UNA región…",
       "options": [
         "Sigue caída regional; necesitas estrategia multi-region/DR",
-        "Sobrevive siempre",
-        "Se convierte en SaaS sola",
-        "Imprime sola"
+        "Sobrevive, porque multi-AZ replica automáticamente a otra región",
+        "Hace failover al CDN, que sirve la app completa desde el edge",
+        "El proveedor la migra sola a otra región según el SLA"
       ],
       "answer": 0,
       "explain": "AZ ≠ región."
@@ -2609,9 +2609,9 @@
       "q": "Una tabla en una BD relacional es…",
       "options": [
         "Conjunto de filas (registros) y columnas (campos)",
-        "Un cable de red",
-        "Un tipo de CPU",
-        "Un protocolo Wi‑Fi"
+        "Log donde el motor anota cada transacción",
+        "Consulta guardada que se ejecuta al leerla",
+        "Estructura que acelera búsquedas en una columna"
       ],
       "answer": 0,
       "explain": "Estructura tabular."
@@ -2631,9 +2631,9 @@
       "q": "¿Qué hace SELECT nombre FROM empleados?",
       "options": [
         "Devuelve la columna nombre de la tabla empleados",
-        "Borra la tabla",
-        "Crea un índice",
-        "Apaga el servidor"
+        "Crea la columna nombre en la tabla empleados",
+        "Devuelve solo la primera fila de la tabla empleados",
+        "Ordena la tabla empleados por la columna nombre"
       ],
       "answer": 0,
       "explain": "SELECT lee datos."
@@ -2659,9 +2659,9 @@
       "q": "Clave primaria sirve para…",
       "options": [
         "Identificar de forma única cada fila",
-        "Cifrar el disco",
-        "Asignar VLANs",
-        "Calibrar pantallas"
+        "Limitar quién puede leer cada fila",
+        "Cifrar los datos sensibles de la fila",
+        "Permitir valores repetidos en la columna"
       ],
       "answer": 0,
       "explain": "PRIMARY KEY."
@@ -2687,12 +2687,12 @@
       "q": "NULL significa…",
       "options": [
         "Valor desconocido/ausente",
-        "Cero siempre",
-        "Cadena vacía siempre",
-        "False siempre"
+        "El número cero en columnas numéricas",
+        "Un espacio en blanco en columnas de texto",
+        "El valor FALSE en columnas booleanas"
       ],
       "answer": 0,
-      "explain": "NULL ≠ 0 ni \"\"."
+      "explain": "NULL no es 0, FALSE ni un espacio: es ausencia de valor."
     },
     {
       "id": "db08",
@@ -2709,9 +2709,9 @@
       "q": "¿Para qué es el WHERE?",
       "options": [
         "Filtrar filas según condición",
-        "Crear usuarios del OS",
-        "Montar discos",
-        "Configurar DNS"
+        "Ordenar los resultados por una columna",
+        "Agrupar filas para funciones de agregación",
+        "Elegir qué columnas devuelve la consulta"
       ],
       "answer": 0,
       "explain": "Sin WHERE, UPDATE/DELETE afectan todo."
@@ -2759,9 +2759,9 @@
       "q": "JOIN se usa para…",
       "options": [
         "Combinar filas de tablas relacionadas",
-        "Comprimir backups solo",
-        "Asignar IPs",
-        "Firmar drivers"
+        "Apilar resultados de dos consultas",
+        "Agrupar filas con el mismo valor",
+        "Crear una tabla a partir de otra"
       ],
       "answer": 0,
       "explain": "INNER/LEFT/RIGHT etc."
@@ -2825,9 +2825,9 @@
       "q": "Un índice acelera…",
       "options": [
         "Búsquedas/filtros a costa de espacio y writes",
-        "La velocidad del ventilador",
-        "El Spooler",
-        "El DHCP"
+        "Inserciones masivas, sin costo extra de espacio",
+        "Backups completos, al comprimir los datos de la tabla",
+        "La replicación, al enviar menos datos a las réplicas"
       ],
       "answer": 0,
       "explain": "Indexa columnas de filtros frecuentes."
@@ -2839,9 +2839,9 @@
       "q": "Reporte lento en tabla de millones. Primera idea:",
       "options": [
         "EXPLAIN/analizar query + índices adecuados",
-        "Poner SELECT * en loop",
-        "Desactivar la PK",
-        "Apagar backups"
+        "Duplicar la RAM del servidor antes de medir nada",
+        "Quitar la clave primaria para acelerar las lecturas",
+        "Reiniciar el servicio de la BD cada vez que corra"
       ],
       "answer": 0,
       "explain": "Mide el plan de ejecución."
@@ -2862,9 +2862,9 @@
       "q": "Normalización busca…",
       "options": [
         "Reducir redundancia y anomalías de datos",
-        "Maximizar duplicados",
-        "Eliminar claves",
-        "Prohibir JOINs"
+        "Duplicar datos para evitar JOINs",
+        "Poner índices en todas las columnas",
+        "Particionar tablas por rango de fechas"
       ],
       "answer": 0,
       "explain": "1NF/2NF/3NF como guía."
@@ -2928,9 +2928,9 @@
       "q": "App muestra datos viejos tras UPDATE. Sospecha:",
       "options": [
         "Caché de app/CDN o isolation/replica lag",
-        "Que SQL no existe",
-        "Que el cable HDMI guarda filas",
-        "Que STP borra tablas"
+        "Falta de índice en la columna actualizada",
+        "La clave primaria de la tabla está duplicada",
+        "Fragmentación del disco del servidor"
       ],
       "answer": 0,
       "explain": "Revisa caché y réplicas de lectura."
@@ -2942,9 +2942,9 @@
       "q": "EXPLAIN (o similar) muestra…",
       "options": [
         "Cómo el motor planea ejecutar la consulta",
-        "El clima",
-        "La cola de impresión",
-        "El voltaje de la PSU"
+        "El resultado de la consulta con sus filas",
+        "Los permisos del usuario sobre cada tabla",
+        "El historial de consultas lentas del servidor"
       ],
       "answer": 0,
       "explain": "Herramienta #1 de performance."
@@ -2964,9 +2964,9 @@
       "q": "Migración con downtime mínimo. Técnica común:",
       "options": [
         "Expand/contract, dual-write o logical replication según motor",
-        "DROP DATABASE en horario pico",
-        "Editar data files a mano",
-        "Desactivar WAL/redo siempre"
+        "Hacer dump completo y restore durante horario pico",
+        "Apagar la app y migrar todo en una sola ventana larga",
+        "Copiar los data files con la BD encendida y escribiendo"
       ],
       "answer": 0,
       "explain": "Planifica rollback."
@@ -2987,9 +2987,9 @@
       "q": "Isolation level más estricto típico…",
       "options": [
         "Serializable (idea) vs read committed más común",
-        "Read uncommitted siempre mejor en bancos",
-        "No existe isolation",
-        "Solo aplica a impresoras"
+        "Read uncommitted, que evita lecturas sucias",
+        "Read committed, el más estricto por defecto",
+        "Repeatable read, que está por encima de serializable"
       ],
       "answer": 0,
       "explain": "Trade-off consistencia vs concurrencia."
@@ -3053,9 +3053,9 @@
       "q": "Point-in-time recovery (PITR) permite…",
       "options": [
         "Restaurar a un instante usando base + WAL/binlog",
-        "Solo el último full semanal sin logs",
-        "Recuperar sin backups",
-        "Imprimir el WAL"
+        "Restaurar solo el último backup completo, sin logs",
+        "Recuperar datos sin haber hecho ningún backup base",
+        "Replicar en vivo a otra región con cero pérdida"
       ],
       "answer": 0,
       "explain": "Requiere archiving de logs."
@@ -3067,9 +3067,9 @@
       "q": "Split-brain en cluster activo-activo mal configurado. Riesgo:",
       "options": [
         "Datos divergentes / corrupción lógica",
-        "Mejor integridad siempre",
-        "Backups mágicos",
-        "Más FPS"
+        "Solo más latencia, sin afectar los datos",
+        "Bloqueo total de escrituras garantizado",
+        "Failover automático más rápido y seguro"
       ],
       "answer": 0,
       "explain": "Quorum y fencing."
@@ -3090,9 +3090,9 @@
       "q": "Un covering index es…",
       "options": [
         "Índice que puede satisfacer la query sin tocar la tabla heap",
-        "Un cable cover",
-        "Un antivirus",
-        "Una GPO"
+        "Índice que cubre todas las tablas de la base de datos",
+        "Índice creado automáticamente sobre cada clave foránea",
+        "Índice parcial que solo incluye filas con cierto WHERE"
       ],
       "answer": 0,
       "explain": "Incluye todas las columnas necesarias."
@@ -3104,9 +3104,9 @@
       "q": "Amenaza si concatenas input en SQL:",
       "options": [
         "SQL injection",
-        "VLAN hopping solo",
-        "Thermal paste dry",
-        "USB-C PD"
+        "XSS reflejado",
+        "CSRF",
+        "Fuerza bruta"
       ],
       "answer": 0,
       "explain": "Usa parámetros."
@@ -3145,9 +3145,9 @@
       "q": "Compliance pide cifrado de datos sensibles. Controles:",
       "options": [
         "TDE/cifrado en reposo + TLS en tránsito + masking",
-        "Solo ocultar la columna en la UI",
-        "Poner la BD en VLAN guest",
-        "Desactivar audits"
+        "Ocultar la columna sensible solo en la interfaz web",
+        "Guardar los datos en Base64 para que no sean legibles",
+        "Hashear con MD5 los datos que luego hay que leer"
       ],
       "answer": 0,
       "explain": "Defensa en profundidad."
@@ -3161,9 +3161,9 @@
       "q": "BOSS: DROP TABLE en prod por script. Contención:",
       "options": [
         "Stop writes, evaluar PITR/backup, comunicar, postmortem",
-        "Correr más DROPs",
-        "Culpar sin logs",
-        "Apagar el SAN sin plan"
+        "Recrear la tabla vacía y dejar que la app siga escribiendo",
+        "Restaurar el backup de anoche encima de todo, sin revisar",
+        "Borrar los logs del script para evitar confusiones"
       ],
       "answer": 0,
       "explain": "PITR salva carreras."
@@ -3175,9 +3175,9 @@
       "q": "BOSS: Replication lag de horas. Efecto:",
       "options": [
         "Lecturas stale; riesgo si failover precipitado",
-        "Integridad perfecta",
-        "DNS más rápido",
-        "Mejor PCL"
+        "Ninguno mientras el primario siga respondiendo",
+        "Pérdida inmediata de datos en el primario",
+        "Las réplicas pasan a aceptar escrituras propias"
       ],
       "answer": 0,
       "explain": "Monitorea lag SLIs."
