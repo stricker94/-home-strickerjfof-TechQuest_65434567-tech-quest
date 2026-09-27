@@ -21,8 +21,11 @@
     matchSelections: {},
     orderItems: [],
     hintUsedThisQ: false,
-    hintDebt: 0,
+    hintCost: 0,
     shownAt: 0,
+    feedbackAt: 0,
+    feedbackTimedOut: false,
+    matchPending: null,
     correctCount: 0,
     wrongCount: 0,
     timeLeft: 0,
@@ -38,6 +41,8 @@
   // Tiempo mínimo tras mostrar una pregunta antes de aceptar clics de respuesta (evita que el
   // segundo clic de un doble clic en "Continuar" o en un nivel responda la pregunta nueva)
   const ANSWER_CLICK_GUARD_MS = 350;
+  // Tras "¡Tiempo agotado!" se ignoran Enter y los atajos un momento: el jugador quizá seguía escribiendo
+  const TIMEOUT_KEY_GUARD_MS = 1000;
 
   function init() {
     bindEvents();
@@ -73,6 +78,12 @@
       // Al escribir en el campo de texto, las letras no son atajos (p. ej. "chmod" no debe usar pista ni silenciar)
       const typing = e.target instanceof HTMLElement && e.target.matches("input, textarea, [contenteditable]");
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+      if (fbOn && state.feedbackTimedOut && performance.now() - state.feedbackAt < TIMEOUT_KEY_GUARD_MS &&
+          (key === "Enter" || key === " " || key.length === 1)) {
+        e.preventDefault();
+        return;
+      }
 
       if (key === "Escape" && (playOn || fbOn)) {
         e.preventDefault();
@@ -543,8 +554,9 @@
   function showQuestion() {
     state.answered = false;
     state.hintUsedThisQ = false;
-    state.hintDebt = 0;
+    state.hintCost = 0;
     state.matchSelections = {};
+    state.matchPending = null;
     state.shownAt = performance.now();
 
     const q = currentQ();
@@ -567,7 +579,9 @@
     const hintBtn = UI.$("#btn-hint");
     if (hintBtn) {
       hintBtn.hidden = state.practice;
-      hintBtn.disabled = state.hintsLeft <= 0;
+      // En Verdadero/Falso no hay pista útil que no regale la respuesta
+      hintBtn.disabled = state.hintsLeft <= 0 || q.type === "tf";
+      hintBtn.title = q.type === "tf" ? "Sin pista en Verdadero / Falso" : "";
     }
     if (submitBtn) submitBtn.disabled = false;
 
@@ -582,7 +596,7 @@
       area.innerHTML = `
         <label class="fill-label" for="fill-input">Tu respuesta:</label>
         <input id="fill-input" class="fill-input" type="text" autocomplete="off" spellcheck="false"
-          placeholder="Escribe aquí…" aria-label="Respuesta" />
+          placeholder="Escribe aquí…" aria-describedby="question-text" />
         <p class="fill-tip">Mayúsculas flexibles · Enter para enviar</p>`;
       // Enter se maneja en el listener global de teclado
       const input = UI.$("#fill-input");
@@ -594,6 +608,8 @@
       submitBtn.hidden = false;
       renderOrder(area, q);
     }
+    // El foco va a la pregunta nueva (el campo de texto lo toma en "completar"), no se pierde en <body>
+    if (q.type !== "fill") UI.$("#question-text")?.focus({ preventScroll: true });
 
     armTimer();
   }
@@ -653,40 +669,50 @@
     area.appendChild(wrap);
   }
 
+  /** Baraja sin devolver el orden original (si hay más de un elemento), para no mostrar el puzzle ya resuelto. */
+  function shuffleUnsolved(arr, isSolved) {
+    let out = UI.shuffle(arr);
+    for (let t = 0; t < 20 && arr.length > 1 && isSolved(out); t++) out = UI.shuffle(arr);
+    return out;
+  }
+
   function renderMatch(area, q) {
     const lefts = q.pairs.map((p, i) => ({ text: p.left, i }));
-    const rights = UI.shuffle(q.pairs.map((p, i) => ({ text: p.right, i })));
+    // Si cada pareja quedara justo enfrente de su concepto, el ejercicio saldría resuelto
+    const rights = shuffleUnsolved(q.pairs.map((p, i) => ({ text: p.right, i })), (a) => a.every((r, k) => r.i === k));
     area.innerHTML = `
-      <p class="match-help">Elige izquierda y luego su pareja a la derecha.</p>
+      <p class="match-help">Toca un concepto y luego su pareja (o al revés).</p>
       <div class="match-board">
-        <div class="match-col">${lefts.map((l) =>
-          `<button type="button" class="match-item" data-side="left" data-i="${l.i}">${UI.escapeHtml(l.text)}</button>`
+        <div class="match-col" role="group" aria-labelledby="match-col-left">
+          <p class="match-col-title" id="match-col-left">Concepto</p>${lefts.map((l) =>
+          `<button type="button" class="match-item" data-side="left" data-i="${l.i}" aria-pressed="false">${UI.escapeHtml(l.text)}</button>`
         ).join("")}</div>
-        <div class="match-col">${rights.map((r) =>
-          `<button type="button" class="match-item" data-side="right" data-i="${r.i}">${UI.escapeHtml(r.text)}</button>`
+        <div class="match-col" role="group" aria-labelledby="match-col-right">
+          <p class="match-col-title" id="match-col-right">Pareja</p>${rights.map((r) =>
+          `<button type="button" class="match-item" data-side="right" data-i="${r.i}" aria-pressed="false">${UI.escapeHtml(r.text)}</button>`
         ).join("")}</div>
       </div>
-      <div class="match-links" id="match-links"></div>`;
-    let pending = null;
+      <div class="match-links" id="match-links" aria-live="polite"></div>`;
     area.querySelectorAll(".match-item").forEach((btn) => {
       btn.addEventListener("click", (ev) => {
         if (state.answered || tooSoon(ev)) return;
         TechAudio.playClick();
         const side = btn.dataset.side;
         const i = +btn.dataset.i;
-        if (side === "left") {
-          area.querySelectorAll('[data-side="left"]').forEach((b) => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          pending = i;
-        } else if (pending != null) {
+        const pend = state.matchPending;
+        if (pend && pend.side !== side) {
+          // Se puede empezar por cualquiera de las dos columnas
+          const l = side === "left" ? i : pend.i;
+          const r = side === "right" ? i : pend.i;
           Object.keys(state.matchSelections).forEach((k) => {
-            if (state.matchSelections[k] === i || +k === pending) delete state.matchSelections[k];
+            if (state.matchSelections[k] === r || +k === l) delete state.matchSelections[k];
           });
-          state.matchSelections[pending] = i;
-          pending = null;
-          area.querySelectorAll(".match-item").forEach((b) => b.classList.remove("selected"));
-          paintMatch();
+          state.matchSelections[l] = r;
+          state.matchPending = null;
+        } else {
+          state.matchPending = { side, i };
         }
+        paintMatch();
       });
     });
   }
@@ -699,6 +725,7 @@
         `<span class="match-chip">${UI.escapeHtml(q.pairs[+l].left)} ↔ ${UI.escapeHtml(q.pairs[r].right)}</span>`
       )
       .join("");
+    const pend = state.matchPending;
     UI.$all(".match-item").forEach((btn) => {
       const side = btn.dataset.side;
       const i = +btn.dataset.i;
@@ -706,12 +733,18 @@
         side === "left"
           ? state.matchSelections[i] != null
           : Object.values(state.matchSelections).includes(i);
+      const selected = !!pend && pend.side === side && pend.i === i;
       btn.classList.toggle("paired", paired);
+      btn.classList.toggle("selected", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
     });
   }
 
   function renderOrder(area, q) {
-    state.orderItems = UI.shuffle(q.items.map((text, orig) => ({ text, orig })));
+    state.orderItems = shuffleUnsolved(
+      q.items.map((text, orig) => ({ text, orig })),
+      (a) => a.every((x, i) => x.orig === q.answer[i])
+    );
     const list = document.createElement("ul");
     list.className = "order-list";
     list.id = "order-list";
@@ -756,21 +789,20 @@
   }
 
   function useHint() {
-    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice) return;
+    const q = currentQ();
+    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice || q.type === "tf") return;
     TechAudio.playClick();
     state.hintsLeft--;
     state.hintsUsedRun++;
     state.hintUsedThisQ = true;
-    // La pista cuesta pointsHintPenalty una sola vez: lo que no alcance a cubrir el marcador se descuenta al acertar
-    const paidNow = Math.min(state.score, GAME_CONFIG.pointsHintPenalty);
-    state.score -= paidNow;
-    state.hintDebt = GAME_CONFIG.pointsHintPenalty - paidNow;
+    // El coste se cobra al resolver la pregunta (finishRound), así siempre es el mismo y se ve en el resultado
+    state.hintCost = GAME_CONFIG.pointsHintPenalty;
     Progress.recordHint();
     UI.updateHUD(hud());
+    // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan
     const hintBtn = UI.$("#btn-hint");
-    if (hintBtn) hintBtn.disabled = state.hintsLeft <= 0;
+    if (hintBtn) hintBtn.disabled = true;
 
-    const q = currentQ();
     const box = UI.$("#hint-box");
     box.hidden = false;
     let tip = "Pista activa.";
@@ -784,8 +816,6 @@
         btn.disabled = true;
         btn.classList.add("eliminated");
       }
-    } else if (q.type === "tf") {
-      tip = "Pista: revisa la definición estándar del concepto.";
     } else if (q.type === "fill") {
       // Revela como mucho la mitad: con respuestas cortas (p. ej. "53", "DNS") no regala la respuesta
       const ans = String(q.answer);
@@ -799,11 +829,12 @@
         if (state.matchSelections[k] === 0) delete state.matchSelections[k];
       });
       state.matchSelections[0] = 0;
+      state.matchPending = null;
       paintMatch();
     } else if (q.type === "order") {
       tip = "Pista: el primero es «" + q.items[q.answer[0]] + "».";
     }
-    box.textContent = tip;
+    box.textContent = tip + " (−" + state.hintCost + " pts)";
   }
 
   function submitAnswer() {
@@ -908,6 +939,7 @@
       state.missed.push({ q: q.q, correct: correctText });
     }
     let gained = 0;
+    let hintPaid = 0;
 
     if (ok) {
       TechAudio.playCorrect();
@@ -920,7 +952,8 @@
         (state.streak > 1 ? GAME_CONFIG.pointsStreakBonus * (state.streak - 1) : 0);
       if (state.mode === "boss") gained = Math.round(gained * 1.5);
       if (state.timed && state.timeLeft > 0) gained += Math.min(50, state.timeLeft * 2);
-      gained = Math.max(0, gained - state.hintDebt);
+      hintPaid = Math.min(gained, state.hintCost);
+      gained -= hintPaid;
       state.score += gained;
       if (state.streak >= 5) grant("streak5");
       if (state.streak >= 10) grant("streak10");
@@ -929,13 +962,18 @@
       state.streak = 0;
       state.wrongCount++;
       if (!state.practice) state.lives--;
+      // Al fallar, la pista se cobra de lo que haya en el marcador (nunca queda negativo)
+      hintPaid = Math.min(state.score, state.hintCost);
+      state.score -= hintPaid;
     }
 
     UI.updateHUD(hud());
-    showFeedback(ok, gained, correctText, q.explain, timedOut);
+    showFeedback(ok, gained, correctText, q.explain, timedOut, hintPaid);
   }
 
-  function showFeedback(ok, gained, correctText, explain, timedOut) {
+  function showFeedback(ok, gained, correctText, explain, timedOut, hintPaid) {
+    state.feedbackAt = performance.now();
+    state.feedbackTimedOut = !!timedOut;
     UI.showScreen("screen-feedback");
     UI.flashFeedback(ok);
     UI.$("#feedback-icon").textContent = ok ? "✅" : timedOut ? "⏰" : "❌";
@@ -943,17 +981,23 @@
     if (ok) {
       title.textContent = "¡Correcto!";
       title.className = "ok";
-      UI.setText("#feedback-detail", "+" + gained + " pts" + (state.streak > 1 ? " · Racha x" + state.streak : ""));
+      UI.setText(
+        "#feedback-detail",
+        "+" + gained + " pts" + (hintPaid ? " (pista −" + hintPaid + ")" : "") +
+          (state.streak > 1 ? " · Racha x" + state.streak : "")
+      );
     } else {
       title.textContent = timedOut ? "¡Tiempo agotado!" : "Incorrecto";
       title.className = "bad";
       UI.setText(
         "#feedback-detail",
-        "Respuesta: " + correctText + (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
+        "Respuesta: " + correctText + (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives)) +
+          (hintPaid ? " · Pista −" + hintPaid + " pts" : "")
       );
     }
     UI.setText("#feedback-explain", explain || "");
     showPendingAchievements("#feedback-ach");
+    UI.announce(title.textContent + ". " + UI.$("#feedback-detail").textContent);
     UI.$("#btn-next-feedback")?.focus();
   }
 

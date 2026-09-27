@@ -12,7 +12,7 @@
   <div class="app">
     <header class="topbar">
       <div class="logo">TECH <span>QUEST</span></div>
-      <button type="button" class="btn btn-ghost" id="btn-mute" data-action="mute" aria-pressed="false" title="Silenciar">🔊 Sonido</button>
+      <button type="button" class="btn btn-ghost" id="btn-mute" data-action="mute" aria-pressed="false" aria-label="Silenciar" title="Silenciar (M)">🔊 Sonido</button>
     </header>
 
     <!-- MENÚ -->
@@ -56,6 +56,7 @@
           <li><strong>Boss:</strong> incidente difícil cronometrado por mundo (tras desbloquearlo).</li>
           <li><strong>Repasar errores:</strong> practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista.</li>
           <li>Tipos: opción múltiple, V/F, completar comando, emparejar, ordenar, escenarios.</li>
+          <li><strong>Pistas:</strong> 2 por partida (1 en Boss), una por pregunta; cuestan 30 pts al resolver la pregunta. No hay pista en V/F.</li>
           <li>Controles: clic/táctil; <kbd>1</kbd>–<kbd>4</kbd>; <kbd>V</kbd>/<kbd>F</kbd>; <kbd>Enter</kbd>; <kbd>H</kbd> pista; <kbd>M</kbd> silencio; <kbd>Esc</kbd> salir.</li>
           <li>Progreso, récord y logros se guardan en este navegador (localStorage).</li>
         </ul>
@@ -101,7 +102,7 @@
       </div>
       <div class="panel">
         <div class="question-meta"><span class="badge" id="question-type">—</span></div>
-        <p id="question-text">Pregunta</p>
+        <p id="question-text" tabindex="-1">Pregunta</p>
         <div id="hint-box" class="hint-box" hidden></div>
         <div id="challenge-area" class="challenge-area"></div>
         <div class="play-actions">
@@ -116,7 +117,7 @@
     <section id="screen-feedback" class="screen" aria-label="Resultado">
       <div class="panel feedback-center">
         <span id="feedback-icon" aria-hidden="true">✅</span>
-        <div role="status" aria-live="polite" aria-atomic="true">
+        <div>
           <h2 id="feedback-title">¡Correcto!</h2>
           <p id="feedback-detail"></p>
         </div>
@@ -169,6 +170,8 @@
 
     <p class="footer-note">Tech Quest · Offline · Web Audio API · Sin dependencias</p>
   </div>
+
+  <div id="sr-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/data.js"></script>
   <script src="js/content-expand.js"></script>

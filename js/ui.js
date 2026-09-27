@@ -6,15 +6,38 @@ const UI = (() => {
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
 
   function showScreen(id) {
+    let target = null;
     $all(".screen").forEach((el) => {
       const on = el.id === id;
       el.classList.toggle("active", on);
       if (on) {
+        target = el;
         el.classList.remove("screen-enter");
         void el.offsetWidth;
         el.classList.add("screen-enter");
       }
     });
+    // La pantalla nueva empieza arriba (si no, en móvil hereda el scroll de una lista larga)
+    window.scrollTo(0, 0);
+    // Si el foco quedó en una pantalla oculta, llévalo al título de la nueva para teclado y lector de pantalla
+    const a = document.activeElement;
+    if (target && (!a || a === document.body || !target.contains(a))) {
+      const h = target.querySelector("h1, h2");
+      if (h) {
+        if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+        h.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  /** Anuncia un texto a lectores de pantalla mediante la región viva persistente #sr-status. */
+  function announce(text) {
+    const el = $("#sr-status");
+    if (!el) return;
+    el.textContent = "";
+    clearTimeout(el._t);
+    // Vaciar y rellenar en otro turno hace que el lector lo lea aunque el texto se repita
+    el._t = setTimeout(() => { el.textContent = text; }, 60);
   }
 
   function setText(sel, text) {
@@ -50,7 +73,10 @@ const UI = (() => {
     if (!btn) return;
     const m = TechAudio.isMuted();
     btn.textContent = m ? "🔇 Silencio" : "🔊 Sonido";
+    // Nombre accesible fijo + aria-pressed: "Silenciar, pulsado" = sin sonido
+    btn.setAttribute("aria-label", "Silenciar");
     btn.setAttribute("aria-pressed", m ? "true" : "false");
+    btn.title = m ? "Activar sonido (M)" : "Silenciar (M)";
   }
 
   function updateHUD(st) {
@@ -109,10 +135,13 @@ const UI = (() => {
       el = document.createElement("div");
       el.id = "tq-toast";
       el.className = "tq-toast";
+      // Lo visual no se lee: el aviso va por la región viva #sr-status
+      el.setAttribute("aria-hidden", "true");
       document.body.appendChild(el);
     }
     el.textContent = msg;
     el.classList.add("show");
+    announce(msg);
     clearTimeout(el._t);
     el._t = setTimeout(() => el.classList.remove("show"), 2800);
   }
@@ -127,6 +156,6 @@ const UI = (() => {
 
   return {
     $, $all, showScreen, setText, setHTML, escapeHtml, shuffle,
-    updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback
+    updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback, announce
   };
 })();

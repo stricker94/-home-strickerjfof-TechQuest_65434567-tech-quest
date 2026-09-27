@@ -655,6 +655,7 @@ kbd {
 .tf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .match-board { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .match-col { display: flex; flex-direction: column; gap: 0.4rem; }
+.match-col-title { margin: 0; font-size: 0.75rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .match-item { text-align: left; padding: 0.65rem 0.75rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; cursor: pointer; }
 .match-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .match-item.paired { border-color: var(--accent2); background: rgba(0,170,255,0.1); }
@@ -694,8 +695,10 @@ kbd {
 @keyframes flashOk { from { box-shadow: 0 0 0 0 rgba(0,255,136,0.5); } to { box-shadow: 0 0 24px 4px rgba(0,255,136,0.15); } }
 @keyframes flashBad { from { box-shadow: 0 0 0 0 rgba(255,85,119,0.5); } to { box-shadow: 0 0 24px 4px rgba(255,85,119,0.15); } }
 
-.tq-toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #122; color: var(--accent); border: 1px solid var(--accent); padding: 0.7rem 1.1rem; border-radius: 999px; z-index: 100; transition: transform 0.25s ease; font-family: var(--mono); font-size: 0.9rem; pointer-events: none; }
-.tq-toast.show { transform: translateX(-50%) translateY(0); }
+.tq-toast { position: fixed; left: 50%; bottom: 1.5rem; width: max-content; max-width: calc(100vw - 2rem); text-align: center; transform: translateX(-50%) translateY(calc(100% + 2rem)); opacity: 0; visibility: hidden; background: #122; color: var(--accent); border: 1px solid var(--accent); padding: 0.7rem 1.1rem; border-radius: 14px; z-index: 100; transition: transform 0.25s ease, opacity 0.25s ease, visibility 0s linear 0.25s; font-family: var(--mono); font-size: 0.9rem; pointer-events: none; }
+.tq-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; transition: transform 0.25s ease, opacity 0.25s ease; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#question-text:focus, .screen-title:focus, [tabindex="-1"]:focus { outline: none; }
 
 .option-btn.eliminated { opacity: 0.35; text-decoration: line-through; }
 .option-btn.correct { border-color: var(--ok); background: rgba(0,255,136,0.12); }
