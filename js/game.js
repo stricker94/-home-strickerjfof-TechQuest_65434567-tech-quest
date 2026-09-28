@@ -38,8 +38,8 @@
   let selectedWorldForLevels = null;
   // Cómo llegó el foco al elemento actual: "pointer" (clic/toque) o "keyboard" (Tab)
   let navMode = "pointer";
-  // Tiempo mínimo tras mostrar una pregunta antes de aceptar clics de respuesta (evita que el
-  // segundo clic de un doble clic en "Continuar" o en un nivel responda la pregunta nueva)
+  // Tiempo mínimo tras mostrar una pregunta (o un resultado) antes de aceptar clics: evita que el segundo
+  // clic de un doble clic responda la pregunta nueva o pulse "Continuar" sin haber visto el resultado
   const ANSWER_CLICK_GUARD_MS = 350;
   // Tras "¡Tiempo agotado!" se ignoran Enter y los atajos un momento: el jugador quizá seguía escribiendo
   const TIMEOUT_KEY_GUARD_MS = 1000;
@@ -62,7 +62,7 @@
     document.body.addEventListener("click", (e) => {
       const t = e.target.closest("[data-action]");
       if (!t) return;
-      onAction(t.getAttribute("data-action"), t);
+      onAction(t.getAttribute("data-action"), t, e);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -134,7 +134,7 @@
     });
   }
 
-  function onAction(action, el) {
+  function onAction(action, el, ev) {
     switch (action) {
       case "mute":
         TechAudio.toggleMute();
@@ -244,6 +244,9 @@
         submitAnswer();
         break;
       case "next":
+        // El segundo clic/toque de un doble clic en una opción cae sobre "Continuar": sin esta guarda
+        // se saltaría el resultado sin verlo
+        if (ev && ev.detail > 0 && performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) break;
         TechAudio.playClick();
         advance();
         break;
