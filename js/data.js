@@ -399,18 +399,27 @@ const WORLDS = [
           "inyección de tinta",
           "inyeccion de tinta",
           "de inyección de tinta",
+          "de inyeccion de tinta",
+          "impresora de inyección de tinta",
+          "impresora de inyeccion de tinta",
           "inyección",
           "inyeccion",
-          "inkjet"
+          "chorro de tinta",
+          "de chorro de tinta",
+          "impresora de chorro de tinta",
+          "inkjet",
+          "ink jet",
+          "ink-jet",
+          "impresora inkjet"
         ],
-        explain: "Las de inyección de tinta (inkjet) usan tinta líquida; las láser usan tóner en polvo y un tambor."
+        explain: "Las de inyección (o chorro) de tinta, inkjet, usan tinta líquida; las láser usan tóner en polvo y un tambor."
       },
       {
         id: "pr08",
         type: "mc",
         q: "Trabajos atascados en la cola. Acción frecuente:",
         options: [
-          "Borrar trabajos, reiniciar Spooler y vaciar System32\\spool\\PRINTERS",
+          "Detener Spooler, vaciar System32\\spool\\PRINTERS e iniciarlo de nuevo",
           "Ejecutar chkdsk /f en C: y desfragmentar la carpeta System32",
           "Renovar la IP con ipconfig /renew y vaciar la caché DNS del PC",
           "Reiniciar Windows Update y vaciar C:\\Windows\\SoftwareDistribution"
@@ -507,8 +516,8 @@ const WORLDS = [
         options: [
           "Switch: capa 2 LAN; Router: enruta entre redes (capa 3)",
           "Switch: repite bits a todos los puertos (capa 1); Router: capa 2",
-          "Switch: asigna IPs por DHCP; Router: solo extiende la señal Wi‑Fi",
-          "Switch: traduce nombres (DNS); Router: conmuta tramas por MAC"
+          "Switch: almacena archivos compartidos de la red; Router: solo extiende la señal Wi‑Fi",
+          "Switch: cachea páginas web; Router: solo conecta equipos dentro de la misma LAN"
         ],
         answer: 0,
         explain: "El switch conecta hosts en la misma red; el router conecta redes distintas y suele hacer NAT."

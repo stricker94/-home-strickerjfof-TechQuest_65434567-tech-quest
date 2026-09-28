@@ -498,7 +498,7 @@
     "id": "prL4a",
     "level": 4,
     "type": "mc",
-    "q": "Un print server centralizado tipicamente…",
+    "q": "Un print server centralizado típicamente…",
     "options": [
       "Hospeda colas compartidas y drivers para muchos clientes",
       "Solo imprime PDFs locales, sin compartir por la red",
@@ -568,7 +568,7 @@
     "pairs": [
       {
         "left": "PCL",
-        "right": "Lenguaje común HP-ish"
+        "right": "Lenguaje de control de impresora creado por HP"
       },
       {
         "left": "PostScript",
@@ -576,7 +576,7 @@
       },
       {
         "left": "Driver Type 4",
-        "right": "V4 print driver modelo moderno Windows"
+        "right": "Modelo de controlador moderno de Windows (desde Windows 8)"
       },
       {
         "left": "Spooler",
@@ -610,13 +610,13 @@
     "type": "tf",
     "q": "Una impresora que aparece 'offline' en el cliente siempre está apagada.",
     "answer": false,
-    "explain": "Falso: 'offline' en el cliente puede deberse al estado SNMP, a un puerto TCP/IP incorrecto o a una cola pausada. Revisa eso antes de ir al equipo."
+    "explain": "Falso: 'offline' en el cliente puede deberse al estado SNMP, a un puerto TCP/IP incorrecto, a fallos de red o a 'Usar impresora sin conexión' activado. Revisa eso antes de ir al equipo."
   },
   {
     "id": "prL4i",
     "level": 4,
     "type": "mc",
-    "q": "¿Qué es una impresora \"universal driver\"?",
+    "q": "¿Qué es un \"universal driver\" de impresora?",
     "options": [
       "Driver que cubre muchas series reduciendo paquetes",
       "Firmware único que se instala en impresoras de cualquier marca",
@@ -660,7 +660,7 @@
     "type": "scenario",
     "q": "Empresa quiere pull-print / follow-me printing. Beneficio:",
     "options": [
-      "Se libera en el equipo tras autenticarse; menos documentos olvidados",
+      "Se libera en la impresora tras autenticarse; menos hojas olvidadas",
       "Imprime de inmediato en la impresora más cercana, sin autenticar",
       "Elimina la necesidad de drivers y de print server en la empresa",
       "Permite imprimir sin red usando USB en cada puesto"
@@ -1655,7 +1655,7 @@
     "id": "secL5a",
     "level": 5,
     "type": "mc",
-    "q": "La cadena supply-chain attack compromete…",
+    "q": "Un ataque a la cadena de suministro (supply-chain attack) compromete…",
     "options": [
       "Dependencias/proveedores para llegar a ti",
       "Tu contraseña probando combinaciones por fuerza bruta",
@@ -1677,7 +1677,7 @@
       "Pasar un antivirus completo y esperar su resultado"
     ],
     "answer": 0,
-    "explain": "Preserva volatilidad si forense lo pide."
+    "explain": "Preserva la evidencia volátil (RAM, conexiones) si forense lo pide: reiniciar el host la destruye."
   },
   {
     "id": "secL5c",
@@ -2066,12 +2066,12 @@
       "q": "Un beneficio común de la nube es…",
       "options": [
         "Escalar recursos según demanda",
-        "Que siempre cuesta menos que on-premise",
+        "Que funciona sin conexión a Internet",
         "Que la seguridad es solo del proveedor",
         "Que ya no hacen falta backups"
       ],
       "answer": 0,
-      "explain": "Elasticidad; aún pagas y aseguras."
+      "explain": "Elasticidad: escalas según la demanda. Aún pagas, aseguras tus datos y haces backups."
     },
     {
       "id": "cl08",
@@ -2130,7 +2130,7 @@
       "id": "cl13",
       "level": 2,
       "type": "mc",
-      "q": "Un snapshot/AMI tipicamente sirve para…",
+      "q": "Un snapshot/AMI típicamente sirve para…",
       "options": [
         "Capturar estado de disco/VM para backup o clon",
         "Balancear tráfico entre varias VMs de la misma zona",
@@ -2917,9 +2917,9 @@
       "id": "db23",
       "level": 3,
       "type": "tf",
-      "q": "En una transacción ACID, si falla un paso se confirman igualmente los pasos que sí funcionaron.",
+      "q": "Si el servidor se cae en plena transacción ACID (sin COMMIT), al reiniciar se conservan los pasos que ya se habían ejecutado.",
       "answer": false,
-      "explain": "Falso: por la atomicidad (la A de ACID), o se confirma todo o se revierte todo."
+      "explain": "Falso: por la atomicidad (la A de ACID), una transacción sin COMMIT se revierte completa al recuperar el motor: o se confirma todo o no se confirma nada."
     },
     {
       "id": "db24",
@@ -2998,7 +2998,7 @@
       "id": "db30",
       "level": 4,
       "type": "match",
-      "q": "Empareja la tarea de mantenimiento de BD con su propósito:",
+      "q": "Empareja el concepto de operación de BD con su propósito:",
       "pairs": [
         {
           "left": "VACUUM (PG idea)",

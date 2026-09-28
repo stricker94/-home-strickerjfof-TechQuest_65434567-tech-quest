@@ -70,7 +70,7 @@ Luego abre <http://localhost:8000> en el navegador y detén el servidor con `Ctr
 | Elegir opción | Clic o toque, o teclas `1`–`4` |
 | Verdadero / Falso | `V` / `F` |
 | Comprobar (completar, emparejar, ordenar) | Botón **Comprobar** o `Enter` |
-| Emparejar | Toca un concepto y luego su pareja (o al revés) |
+| Emparejar | Toca un concepto y luego su pareja (o al revés); toca otra vez un ítem marcado para soltarlo |
 | Ordenar | Botones ▲ ▼ (arriba = primero) |
 | Pista | Botón **Pista** o `H` |
 | Silenciar | Botón de sonido o `M` |

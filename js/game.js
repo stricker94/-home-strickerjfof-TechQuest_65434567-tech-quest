@@ -98,6 +98,10 @@
           const pointerOnItem = navMode === "pointer" && focusedBtn && focusedBtn.closest(".match-board, #order-list");
           if (focusedBtn && focusedBtn.id !== "btn-submit" && !pointerOnItem) return;
           e.preventDefault();
+          // Un segundo Enter justo tras "Continuar" o un nivel no debe enviar el puzzle que acaba de aparecer
+          // (en "completar" no hace falta: el campo vacío no se envía)
+          const t = currentQ()?.type;
+          if ((t === "order" || t === "match") && performance.now() - state.shownAt < ANSWER_CLICK_GUARD_MS) return;
           submitAnswer();
         } else if (fbOn) {
           // Otro botón elegido con Tab (p. ej. Sonido) conserva su Enter nativo
@@ -581,6 +585,7 @@
       hintBtn.hidden = state.practice;
       // En Verdadero/Falso no hay pista útil que no regale la respuesta
       hintBtn.disabled = state.hintsLeft <= 0 || q.type === "tf";
+      hintBtn.removeAttribute("aria-disabled");
       hintBtn.title = q.type === "tf" ? "Sin pista en Verdadero / Falso" : "";
     }
     if (submitBtn) submitBtn.disabled = false;
@@ -692,7 +697,7 @@
           `<button type="button" class="match-item" data-side="right" data-i="${r.i}" aria-pressed="false">${UI.escapeHtml(r.text)}</button>`
         ).join("")}</div>
       </div>
-      <div class="match-links" id="match-links" aria-live="polite"></div>`;
+      <div class="match-links" id="match-links"></div>`;
     area.querySelectorAll(".match-item").forEach((btn) => {
       btn.addEventListener("click", (ev) => {
         if (state.answered || tooSoon(ev)) return;
@@ -708,6 +713,10 @@
             if (state.matchSelections[k] === r || +k === l) delete state.matchSelections[k];
           });
           state.matchSelections[l] = r;
+          state.matchPending = null;
+          UI.announce("Emparejado: " + q.pairs[l].left + " con " + q.pairs[r].right, true);
+        } else if (pend && pend.i === i) {
+          // Volver a tocar el ítem pendiente lo suelta
           state.matchPending = null;
         } else {
           state.matchPending = { side, i };
@@ -729,14 +738,20 @@
     UI.$all(".match-item").forEach((btn) => {
       const side = btn.dataset.side;
       const i = +btn.dataset.i;
-      const paired =
-        side === "left"
-          ? state.matchSelections[i] != null
-          : Object.values(state.matchSelections).includes(i);
+      let partner = null;
+      if (side === "left") {
+        if (state.matchSelections[i] != null) partner = q.pairs[state.matchSelections[i]].right;
+      } else {
+        const l = Object.keys(state.matchSelections).find((k) => state.matchSelections[k] === i);
+        if (l != null) partner = q.pairs[+l].left;
+      }
       const selected = !!pend && pend.side === side && pend.i === i;
-      btn.classList.toggle("paired", paired);
+      btn.classList.toggle("paired", partner != null);
       btn.classList.toggle("selected", selected);
       btn.setAttribute("aria-pressed", selected ? "true" : "false");
+      // El lector de pantalla también dice con qué quedó emparejado (el color solo no basta)
+      if (partner != null) btn.setAttribute("aria-label", btn.textContent + ", emparejado con " + partner);
+      else btn.removeAttribute("aria-label");
     });
   }
 
@@ -758,8 +773,8 @@
           <span class="order-num">${idx + 1}</span>
           <span class="order-text">${UI.escapeHtml(item.text)}</span>
           <span class="order-controls">
-            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir: ${UI.escapeHtml(item.text)}" ${idx === 0 ? "disabled" : ""}>▲</button>
-            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar: ${UI.escapeHtml(item.text)}" ${idx === state.orderItems.length - 1 ? "disabled" : ""}>▼</button>
+            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir: ${UI.escapeHtml(item.text)}" ${idx === 0 ? 'aria-disabled="true"' : ""}>▲</button>
+            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar: ${UI.escapeHtml(item.text)}" ${idx === state.orderItems.length - 1 ? 'aria-disabled="true"' : ""}>▼</button>
           </span>`;
         list.appendChild(li);
       });
@@ -770,16 +785,16 @@
           const dir = +btn.dataset.dir;
           const idx = +btn.dataset.idx;
           const j = idx + dir;
+          // Las flechas de los extremos no se desactivan de verdad (el foco se perdería): solo no hacen nada
           if (j < 0 || j >= state.orderItems.length) return;
           const tmp = state.orderItems[idx];
           state.orderItems[idx] = state.orderItems[j];
           state.orderItems[j] = tmp;
           paint();
-          // paint() reconstruye los botones: devuelve el foco al ítem movido para no perder el lugar con teclado
-          const next =
-            list.querySelector(`[data-dir="${dir}"][data-idx="${j}"]:not([disabled])`) ||
-            list.querySelector(`[data-idx="${j}"]:not([disabled])`);
-          if (next) next.focus();
+          // paint() reconstruye los botones: el foco vuelve a la misma flecha del ítem movido, así con teclado
+          // se puede seguir pulsando en la misma dirección
+          list.querySelector(`[data-dir="${dir}"][data-idx="${j}"]`)?.focus();
+          UI.announce("«" + tmp.text + "» ahora en la posición " + (j + 1) + " de " + state.orderItems.length, true);
         });
       });
     }
@@ -799,9 +814,11 @@
     state.hintCost = GAME_CONFIG.pointsHintPenalty;
     Progress.recordHint();
     UI.updateHUD(hud());
-    // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan
+    // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan. Se marca con
+    // aria-disabled en vez de disabled para que, si tenía el foco, no caiga a <body> (y un segundo
+    // Enter no envíe la respuesta a medias)
     const hintBtn = UI.$("#btn-hint");
-    if (hintBtn) hintBtn.disabled = true;
+    if (hintBtn) hintBtn.setAttribute("aria-disabled", "true");
 
     const box = UI.$("#hint-box");
     box.hidden = false;
@@ -813,6 +830,7 @@
       tip = "Pista: elimina «" + q.options[elim] + "».";
       const btn = document.querySelector(`#options .option-btn[data-index="${elim}"]`);
       if (btn) {
+        if (btn === document.activeElement) UI.$("#question-text")?.focus({ preventScroll: true });
         btn.disabled = true;
         btn.classList.add("eliminated");
       }
@@ -835,6 +853,7 @@
       tip = "Pista: el primero es «" + q.items[q.answer[0]] + "».";
     }
     box.textContent = tip + " (−" + state.hintCost + " pts)";
+    UI.announce(box.textContent, true);
   }
 
   function submitAnswer() {
@@ -997,8 +1016,16 @@
     }
     UI.setText("#feedback-explain", explain || "");
     showPendingAchievements("#feedback-ach");
-    UI.announce(title.textContent + ". " + UI.$("#feedback-detail").textContent);
-    UI.$("#btn-next-feedback")?.focus();
+    // Un solo aviso con el resultado y los logros de esta pregunta (sustituye al del toast del logro)
+    const ach = UI.$("#feedback-ach");
+    const t = title.textContent;
+    UI.announce(
+      t + (/[!?.]$/.test(t) ? " " : ". ") + UI.$("#feedback-detail").textContent +
+        (ach && !ach.hidden ? ". " + ach.textContent : ""),
+      true
+    );
+    // preventScroll: en pantallas pequeñas el título y la respuesta deben seguir visibles arriba
+    UI.$("#btn-next-feedback")?.focus({ preventScroll: true });
   }
 
   /** Muestra (y vacía) los logros obtenidos desde la última vez; los toasts solo dejan ver el último. */

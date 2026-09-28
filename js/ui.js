@@ -30,14 +30,25 @@ const UI = (() => {
     }
   }
 
-  /** Anuncia un texto a lectores de pantalla mediante la región viva persistente #sr-status. */
-  function announce(text) {
+  /**
+   * Anuncia un texto a lectores de pantalla mediante la región viva persistente #sr-status.
+   * Los avisos que llegan casi a la vez (p. ej. varios logros) se leen juntos; con replace solo el último.
+   */
+  function announce(text, replace) {
     const el = $("#sr-status");
-    if (!el) return;
+    if (!el || !text) return;
+    const prev = !replace && el._q ? el._q : "";
+    el._q = prev ? prev + (/[.!?…]$/.test(prev) ? " " : ". ") + text : text;
     el.textContent = "";
     clearTimeout(el._t);
+    clearTimeout(el._c);
     // Vaciar y rellenar en otro turno hace que el lector lo lea aunque el texto se repita
-    el._t = setTimeout(() => { el.textContent = text; }, 60);
+    el._t = setTimeout(() => {
+      el.textContent = el._q;
+      el._q = "";
+      // Luego se vacía para que el aviso viejo no aparezca al recorrer otras pantallas
+      el._c = setTimeout(() => { el.textContent = ""; }, 7000);
+    }, 60);
   }
 
   function setText(sel, text) {
@@ -72,10 +83,9 @@ const UI = (() => {
     const btn = $("#btn-mute");
     if (!btn) return;
     const m = TechAudio.isMuted();
-    btn.textContent = m ? "🔇 Silencio" : "🔊 Sonido";
-    // Nombre accesible fijo + aria-pressed: "Silenciar, pulsado" = sin sonido
-    btn.setAttribute("aria-label", "Silenciar");
-    btn.setAttribute("aria-pressed", m ? "true" : "false");
+    // Interruptor con nombre fijo igual al texto visible ("Sonido") y aria-pressed = sonido activado
+    btn.innerHTML = '<span aria-hidden="true">' + (m ? "🔇" : "🔊") + "</span> Sonido";
+    btn.setAttribute("aria-pressed", m ? "false" : "true");
     btn.title = m ? "Activar sonido (M)" : "Silenciar (M)";
   }
 
