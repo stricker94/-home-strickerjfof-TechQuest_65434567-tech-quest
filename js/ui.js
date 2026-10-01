@@ -23,6 +23,8 @@ const UI = (() => {
         el.classList.add("screen-enter");
       }
     });
+    // El margen para el HUD fijo de Cronómetro y Boss solo hace falta durante la pregunta
+    if (id !== "screen-play") document.documentElement.style.scrollPaddingTop = "";
     // La pantalla nueva empieza arriba (si no, en móvil hereda el scroll de una lista larga)
     window.scrollTo(0, 0);
     // Si el foco quedó en una pantalla oculta, llévalo al título de la nueva para teclado y lector de pantalla
@@ -133,6 +135,12 @@ const UI = (() => {
       if (w) label = w.icon + " " + w.name + (st.level ? " · Nv." + st.level : "");
     }
     setText("#hud-world", label);
+    // Con reloj, el HUD queda fijo arriba (CSS #screen-play.timed); el foco con Tab no debe quedar debajo de él
+    const play = $("#screen-play");
+    if (play) play.classList.toggle("timed", !!st.timed);
+    const hud = $("#screen-play .hud");
+    document.documentElement.style.scrollPaddingTop =
+      st.timed && hud && hud.offsetHeight ? hud.offsetHeight + 8 + "px" : "";
   }
 
   function getHighScore() {

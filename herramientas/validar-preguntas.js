@@ -15,6 +15,12 @@ const vm = require("vm");
 const RAIZ = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, "..");
 const ARCHIVOS = ["js/data.js", "js/content-expand.js", "js/levels-expand.js", "js/levels5-expand.js"];
 const TIPOS = ["mc", "identify", "scenario", "tf", "fill", "match", "order"];
+// Campos que el juego lee en cada tipo; cualquier otro lo ignora sin aviso (p. ej. "acepta" en vez de "accept")
+const CAMPOS_BASE = ["id", "level", "type", "q", "explain"];
+const CAMPOS = {
+  mc: ["options", "answer"], identify: ["options", "answer"], scenario: ["options", "answer"],
+  tf: ["answer"], fill: ["answer", "accept"], match: ["pairs"], order: ["items", "answer"],
+};
 
 const errores = [];
 const avisos = [];
@@ -88,14 +94,18 @@ const idsMundos = WORLDS.map((w) => w.id);
 
 // ——— 2. Preguntas escritas en los archivos que no llegan al juego ———
 const lineaDe = (src, pos) => src.slice(0, pos).split("\n").length;
-/** Copia del código con los comentarios cambiados por espacios (respeta textos entre comillas y saltos de línea). */
-function sinComentarios(src) {
+/**
+ * Copia del código con los comentarios cambiados por espacios (respeta textos entre comillas y saltos de línea).
+ * Si se pasa `dentro`, marca con 1 cada posición que está DENTRO de un texto entre comillas (no su comilla de apertura).
+ */
+function sinComentarios(src, dentro) {
   let out = "";
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (c === '"' || c === "'" || c === "`") {
       let j = i + 1;
       while (j < src.length && src[j] !== c && src[j] !== "\n") j += src[j] === "\\" ? 2 : 1;
+      if (dentro) dentro.fill(1, i + 1, Math.min(j + 1, src.length));
       out += src.slice(i, j + 1);
       i = j;
     } else if (c === "/" && src[i + 1] === "/") {
@@ -111,7 +121,19 @@ function sinComentarios(src) {
   return out;
 }
 const limpias = {};
-for (const rel of ARCHIVOS) limpias[rel] = sinComentarios(fuentes[rel]);
+const enTexto = {};
+for (const rel of ARCHIVOS) {
+  enTexto[rel] = new Uint8Array(fuentes[rel].length + 1);
+  limpias[rel] = sinComentarios(fuentes[rel], enTexto[rel]);
+}
+// Archivo guardado con otra codificación (ANSI/Windows-1252): cada acento o "¿" se lee como «\uFFFD» en el navegador
+for (const rel of ARCHIVOS) {
+  const lineas = [];
+  fuentes[rel].split("\n").forEach((l, k) => { if (l.includes("\uFFFD")) lineas.push(k + 1); });
+  if (lineas.length) {
+    errores.push(`${rel}, línea${lineas.length > 1 ? "s" : ""} ${lineas.slice(0, 8).join(", ")}${lineas.length > 8 ? ", …" : ""}: hay caracteres ilegibles (\uFFFD); el archivo no está guardado en UTF-8 y el juego mostraría "¿Qu\uFFFD…". Guárdalo con codificación UTF-8 y vuelve a escribir esos acentos`);
+  }
+}
 for (const rel of ARCHIVOS) {
   const src = limpias[rel];
   // add("mundo", [...]) o setBoss("mundo", [...]) con un mundo que no existe: sus preguntas se pierden sin aviso.
@@ -127,6 +149,8 @@ WORLDS.forEach((w) => (w.questions || []).concat(w.boss || []).forEach((q) => q 
 for (const rel of ARCHIVOS) {
   const perdidas = [];
   for (const m of limpias[rel].matchAll(/["']?\bid["']?\s*:\s*["']([^"']+)["']\s*,\s*["']?(?:level|type)\b/g)) {
+    // Un { id: '…', type: … } escrito dentro del enunciado o la explicación no es una pregunta
+    if (enTexto[rel][m.index]) continue;
     if (!enJuego.has(m[1])) perdidas.push(m[1]);
   }
   if (perdidas.length) {
@@ -135,14 +159,21 @@ for (const rel of ARCHIVOS) {
 }
 
 // ——— 3. Revisar cada pregunta ———
-// Igual que el juego (game.js): sin espacios de más y en minúsculas; los acentos cuentan
-const norm = (s) => String(s).trim().toLowerCase().replace(/\s+/g, " ");
+// Igual que el juego (game.js): sin espacios de más y en minúsculas; los acentos cuentan (en forma NFC)
+const norm = (s) => String(s).normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
 const txt = (v) => JSON.stringify(v);
 /** Posición (desde 1) del primer elemento vacío de una lista (",," o null), o 0 si no hay. */
 function hueco(lista) {
   for (let i = 0; i < lista.length; i++) {
     if (!(i in lista) || lista[i] == null || (typeof lista[i] === "string" && !lista[i].trim())) return i + 1;
   }
+  return 0;
+}
+/** true si el juego puede mostrarlo como texto: una cadena con algo escrito o un número (no objeto, lista ni true/false). */
+const esTexto = (v) => (typeof v === "string" && v.trim() !== "") || (typeof v === "number" && Number.isFinite(v));
+/** Posición (desde 1) del primer elemento que no es un texto, o 0 si todos lo son. */
+function noTexto(lista) {
+  for (let i = 0; i < lista.length; i++) if (!(i in lista) || !esTexto(lista[i])) return i + 1;
   return 0;
 }
 const idsVistos = Object.create(null);
@@ -198,11 +229,12 @@ for (const w of WORLDS) {
             err("options debe ser una lista de 2 a 4 textos (el juego usa las teclas 1–4)");
             break;
           }
-          const h = hueco(q.options);
+          const h = noTexto(q.options);
           if (h) {
-            err(`la opción ${h} está vacía (¿dos comas seguidas ",," o un null?)`);
+            err(`la opción ${h} está vacía o no es un texto entre comillas (¿dos comas seguidas ",,", un null, { } o [ ]?); vale ${txt(q.options[h - 1])}`);
             break;
           }
+          if (q.options.length < 3) aviso("solo 2 opciones: es un 50/50 y el juego no ofrece pista; mejor 4");
           if (!(Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length)) {
             err(`answer debe ser la posición (desde 0, sin comillas) de la opción correcta; vale ${txt(q.answer)}`);
           }
@@ -230,28 +262,30 @@ for (const w of WORLDS) {
           if (q.accept != null) {
             const acepta = typeof q.accept === "string" ? q.accept.split("|") : q.accept;
             if (!Array.isArray(acepta)) err("accept debe ser una lista de textos");
-            else if (hueco(acepta)) err(`accept: el elemento ${hueco(acepta)} está vacío (¿dos comas seguidas ",,"?)`);
+            else if (noTexto(acepta)) err(`accept: el elemento ${noTexto(acepta)} está vacío o no es un texto (¿dos comas seguidas ",," o una lista dentro de otra?); vale ${txt(acepta[noTexto(acepta) - 1])}`);
             else if (!acepta.map(norm).includes(norm(q.answer))) err("accept no incluye la respuesta (answer)");
           }
           break;
         }
         case "match":
-          if (!Array.isArray(q.pairs) || q.pairs.length < 2) {
-            err("pairs debe tener al menos 2 parejas { left, right }");
+          if (!Array.isArray(q.pairs) || q.pairs.length < 3) {
+            err("pairs debe tener al menos 3 parejas { left, right } (con 2, el juego siempre las muestra cruzadas y se adivinan)");
             break;
           }
           if (hueco(q.pairs) || q.pairs.some((p) => typeof p !== "object")) {
             err(`la pareja ${hueco(q.pairs) || 1 + q.pairs.findIndex((p) => typeof p !== "object")} está vacía o mal escrita (¿dos comas seguidas ",,"?)`);
-          } else if (q.pairs.some((p) => !p.left || !p.right)) err("cada pareja necesita left y right");
-          else {
+          } else if (q.pairs.some((p) => !esTexto(p.left) || !esTexto(p.right))) {
+            const k = q.pairs.findIndex((p) => !esTexto(p.left) || !esTexto(p.right));
+            err(`la pareja ${k + 1} necesita left y right, cada uno con un solo texto entre comillas (sin listas de alternativas); vale ${txt(q.pairs[k])}`);
+          } else {
             if (new Set(q.pairs.map((p) => norm(p.left))).size !== q.pairs.length) err("hay textos repetidos a la izquierda");
             if (new Set(q.pairs.map((p) => norm(p.right))).size !== q.pairs.length) err("hay textos repetidos a la derecha");
           }
           if (/^empareja:?$/i.test(String(q.q).trim())) aviso("enunciado genérico; di qué se empareja");
           break;
         case "order":
-          if (!Array.isArray(q.items) || q.items.length < 2) err("items debe tener al menos 2 pasos");
-          else if (hueco(q.items)) err(`el paso ${hueco(q.items)} está vacío (¿dos comas seguidas ",,"?)`);
+          if (!Array.isArray(q.items) || q.items.length < 3) err("items debe tener al menos 3 pasos (con 2, el juego siempre los muestra al revés y se adivinan)");
+          else if (noTexto(q.items)) err(`el paso ${noTexto(q.items)} está vacío o no es un texto entre comillas (¿dos comas seguidas ",,", un null, { } o [ ]?); vale ${txt(q.items[noTexto(q.items) - 1])}`);
           else if (!Array.isArray(q.answer) || q.answer.length !== q.items.length || hueco(q.answer) ||
             !q.answer.every(Number.isInteger) || [...q.answer].sort((a, b) => a - b).some((v, k) => v !== k)) {
             err(`answer debe listar cada posición de items una vez, sin comillas y en el orden correcto (p. ej. [0, 1, 2, 3]); vale ${txt(q.answer)}`);
@@ -259,6 +293,15 @@ for (const w of WORLDS) {
           break;
         default:
           err(`tipo desconocido: ${txt(q.type)} (usa ${TIPOS.join(", ")}, sin espacios)`);
+      }
+      if (TIPOS.includes(q.type)) { // con tipo desconocido ya hay error; no se listan todos sus campos
+        const extra = Object.keys(q).filter((k) => !CAMPOS_BASE.includes(k) && !CAMPOS[q.type].includes(k));
+        if (extra.length) {
+          const msg = `campo que el juego no usa en "${q.type}": ${extra.join(", ")} (¿mal escrito? los válidos son ${CAMPOS_BASE.concat(CAMPOS[q.type]).join(", ")})`;
+          // En completar sin "accept", las respuestas alternativas mal escritas se calificarían como Incorrecto
+          if (q.type === "fill" && q.accept == null) err(msg + '; las respuestas alternativas van en "accept"');
+          else aviso(msg);
+        }
       }
     }
   }
@@ -285,6 +328,8 @@ console.log(`\n${total} preguntas en ${WORLDS.length} mundos.`);
 if (avisos.length) console.log(`\nAVISOS (${avisos.length}):\n  ` + avisos.join("\n  "));
 if (errores.length) {
   console.log(`\nERRORES (${errores.length}):\n  ` + errores.join("\n  "));
-  process.exit(1);
+  // Sin process.exit(): con la salida en una tubería (| more) se cortaría pasados ~64 KB
+  process.exitCode = 1;
+} else {
+  console.log("\nSin errores: el juego puede calificar todas las preguntas.");
 }
-console.log("\nSin errores: el juego puede calificar todas las preguntas.");

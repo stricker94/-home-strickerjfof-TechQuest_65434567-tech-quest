@@ -18,6 +18,8 @@ const GAME_CONFIG = {
   storageLevels: "techQuestLevelClears",
   levelsPerWorld: 5,
   marathonCount: 20,
+  // Repasar errores juega como mucho esta cantidad por partida (al azar entre los pendientes)
+  reviewMaxQuestions: 20,
   timerSeconds: 25,
   timerMaxQuestions: 12,
   bossTimerSeconds: 20,

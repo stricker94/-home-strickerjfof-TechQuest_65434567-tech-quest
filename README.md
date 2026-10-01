@@ -44,7 +44,7 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 - **Maratón** — 20 preguntas mezcladas de todos los mundos (sin las de Boss); 3 vidas
 - **Cronómetro** — hasta 12 preguntas del nivel elegido, 25 s por pregunta; 3 vidas
 - **Boss** — desafío difícil por mundo, 20 s por pregunta y 3 vidas (requiere el mundo desbloqueado en Aventura)
-- **Repasar errores** — practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista
+- **Repasar errores** — practica sin vidas hasta 20 de las preguntas que has fallado (al azar); al acertarlas salen de la lista y la siguiente ronda sigue con las demás
 
 Al terminar una partida puedes desplegar la lista de preguntas falladas con su respuesta correcta. En **Stats** hay un botón para reiniciar todo el progreso (conserva la preferencia de sonido).
 
@@ -57,7 +57,7 @@ Al terminar una partida puedes desplegar la lista de preguntas falladas con su r
 | Enviar | **Comprobar** o `Enter` |
 | Pista | Botón o `H` (no dentro del campo de «completar») |
 | Silencio | Botón o `M` (no dentro del campo de «completar») |
-| Salir | **Salir** o `Esc` |
+| Salir | **Salir**, `Esc` o Atrás (piden confirmar) |
 
 ## Estructura
 
@@ -93,6 +93,7 @@ tech-quest/
 | `techQuestCompletedWorlds` | Mundos completados (nivel 5) |
 | `techQuestLevelClears` | Niveles 1–5 completados por mundo |
 | `techQuestMistakes` | Preguntas falladas pendientes de repaso |
+| `techQuestSaveId` | Cambia al reiniciar el progreso; una partida empezada antes (en otra pestaña) ya no guarda |
 
 `techQuestLevelClears` guarda los niveles `"1"` a `"5"` de cada mundo.
 
@@ -102,4 +103,4 @@ tech-quest/
 
 ## Requisitos
 
-ES6, `localStorage`, Web Audio API. El audio se activa con la primera interacción.
+Chrome o Edge 80+, Firefox 74+ o Safari 13.1+ (iPhone/iPad: iOS/iPadOS 13.4+), porque `js/game.js` usa encadenamiento opcional (`?.`, ES2020). Además `localStorage` y Web Audio API (sin sonido el juego funciona igual). El audio se activa con la primera interacción.

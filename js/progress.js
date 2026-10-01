@@ -193,6 +193,10 @@ const Progress = (() => {
     return true;
   }
 
+  // Cambia en cada reinicio: una partida empezada antes (p. ej. en otra pestaña) no escribe en el progreso nuevo
+  const SAVE_ID_KEY = "techQuestSaveId";
+  function saveId() { return readRaw(SAVE_ID_KEY) || ""; }
+
   /** Borra progreso, logros, estadísticas y récord; conserva la preferencia de sonido. */
   function resetAll() {
     let keys = Object.keys(mem);
@@ -200,6 +204,7 @@ const Progress = (() => {
     keys
       .filter((k) => k.startsWith("techQuest") && k !== GAME_CONFIG.storageMuted)
       .forEach(removeRaw);
+    writeRaw(SAVE_ID_KEY, Date.now().toString(36) + "-" + Math.random().toString(36).slice(2));
   }
 
   function defaultStats() {
@@ -241,7 +246,7 @@ const Progress = (() => {
     getBossWins, markBossWin, allBossesBeaten,
     getCompleted, markWorldCompleted, allWorldsCompleted,
     getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordPracticeRun, recordGameEnd,
-    getMistakes, addMistake, removeMistake, resetAll,
+    getMistakes, addMistake, removeMistake, resetAll, saveId,
     readRaw, writeRaw
   };
 })();

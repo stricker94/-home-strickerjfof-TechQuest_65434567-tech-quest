@@ -26,7 +26,7 @@
           <span class="pill">Mundos: <strong id="menu-worlds">10</strong></span>
           <span class="pill">Logros: <strong id="menu-ach-count">0 / 17</strong></span>
         </div>
-        <div id="menu-badges" class="menu-badges" aria-label="Logros"></div>
+        <div id="menu-badges" class="menu-badges" role="group" aria-label="Logros"></div>
         <div class="btn-row modes">
           <button type="button" class="btn btn-primary" data-action="play">▶ Aventura</button>
           <button type="button" class="btn" data-action="practice">📚 Práctica</button>
@@ -54,11 +54,11 @@
           <li><strong>Maratón:</strong> 20 preguntas mezcladas de todos los mundos.</li>
           <li><strong>Cronómetro:</strong> hasta 12 preguntas del nivel elegido, con tiempo límite por pregunta.</li>
           <li><strong>Boss:</strong> incidente difícil cronometrado por mundo (tras desbloquearlo).</li>
-          <li><strong>Repasar errores:</strong> practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista.</li>
+          <li><strong>Repasar errores:</strong> practica sin vidas hasta 20 de las preguntas que has fallado (al azar); al acertarlas salen de la lista y la siguiente ronda sigue con las demás.</li>
           <li>Tipos: opción múltiple, V/F, completar comando, emparejar, ordenar, escenarios.</li>
           <li><strong>Vidas:</strong> 3 por partida en Aventura, Maratón, Cronómetro y Boss; cada fallo o tiempo agotado quita una y al llegar a 0 termina la partida. Práctica y Repasar errores no tienen vidas.</li>
           <li><strong>Pistas:</strong> 2 por partida (1 en Boss; ninguna en Práctica ni en Repasar errores), una por pregunta; cuestan 30 pts al resolver la pregunta. No hay pista en V/F.</li>
-          <li>Controles: clic/táctil; <kbd>1</kbd>–<kbd>4</kbd>; <kbd>V</kbd>/<kbd>F</kbd>; <kbd>Enter</kbd>; <kbd>H</kbd> pista y <kbd>M</kbd> silencio (mientras escribes en «completar» son letras: usa los botones); <kbd>Esc</kbd> salir.</li>
+          <li>Controles: clic/táctil; <kbd>1</kbd>–<kbd>4</kbd>; <kbd>V</kbd>/<kbd>F</kbd>; <kbd>Enter</kbd>; <kbd>H</kbd> pista y <kbd>M</kbd> silencio (mientras escribes en «completar» son letras: usa los botones); <kbd>Esc</kbd> (o Atrás) salir de la partida, con confirmación.</li>
           <li>Progreso, récord y logros se guardan en este navegador (localStorage).</li>
         </ul>
         <div class="btn-row"><button type="button" class="btn btn-primary" data-action="menu">← Menú</button></div>
@@ -104,8 +104,8 @@
       <div class="panel">
         <div class="question-meta"><span class="badge" id="question-type">—</span></div>
         <p id="question-text" tabindex="-1">Pregunta</p>
-        <div id="hint-box" class="hint-box" hidden></div>
         <div id="challenge-area" class="challenge-area"></div>
+        <div id="hint-box" class="hint-box" hidden></div>
         <div class="play-actions">
           <button type="button" class="btn" id="btn-hint" data-action="hint">💡 Pista (H)</button>
           <button type="button" class="btn btn-primary" id="btn-submit" data-action="submit" hidden>Comprobar</button>
@@ -182,5 +182,19 @@
   <script src="js/progress.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>
+  <script>
+    // Si game.js no arrancó (navegador anterior a Chrome 80 / Safari 13.1, o un error de escritura en js/),
+    // se avisa en pantalla en vez de dejar un menú cuyos botones no responden. Escrito en ES5 a propósito
+    window.addEventListener("load", function () {
+      if (window.techQuestReady) return;
+      var menu = document.getElementById("screen-menu");
+      if (!menu) return;
+      var p = document.createElement("p");
+      p.className = "panel load-error";
+      p.setAttribute("role", "alert");
+      p.textContent = "El juego no pudo arrancar. Actualiza el navegador (Chrome o Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+) o prueba con otro. Si editaste archivos de js/, revisa la sección 8 de INSTRUCCIONES.md.";
+      menu.insertBefore(p, menu.firstChild);
+    });
+  </script>
 </body>
 </html>

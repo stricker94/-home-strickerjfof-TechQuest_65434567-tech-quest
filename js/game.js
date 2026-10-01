@@ -45,15 +45,42 @@
   const ANSWER_CLICK_GUARD_MS = 350;
   // Tras "¡Tiempo agotado!" se ignoran Enter y los atajos un momento: el jugador quizá seguía escribiendo
   const TIMEOUT_KEY_GUARD_MS = 1000;
+  const QUIT_MSG = "¿Volver al menú? Se perderá el progreso de esta partida.";
+  // Partida en curso (de startRun a endGame o a salir): Atrás, recargar o cerrar la pestaña piden confirmar
+  let inRun = false;
 
   function init() {
     bindEvents();
     refreshMenu();
     UI.showScreen("screen-menu");
     UI.updateMuteButton();
+    // index.html avisa en pantalla si esto no llega a ejecutarse (navegador viejo o error en js/)
+    window.techQuestReady = true;
   }
 
   function bindEvents() {
+    // Atrás (botón o gesto del móvil) durante una partida pregunta lo mismo que Salir. Todas las partidas
+    // usan una sola entrada del historial, que la siguiente reutiliza, así no se acumulan
+    try { history.scrollRestoration = "manual"; } catch (_) {}
+    window.addEventListener("popstate", () => {
+      // Fuera de partida, Atrás sale del juego de una vez, como siempre
+      if (!inRun) {
+        if (!onRunEntry()) history.back();
+        return;
+      }
+      if (confirm(QUIT_MSG)) quitToMenu();
+      else pushRunEntry();
+    });
+    window.addEventListener("beforeunload", (e) => {
+      if (!inRun) return;
+      e.preventDefault();
+      e.returnValue = "";
+    });
+    // Otra pestaña cambió el progreso (p. ej. lo reinició): el menú muestra los datos actuales
+    window.addEventListener("storage", (e) => {
+      if (e.key === null || String(e.key).startsWith("techQuest")) refreshMenu();
+    });
+
     // Los navegadores solo permiten iniciar audio tras un gesto del usuario (clic, toque o tecla)
     document.addEventListener("pointerdown", () => { navMode = "pointer"; TechAudio.unlock(); }, { passive: true });
     document.addEventListener("keydown", (e) => {
@@ -101,10 +128,12 @@
 
       if (key === "Enter") {
         if (playOn) {
-          // Enter activa el botón enfocado (opciones, ▲/▼, ítems de emparejar, Pista, Sonido…), salvo cuando
-          // el foco quedó en un ítem de emparejar/ordenar por un clic: ahí Enter envía la respuesta
-          const pointerOnItem = navMode === "pointer" && focusedBtn && focusedBtn.closest(".match-board, #order-list");
-          if (focusedBtn && focusedBtn.id !== "btn-submit" && !pointerOnItem) return;
+          // Un botón elegido con Tab conserva su Enter nativo (▲/▼, ítems de emparejar, Pista, Sonido, Salir…).
+          // Si el foco quedó en él por un clic (Pista, Sonido, Salir tras Cancelar, un ítem), Enter envía la
+          // respuesta, como en la pantalla de resultado. Las opciones y V/F siempre conservan su Enter nativo:
+          // un clic en ellas ya responde, y un lector de pantalla puede llevarles el foco sin Tab
+          const pointerFocus = navMode === "pointer" && focusedBtn && !focusedBtn.matches(".option-btn");
+          if (focusedBtn && focusedBtn.id !== "btn-submit" && !pointerFocus) return;
           e.preventDefault();
           // Un segundo Enter justo tras "Continuar" o un nivel no debe enviar el puzzle que acaba de aparecer
           // (en "completar" no hace falta: el campo vacío no se envía)
@@ -154,6 +183,10 @@
         TechAudio.toggleMute();
         UI.updateMuteButton();
         TechAudio.playClick();
+        // Con la tecla M el foco suele estar en otro control y el cambio del botón no se lee
+        if (!el && document.activeElement !== UI.$("#btn-mute")) {
+          UI.announce(TechAudio.isMuted() ? "Sonido desactivado" : "Sonido activado");
+        }
         break;
       case "play":
         TechAudio.playClick();
@@ -212,6 +245,7 @@
         break;
       case "menu":
         TechAudio.playClick();
+        inRun = false;
         clearTimer();
         refreshMenu();
         UI.showScreen("screen-menu");
@@ -277,11 +311,23 @@
   }
 
   function confirmQuit() {
-    if (confirm("¿Volver al menú? Se perderá el progreso de esta partida.")) {
-      clearTimer();
-      refreshMenu();
-      UI.showScreen("screen-menu");
-    }
+    if (confirm(QUIT_MSG)) quitToMenu();
+  }
+
+  function quitToMenu() {
+    inRun = false;
+    clearTimer();
+    refreshMenu();
+    UI.showScreen("screen-menu");
+  }
+
+  function onRunEntry() {
+    try { return !!(history.state && history.state.tq === "run"); } catch (_) { return false; }
+  }
+
+  function pushRunEntry() {
+    // Una sola entrada para todas las partidas: si ya existe, la siguiente la reutiliza
+    try { if (!onRunEntry()) history.pushState({ tq: "run" }, ""); } catch (_) { /* queda beforeunload */ }
   }
 
   function retry() {
@@ -315,7 +361,9 @@
     if (wrap) {
       wrap.innerHTML = ACHIEVEMENTS.map((a) => {
         const on = !!unlocked[a.id];
-        return `<span class="mini-badge ${on ? "on" : ""}" title="${UI.escapeHtml(a.name)}">${a.icon}</span>`;
+        const name = UI.escapeHtml(a.name);
+        // El brillo solo no basta: el lector de pantalla dice el nombre y si está desbloqueado
+        return `<span class="mini-badge ${on ? "on" : ""}" role="img" aria-label="${name}: ${on ? "desbloqueado" : "bloqueado"}" title="${name}">${a.icon}</span>`;
       }).join("");
     }
   }
@@ -391,6 +439,8 @@
 
   function startRun(opts) {
     clearTimer();
+    inRun = true;
+    pushRunEntry();
     state.mode = opts.mode;
     state.practice = !!opts.practice;
     state.timed = !!opts.timed;
@@ -413,6 +463,8 @@
     state.pendingAchievements = [];
     state.runAchievements = [];
     state.missed = [];
+    // Si el progreso se reinicia en otra pestaña durante la partida, esta deja de guardar
+    state.saveId = Progress.saveId();
     // Práctica y Repaso no tienen vidas (no se pueden perder): no cuentan como partidas en Stats
     if (state.practice) Progress.recordPracticeRun();
     else Progress.recordGameStart();
@@ -421,6 +473,14 @@
   }
 
   const CHOICE_TYPES = ["mc", "identify", "scenario"];
+
+  // Sin pista donde la pista dejaría una sola respuesta posible: V/F, y opción múltiple, emparejar u ordenar con solo 2
+  function hintGivesAway(q) {
+    return q.type === "tf" ||
+      (CHOICE_TYPES.includes(q.type) && q.options.length < 3) ||
+      (q.type === "match" && q.pairs.length < 3) ||
+      (q.type === "order" && q.items.length < 3);
+  }
 
   /** Copia la pregunta y baraja sus opciones para que la correcta no quede siempre en la misma posición. */
   function prepareQuestion(q) {
@@ -511,7 +571,7 @@
     startRun({
       mode: "review",
       practice: true,
-      questions: UI.shuffle(qs).slice(0, GAME_CONFIG.marathonCount)
+      questions: UI.shuffle(qs).slice(0, GAME_CONFIG.reviewMaxQuestions || GAME_CONFIG.marathonCount)
     });
   }
 
@@ -605,10 +665,11 @@
     const hintBtn = UI.$("#btn-hint");
     if (hintBtn) {
       hintBtn.hidden = state.practice;
-      // En Verdadero/Falso no hay pista útil que no regale la respuesta
-      hintBtn.disabled = state.hintsLeft <= 0 || q.type === "tf";
+      // En Verdadero/Falso (o con solo 2 opciones) no hay pista útil que no regale la respuesta
+      const noHint = hintGivesAway(q);
+      hintBtn.disabled = state.hintsLeft <= 0 || noHint;
       hintBtn.removeAttribute("aria-disabled");
-      hintBtn.title = q.type === "tf" ? "Sin pista en Verdadero / Falso" : "";
+      hintBtn.title = q.type === "tf" ? "Sin pista en Verdadero / Falso" : noHint ? "Sin pista: solo hay 2 opciones" : "";
     }
     if (submitBtn) submitBtn.disabled = false;
 
@@ -827,7 +888,7 @@
 
   function useHint() {
     const q = currentQ();
-    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice || q.type === "tf") return;
+    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice || hintGivesAway(q)) return;
     TechAudio.playClick();
     state.hintsLeft--;
     state.hintsUsedRun++;
@@ -835,7 +896,7 @@
     state.hintAt = performance.now();
     // El coste se cobra al resolver la pregunta (finishRound), así siempre es el mismo y se ve en el resultado
     state.hintCost = GAME_CONFIG.pointsHintPenalty;
-    Progress.recordHint();
+    if (runSaves()) Progress.recordHint();
     UI.updateHUD(hud());
     // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan. Se marca con
     // aria-disabled en vez de disabled para que, si tenía el foco, no caiga a <body> (y un segundo
@@ -859,23 +920,33 @@
       }
     } else if (q.type === "fill") {
       // Revela como mucho la mitad: con respuestas cortas (p. ej. "53", "DNS") no regala la respuesta
-      const ans = String(q.answer);
+      const ans = String(q.answer).normalize("NFC");
       const n = ans.length <= 2 ? 0 : ans.length <= 4 ? 1 : Math.min(4, Math.floor(ans.length / 2));
       tip = n
         ? "Pista: empieza con «" + ans.slice(0, n) + "…» (" + ans.length + " caracteres)."
         : "Pista: la respuesta tiene " + ans.length + " caracteres.";
     } else if (q.type === "match") {
-      tip = "Pista: «" + q.pairs[0].left + "» ↔ «" + q.pairs[0].right + "».";
-      Object.keys(state.matchSelections).forEach((k) => {
-        if (state.matchSelections[k] === 0) delete state.matchSelections[k];
+      // Revela la primera pareja que el jugador aún no tiene bien (no una que ya colocó)
+      const miss = q.pairs.findIndex((_, i) => state.matchSelections[i] !== i);
+      const h = miss < 0 ? 0 : miss;
+      tip = "Pista: «" + q.pairs[h].left + "» ↔ «" + q.pairs[h].right + "».";
+      Object.keys(state.matchSelections).forEach((key) => {
+        if (state.matchSelections[key] === h) delete state.matchSelections[key];
       });
-      state.matchSelections[0] = 0;
+      state.matchSelections[h] = h;
       state.matchPending = null;
       paintMatch();
     } else if (q.type === "order") {
-      tip = "Pista: el primero es «" + q.items[q.answer[0]] + "».";
+      // Nombra el primer paso que el jugador aún no tiene en su lugar
+      const miss = state.orderItems.findIndex((x, i) => x.orig !== q.answer[i]);
+      const h = miss < 0 ? 0 : miss;
+      tip = h === 0
+        ? "Pista: el primero es «" + q.items[q.answer[0]] + "»."
+        : "Pista: el paso " + (h + 1) + " es «" + q.items[q.answer[h]] + "».";
     }
     box.textContent = tip + " (−" + state.hintCost + " pts)";
+    // La pista sale junto a la respuesta: si el jugador bajó hasta el botón, que no quede fuera de la vista
+    box.scrollIntoView({ block: "nearest" });
     UI.announce(box.textContent, true);
     // En "completar" se vuelve al campo para seguir escribiendo (con el foco en Pista las letras serían atajos)
     if (q.type === "fill") UI.$("#fill-input")?.focus();
@@ -928,7 +999,8 @@
     finishRound(ok, q.answer ? "Verdadero" : "Falso");
   }
 
-  function norm(s) { return String(s).trim().toLowerCase().replace(/\s+/g, " "); }
+  // NFC: una «ó» pegada como «o» + acento combinado (de un PDF o un nombre de archivo de macOS) es la misma letra
+  function norm(s) { return String(s).normalize("NFC").trim().toLowerCase().replace(/\s+/g, " "); }
 
   function gradeFill(raw) {
     const q = currentQ();
@@ -957,14 +1029,16 @@
     finishRound(ok, correctLabel(q));
   }
 
+  /** false si el progreso se reinició (en otra pestaña) después de empezar la partida: ya no se guarda nada. */
+  function runSaves() { return Progress.saveId() === state.saveId; }
+
+  // El sonido del logro lo pone quien llama, una vez por tanda (varios a la vez sonarían superpuestos y más fuerte)
   function grant(id) {
-    if (Progress.unlockAchievement(id)) {
-      state.pendingAchievements.push(id);
-      state.runAchievements.push(id);
-      TechAudio.playAchievement();
-      const a = ACHIEVEMENTS.find((x) => x.id === id);
-      if (a) UI.toast("Logro: " + a.icon + " " + a.name);
-    }
+    if (!runSaves() || !Progress.unlockAchievement(id)) return;
+    state.pendingAchievements.push(id);
+    state.runAchievements.push(id);
+    const a = ACHIEVEMENTS.find((x) => x.id === id);
+    if (a) UI.toast("Logro: " + a.icon + " " + a.name);
   }
 
   function finishRound(ok, correctText, timedOut) {
@@ -975,12 +1049,14 @@
     if (sub) sub.disabled = true;
     if (hint) hint.disabled = true;
 
-    Progress.recordAnswer(ok);
+    const saves = runSaves();
+    if (saves) Progress.recordAnswer(ok);
     const q = currentQ();
     // Lo fallado se guarda para el modo Repasar errores; acertarlo después lo quita de la lista
-    if (ok) Progress.removeMistake(q.id);
-    else {
-      Progress.addMistake(q.id);
+    if (ok) {
+      if (saves) Progress.removeMistake(q.id);
+    } else {
+      if (saves) Progress.addMistake(q.id);
       state.missed.push({ q: q.q, correct: correctText });
     }
     let gained = 0;
@@ -991,7 +1067,7 @@
       state.streak++;
       state.correctCount++;
       if (state.streak > state.bestStreakRun) state.bestStreakRun = state.streak;
-      Progress.recordStreak(state.streak);
+      if (saves) Progress.recordStreak(state.streak);
       gained =
         GAME_CONFIG.pointsCorrect +
         (state.streak > 1 ? GAME_CONFIG.pointsStreakBonus * (state.streak - 1) : 0);
@@ -1002,6 +1078,7 @@
       state.score += gained;
       if (state.streak >= 5) grant("streak5");
       if (state.streak >= 10) grant("streak10");
+      if (state.pendingAchievements.length) TechAudio.playAchievement(0.4); // tras el sonido de acierto
     } else {
       TechAudio.playWrong();
       state.streak = 0;
@@ -1042,14 +1119,11 @@
     }
     UI.setText("#feedback-explain", explain || "");
     showPendingAchievements("#feedback-ach");
-    // Un solo aviso con el resultado y los logros de esta pregunta (sustituye al del toast del logro)
+    // Un solo aviso con el resultado, los logros de esta pregunta (sustituye al del toast del logro) y,
+    // al final, la explicación: es lo que enseña y el foco va a Continuar, que está debajo
     const ach = UI.$("#feedback-ach");
-    const t = title.textContent;
-    UI.announce(
-      t + (/[!?.]$/.test(t) ? " " : ". ") + UI.$("#feedback-detail").textContent +
-        (ach && !ach.hidden ? ". " + ach.textContent : ""),
-      true
-    );
+    const parts = [title.textContent, UI.$("#feedback-detail").textContent, ach && !ach.hidden ? ach.textContent : "", explain || ""];
+    UI.announce(parts.filter(Boolean).reduce((acc, s) => (acc ? acc + (/[.!?…]$/.test(acc) ? " " : ". ") + s : s), ""), true);
     // preventScroll: en pantallas pequeñas el título y la respuesta deben seguir visibles arriba
     UI.$("#btn-next-feedback")?.focus({ preventScroll: true });
   }
@@ -1105,14 +1179,17 @@
 
   function endGame(victory) {
     clearTimer();
-    const isNew = UI.saveHighScore(state.score);
+    inRun = false;
+    // Progreso reiniciado en otra pestaña durante la partida: este resultado no se guarda en el progreso nuevo
+    const saves = runSaves();
+    const isNew = saves && UI.saveHighScore(state.score);
     const world = state.worldId ? getWorldById(state.worldId) : null;
     const levelCleared = !!(victory && state.mode === "campaign" && state.worldId && state.level);
-    if (!state.practice) Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
+    if (!state.practice && saves) Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
     // Al repetir un nivel ya superado no se desbloquea nada nuevo: el aviso solo sale la primera vez
     let nextWasOpen = false;
 
-    if (victory) {
+    if (victory && saves) {
       if (state.mode === "campaign" && state.worldId && state.level) {
         const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         const wi = WORLDS.findIndex((w) => w.id === state.worldId);
@@ -1163,13 +1240,17 @@
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
     // La pantalla final lista todos los logros de la partida (también las rachas ya vistas en un resultado)
+    const newAch = state.pendingAchievements.length > 0;
     state.pendingAchievements = [];
     renderAchievementList("#end-ach", state.runAchievements);
     renderMissed();
 
     const unlockEl = UI.$("#end-unlock");
     if (unlockEl) {
-      if (victory && state.mode === "campaign" && world && state.level) {
+      if (!saves) {
+        unlockEl.hidden = false;
+        unlockEl.textContent = "El progreso se reinició durante esta partida: este resultado no se guardó.";
+      } else if (victory && state.mode === "campaign" && world && state.level) {
         const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.level < maxL) {
           unlockEl.hidden = nextWasOpen;
@@ -1189,6 +1270,7 @@
 
     if (victory) TechAudio.playLevelComplete();
     else TechAudio.playGameOver();
+    if (newAch) TechAudio.playAchievement(0.9); // una vez, tras la fanfarria
   }
 
   function renderMissed() {
