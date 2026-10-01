@@ -19,6 +19,7 @@ const GAME_CONFIG = {
   levelsPerWorld: 5,
   marathonCount: 20,
   timerSeconds: 25,
+  timerMaxQuestions: 12,
   bossTimerSeconds: 20,
   unlockScoreThreshold: 600
 };
@@ -45,14 +46,23 @@ const WORLDS = [
         q: "¿Qué comando cambia el directorio de trabajo actual?",
         options: ["mv", "cd", "cp", "rm"],
         answer: 1,
-        explain: "cd (change directory) te mueve entre carpetas. cd .. sube un nivel; cd ~ va al home."
+        explain: "cd (change directory) te mueve entre carpetas, con ruta absoluta (cd /etc) o relativa (cd Documentos)."
       },
       {
         id: "lx03",
         type: "fill",
         q: "Escribe el comando para crear un directorio llamado 'proyectos':",
         answer: "mkdir proyectos",
-        accept: ["mkdir proyectos", "mkdir ./proyectos"],
+        accept: [
+          "mkdir proyectos",
+          "mkdir ./proyectos",
+          "mkdir proyectos/",
+          "mkdir -p proyectos",
+          "mkdir -p ./proyectos",
+          "mkdir -p proyectos/",
+          "mkdir 'proyectos'",
+          "mkdir \"proyectos\""
+        ],
         explain: "mkdir crea directorios. mkdir -p crea rutas anidadas si no existen."
       },
       {
@@ -60,10 +70,10 @@ const WORLDS = [
         type: "mc",
         q: "En permisos Unix, ¿qué significa el bit de lectura (r)?",
         options: [
-          "Ejecutar el archivo",
+          "Ejecutar el archivo / entrar en el directorio",
           "Ver el contenido / listar el directorio",
-          "Modificar el propietario",
-          "Montar el sistema de archivos"
+          "Modificar el contenido / crear y borrar entradas",
+          "Cambiar el propietario y el grupo del archivo"
         ],
         answer: 1,
         explain: "r = read. En archivos permite leer; en directorios, listar entradas."
@@ -86,10 +96,10 @@ const WORLDS = [
         type: "mc",
         q: "¿Qué hace chmod 755 archivo.sh?",
         options: [
-          "Solo lectura para todos",
+          "Dueño: rw-; grupo y otros: r--",
           "Dueño: rwx; grupo y otros: r-x",
-          "Borra el archivo",
-          "Cambia el dueño a root"
+          "Dueño: rwx; grupo y otros: rw-",
+          "Dueño: rwx; grupo: r-x; otros: ---"
         ],
         answer: 1,
         explain: "7=rwx, 5=r-x. El dueño puede todo; grupo/otros leen y ejecutan. Típico en scripts."
@@ -98,7 +108,12 @@ const WORLDS = [
         id: "lx07",
         type: "identify",
         q: "¿Qué herramienta o comando usas para ver procesos en ejecución?",
-        options: ["ps / top / htop", "chmod", "apt", "mkdir"],
+        options: [
+          "ps / top / htop",
+          "df / du / lsblk",
+          "ip / ss / ping",
+          "chmod / chown / umask"
+        ],
         answer: 0,
         explain: "ps lista procesos; top/htop muestran uso en tiempo real. kill termina un proceso por PID."
       },
@@ -127,7 +142,16 @@ const WORLDS = [
         type: "fill",
         q: "Comando para cambiar permisos a 644 en config.txt:",
         answer: "chmod 644 config.txt",
-        accept: ["chmod 644 config.txt", "chmod 0644 config.txt"],
+        accept: [
+          "chmod 644 config.txt",
+          "chmod 0644 config.txt",
+          "sudo chmod 644 config.txt",
+          "sudo chmod 0644 config.txt",
+          "chmod 644 ./config.txt",
+          "chmod 0644 ./config.txt",
+          "sudo chmod 644 ./config.txt",
+          "sudo chmod 0644 ./config.txt"
+        ],
         explain: "644 = dueño rw, grupo/otros solo lectura. Común en archivos de configuración."
       },
       {
@@ -143,10 +167,10 @@ const WORLDS = [
         type: "mc",
         q: "¿Qué representa / en el sistema de archivos Linux?",
         options: [
-          "La carpeta del usuario",
+          "El directorio personal del usuario root (/root)",
           "La raíz (root) del árbol de directorios",
-          "Solo dispositivos USB",
-          "El swap"
+          "El punto de montaje de las unidades extraíbles",
+          "El área de intercambio (swap) del sistema"
         ],
         answer: 1,
         explain: "Todo cuelga de /. No hay letras de unidad como en Windows; /home, /var, /usr están bajo /."
@@ -164,7 +188,12 @@ const WORLDS = [
         id: "wn01",
         type: "mc",
         q: "¿Dónde revisas errores y avisos del sistema en Windows?",
-        options: ["Paint", "Visor de eventos (Event Viewer)", "Bloc de notas", "Explorador de archivos"],
+        options: [
+          "Editor del Registro (regedit)",
+          "Visor de eventos (Event Viewer)",
+          "Programador de tareas (Task Scheduler)",
+          "Monitor de recursos (Resource Monitor)"
+        ],
         answer: 1,
         explain: "Event Viewer (eventvwr.msc) registra Application, Security y System. Útil para diagnosticar fallos."
       },
@@ -172,9 +201,14 @@ const WORLDS = [
         id: "wn02",
         type: "mc",
         q: "¿Qué utilidad muestra CPU, memoria y procesos en tiempo real?",
-        options: ["cmd", "Administrador de tareas", "Regedit", "msconfig"],
+        options: [
+          "Configuración del sistema",
+          "Administrador de tareas",
+          "Editor del Registro",
+          "Monitor de confiabilidad"
+        ],
         answer: 1,
-        explain: "Task Manager (Ctrl+Shift+Esc): procesos, rendimiento, inicio y usuarios."
+        explain: "El Administrador de tareas (taskmgr) muestra procesos, rendimiento, inicio y usuarios."
       },
       {
         id: "wn03",
@@ -203,7 +237,7 @@ const WORLDS = [
           "Verificar que el estado sea En ejecución"
         ],
         answer: [0, 1, 2, 3],
-        explain: "También puedes usar Restart-Service NombreEnPowerShell."
+        explain: "También puedes usar Restart-Service <Nombre> en PowerShell (por ejemplo, Restart-Service Spooler)."
       },
       {
         id: "wn06",
@@ -216,10 +250,15 @@ const WORLDS = [
       {
         id: "wn07",
         type: "mc",
-        q: "¿Qué tipo de cuenta de Windows tiene privilegios elevados por defecto?",
-        options: ["Usuario estándar", "Administrador", "Invitado", "Cuenta local sin contraseña"],
+        q: "¿Qué tipo de cuenta de Windows puede instalar software para todos los usuarios y cambiar la configuración del sistema?",
+        options: [
+          "Usuario estándar",
+          "Administrador",
+          "Invitado",
+          "Cuenta local sin contraseña"
+        ],
         answer: 1,
-        explain: "Las cuentas Administrador (o con rol admin) pueden instalar software y cambiar sistema. UAC pide elevación."
+        explain: "Las cuentas Administrador pueden instalar software y cambiar el sistema. Con UAC trabajan con permisos estándar hasta que apruebas la elevación."
       },
       {
         id: "wn08",
@@ -239,9 +278,9 @@ const WORLDS = [
         q: "¿Qué hace Get-Process en PowerShell?",
         options: [
           "Lista procesos en ejecución",
-          "Formatea el disco",
-          "Crea usuarios",
-          "Instala Windows Update"
+          "Lista los servicios y su estado",
+          "Detiene un proceso por su nombre o PID",
+          "Muestra el contenido de un archivo"
         ],
         answer: 0,
         explain: "Get-Process es el equivalente moderno a tasklist. Stop-Process termina un proceso."
@@ -249,20 +288,20 @@ const WORLDS = [
       {
         id: "wn10",
         type: "fill",
-        q: "Comando para ver rutas DNS y liberar/renovar DHCP (libera):",
+        q: "Comando para liberar la concesión (lease) DHCP del adaptador:",
         answer: "ipconfig /release",
-        accept: ["ipconfig /release", "ipconfig /release *"],
-        explain: "Después suele usarse ipconfig /renew. /flushdns limpia la caché DNS."
+        accept: ["ipconfig /release", "ipconfig /release *", "ipconfig -release"],
+        explain: "Después suele usarse ipconfig /renew para pedir una nueva concesión. /flushdns limpia la caché DNS y route print muestra las rutas."
       },
       {
         id: "wn11",
         type: "mc",
         q: "Un servicio en estado 'Detenido' que debería estar activo…",
         options: [
-          "No afecta a nada",
+          "No afecta a nada mientras el equipo siga encendido",
           "Puede impedir funciones (impresión, red, actualizaciones)",
-          "Solo afecta al escritorio",
-          "Significa que el PC está apagado"
+          "Solo afecta la apariencia del escritorio",
+          "Indica que el servicio fue desinstalado del sistema"
         ],
         answer: 1,
         explain: "Servicios críticos (Spooler, DHCP Client, Windows Update) deben estar en ejecución según necesidad."
@@ -273,8 +312,8 @@ const WORLDS = [
         q: "¿Dónde gestionas cuentas locales de usuario en Windows Pro?",
         options: [
           "lusrmgr.msc / Configuración → Cuentas",
-          "Solo en Paint",
-          "Solo con ping",
+          "devmgmt.msc / Configuración → Dispositivos",
+          "services.msc / Configuración → Aplicaciones",
           "En el Visor de eventos únicamente"
         ],
         answer: 0,
@@ -293,7 +332,12 @@ const WORLDS = [
         id: "pr01",
         type: "mc",
         q: "¿Qué servicio de Windows gestiona la cola de impresión?",
-        options: ["Spooler (Print Spooler)", "BITS", "Windows Audio", "Themes"],
+        options: [
+          "Spooler (Print Spooler)",
+          "BITS (Background Intelligent Transfer)",
+          "Windows Search (WSearch)",
+          "Task Scheduler (Schedule)"
+        ],
         answer: 0,
         explain: "Print Spooler (spoolsv.exe) encola trabajos. Si falla, reinícialo en services.msc."
       },
@@ -302,10 +346,10 @@ const WORLDS = [
         type: "mc",
         q: "Un driver de impresora incorrecto suele causar…",
         options: [
-          "Mejor calidad siempre",
+          "Que la impresora pierda la IP asignada por DHCP",
           "Errores, caracteres basura o que no imprima",
-          "Más RAM en el PC",
-          "Que el monitor se apague"
+          "Desgaste prematuro del tambor fotosensible",
+          "Que el firewall bloquee el puerto 9100"
         ],
         answer: 1,
         explain: "Instala el driver del fabricante o el genérico correcto (PCL/PS/IPP) según el modelo."
@@ -321,7 +365,7 @@ const WORLDS = [
           "Probar página de prueba / reinstalar driver"
         ],
         answer: [0, 1, 2, 3],
-        explain: "De lo físico a lo lógico: cable/papel → cola → driver → red."
+        explain: "De lo físico a lo lógico: alimentación y conexión (USB/red) → impresora predeterminada → cola/Spooler → página de prueba/driver."
       },
       {
         id: "pr04",
@@ -330,8 +374,8 @@ const WORLDS = [
         options: [
           "Internet Printing Protocol",
           "Internal Paper Protocol",
-          "IP Private Printer",
-          "Ink Pressure Pump"
+          "Intranet Printer Provisioning",
+          "Integrated Print Processor"
         ],
         answer: 0,
         explain: "IPP (suele puerto 631) permite imprimir por IP/hostname. AirPrint y muchas MFP lo usan."
@@ -342,9 +386,9 @@ const WORLDS = [
         q: "¿Qué indica un LED o mensaje de 'Toner bajo'?",
         options: [
           "El cartucho de tóner está casi agotado",
-          "Falta papel únicamente",
-          "El Spooler está detenido",
-          "La IP está mal"
+          "La bandeja de papel principal está vacía",
+          "El depósito de tóner residual está lleno",
+          "El Spooler del PC está detenido"
         ],
         answer: 0,
         explain: "Sustituye o agita el cartucho según el modelo. No confundir con 'Atasco de papel'."
@@ -364,20 +408,36 @@ const WORLDS = [
       {
         id: "pr07",
         type: "fill",
-        q: "Nombre del servicio de cola de impresión en Windows (inglés):",
-        answer: "Print Spooler",
-        accept: ["print spooler", "Print Spooler", "Spooler", "spooler"],
-        explain: "Nombre para mostrar: Print Spooler. Nombre corto a veces Spooler."
+        q: "Tipo de impresora que usa cartuchos de tinta líquida en lugar de tóner:",
+        answer: "inyección de tinta",
+        accept: [
+          "inyección de tinta",
+          "inyeccion de tinta",
+          "de inyección de tinta",
+          "de inyeccion de tinta",
+          "impresora de inyección de tinta",
+          "impresora de inyeccion de tinta",
+          "inyección",
+          "inyeccion",
+          "chorro de tinta",
+          "de chorro de tinta",
+          "impresora de chorro de tinta",
+          "inkjet",
+          "ink jet",
+          "ink-jet",
+          "impresora inkjet"
+        ],
+        explain: "Las de inyección (o chorro) de tinta, inkjet, usan tinta líquida; las láser usan tóner en polvo y un tambor."
       },
       {
         id: "pr08",
         type: "mc",
         q: "Trabajos atascados en la cola. Acción frecuente:",
         options: [
-          "Borrar trabajos / reiniciar Spooler / limpiar C:\\Windows\\System32\\spool\\PRINTERS",
-          "Formatear el disco C:",
-          "Desinstalar Windows",
-          "Cambiar la resolución del monitor"
+          "Detener Spooler, vaciar System32\\spool\\PRINTERS e iniciarlo de nuevo",
+          "Ejecutar chkdsk /f en C: y desfragmentar la carpeta System32",
+          "Renovar la IP con ipconfig /renew y vaciar la caché DNS del PC",
+          "Reiniciar Windows Update y vaciar C:\\Windows\\SoftwareDistribution"
         ],
         answer: 0,
         explain: "Detén Spooler, vacía la carpeta de spool, inicia Spooler de nuevo. Con cuidado y permisos admin."
@@ -388,9 +448,9 @@ const WORLDS = [
         q: "Para agregar impresora por IP en Windows suele usarse:",
         options: [
           "Puerto TCP/IP estándar (o IPP) con la IP del dispositivo",
-          "Solo Bluetooth del ratón",
-          "Un cable HDMI",
-          "Regedit obligatorio"
+          "Un puerto COM virtual configurado con la MAC de la impresora",
+          "Una entrada en el archivo hosts con la IP del dispositivo",
+          "Emparejamiento Bluetooth usando la MAC del dispositivo"
         ],
         answer: 0,
         explain: "Configuración → Impresoras → Agregar → TCP/IP o hostname. Verifica ping a la IP primero."
@@ -401,9 +461,9 @@ const WORLDS = [
         q: "Atasco de papel: primer paso seguro:",
         options: [
           "Abrir tapas, retirar papel en la dirección del paso (sin forzar)",
-          "Meter más papel con fuerza",
-          "Golpear la impresora",
-          "Ignorar y reimprimir 50 veces"
+          "Tirar del papel en sentido contrario al paso para sacarlo más rápido",
+          "Reiniciar el Spooler en el PC y reenviar el trabajo a la cola",
+          "Reinstalar el driver para que se recalibre el sensor de papel"
         ],
         answer: 0,
         explain: "Sigue las guías del fabricante. Revisa rodillos y sensores después del atasco."
@@ -414,9 +474,9 @@ const WORLDS = [
         q: "Una impresora de red no aparece. ¿Qué revisar primero a nivel red?",
         options: [
           "Misma VLAN/subred, IP, ping y firewall",
-          "Solo el tema de Windows",
-          "La versión de Excel",
-          "El volumen de audio"
+          "El nivel de tóner y el contador de páginas",
+          "La resolución DPI y el perfil de color del driver",
+          "La versión de BIOS y los drivers de chipset del PC"
         ],
         answer: 0,
         explain: "Sin conectividad IP no habrá descubrimiento ni puerto 9100/IPP. Revisa también discovery (mDNS/WS-Discovery)."
@@ -457,9 +517,9 @@ const WORLDS = [
         q: "DHCP principalmente…",
         options: [
           "Asigna IP, máscara, gateway y DNS automáticamente",
-          "Encripta discos",
-          "Compila código",
-          "Gestiona impresoras USB"
+          "Traduce nombres de dominio a IP para los clientes de la red",
+          "Obtiene la MAC de un host a partir de su dirección IP",
+          "Traduce IPs privadas a la IP pública"
         ],
         answer: 0,
         explain: "DHCP entrega configuración IP por lease. El servidor evita conflictos de IP."
@@ -470,9 +530,9 @@ const WORLDS = [
         q: "Diferencia clave: switch vs router",
         options: [
           "Switch: capa 2 LAN; Router: enruta entre redes (capa 3)",
-          "Son exactamente lo mismo",
-          "Router solo sirve Wi-Fi doméstico",
-          "Switch solo funciona con fibra"
+          "Switch: repite bits a todos los puertos (capa 1); Router: capa 2",
+          "Switch: almacena archivos compartidos de la red; Router: solo extiende la señal Wi‑Fi",
+          "Switch: cachea páginas web; Router: solo conecta equipos dentro de la misma LAN"
         ],
         answer: 0,
         explain: "El switch conecta hosts en la misma red; el router conecta redes distintas y suele hacer NAT."
@@ -538,7 +598,12 @@ const WORLDS = [
         id: "net10",
         type: "identify",
         q: "¿Qué dispositivo suele hacer NAT hacia Internet en casa?",
-        options: ["Router / gateway doméstico", "Monitor", "Teclado", "Impresora solo USB"],
+        options: [
+          "Router / gateway doméstico",
+          "Switch no administrado de 8 puertos",
+          "Punto de acceso en modo puente",
+          "Tarjeta de red del PC"
+        ],
         answer: 0,
         explain: "El router casero traduce IPs privadas a la IP pública del ISP (NAT/PAT)."
       },
@@ -548,9 +613,9 @@ const WORLDS = [
         q: "Wi-Fi 2.4 GHz vs 5 GHz (idea general):",
         options: [
           "2.4: más alcance, más interferencia; 5: más velocidad, menos alcance",
-          "5 GHz siempre más lento",
-          "2.4 no existe",
-          "Son protocolos de impresión"
+          "2.4: más velocidad, menos alcance; 5: más alcance, más interferencia",
+          "Igual alcance y velocidad; solo cambia el nombre del SSID de la red",
+          "5: atraviesa mejor paredes; 2.4: casi sin interferencias en la ciudad"
         ],
         answer: 0,
         explain: "Elige banda según distancia e interferencias. 6 GHz (Wi-Fi 6E) añade otra opción."
@@ -591,18 +656,18 @@ const WORLDS = [
         q: "Una variable es…",
         options: [
           "Un nombre que guarda un valor en memoria",
-          "Un cable de red",
-          "Un tipo de impresora",
-          "Un permiso de Linux"
+          "Un bloque de código reutilizable que recibe parámetros",
+          "Una instrucción que repite código varias veces",
+          "Un mensaje que el programa muestra en consola"
         ],
         answer: 0,
-        explain: "Ej.: let edad = 20; puedes leer y (si no es const) reasignar el valor."
+        explain: "Ej.: edad = 20 guarda el valor 20 con el nombre edad; puedes leerlo y, si no es una constante, reasignarlo."
       },
       {
         id: "pg02",
         type: "mc",
         q: "¿Qué estructura ejecuta código solo si una condición es verdadera?",
-        options: ["if / else", "solo console.log", "CDN", "DHCP"],
+        options: ["if / else", "try / catch", "for / of", "import / export"],
         answer: 0,
         explain: "if (condición) { … } else { … }. También switch y operadores ternarios."
       },
@@ -612,12 +677,12 @@ const WORLDS = [
         q: "Un bucle for sirve para…",
         options: [
           "Repetir un bloque un número controlado de veces",
-          "Apagar el servidor DNS",
-          "Crear usuarios de Windows",
-          "Montar particiones"
+          "Declarar una variable que no se puede reasignar",
+          "Capturar errores sin que el programa se detenga",
+          "Elegir entre dos caminos según una condición"
         ],
         answer: 0,
-        explain: "for (let i = 0; i < n; i++) { … }. while repite mientras la condición sea true."
+        explain: "El for reúne inicio (i = 0), condición (i < n) y paso (i++): así el bloque se ejecuta n veces, con i de 0 a n-1."
       },
       {
         id: "pg04",
@@ -645,9 +710,9 @@ const WORLDS = [
         q: "Una función es…",
         options: [
           "Un bloque reutilizable con nombre que puede recibir parámetros",
-          "Un tipo de switch de red",
-          "Un driver de impresora",
-          "Una IP pública"
+          "Una variable que guarda una lista ordenada de valores",
+          "Un valor fijo que no puede cambiar durante la ejecución",
+          "Una estructura que repite código mientras se cumpla una condición"
         ],
         answer: 0,
         explain: "function saludar(nombre) { return 'Hola ' + nombre; } — DRY: Don't Repeat Yourself."
@@ -669,7 +734,12 @@ const WORLDS = [
         id: "pg08",
         type: "identify",
         q: "¿Qué herramienta del navegador ayuda a depurar JS?",
-        options: ["DevTools / consola", "Paint", "Event Viewer", "apt"],
+        options: [
+          "DevTools / consola",
+          "Marcadores / historial",
+          "Modo incógnito",
+          "Gestor de descargas"
+        ],
         answer: 0,
         explain: "F12 → Console, Sources, Network. console.log y breakpoints son tus amigos."
       },
@@ -679,9 +749,9 @@ const WORLDS = [
         q: "¿Qué hace git branch?",
         options: [
           "Lista o crea ramas de desarrollo",
-          "Formatea el disco",
-          "Instala Node",
-          "Abre PowerShell"
+          "Descarga los cambios del remoto",
+          "Guarda el stage en el historial",
+          "Muestra el historial de commits"
         ],
         answer: 0,
         explain: "Las ramas aíslan features. git checkout / git switch cambia de rama."
@@ -700,9 +770,9 @@ const WORLDS = [
         q: "Un error 'undefined is not a function' suele indicar…",
         options: [
           "Llamaste algo que no es una función (variable undefined/mal nombre)",
-          "Que la red está caída siempre",
-          "Que falta tóner",
-          "Que chmod falló"
+          "Que la función recibió menos argumentos de los que declara",
+          "Que el archivo JS tiene un error de sintaxis y no se pudo parsear",
+          "Que una promesa fue rechazada y nadie capturó el error con catch"
         ],
         answer: 0,
         explain: "Revisa nombres, imports y si el valor existe antes de invocarlo."
@@ -720,13 +790,13 @@ const WORLDS = [
         type: "order",
         q: "Ordena la depuración mínima de un bug:",
         items: [
-          "Reproducir el error",
-          "Leer el mensaje / stack trace",
+          "Reproducir el error de forma consistente",
+          "Leer el stack trace/logs de esa reproducción",
           "Aislar la causa (hipótesis)",
           "Corregir y verificar"
         ],
         answer: [0, 1, 2, 3],
-        explain: "Sin reproducir, no sabes si lo arreglaste. Los mensajes de error son pistas valiosas."
+        explain: "Reproducirlo de forma consistente te da logs/stack trace fiables y una forma de comprobar el arreglo; luego aislas la causa, corriges y verificas con la misma reproducción."
       }
     ]
   }
@@ -749,16 +819,16 @@ function getAllPoolQuestions() {
 }
 
 const ACHIEVEMENTS = [
-  { id: "first_win", icon: "🏁", name: "Primera victoria", desc: "Completa un mundo por primera vez." },
+  { id: "first_win", icon: "🏁", name: "Primera victoria", desc: "Completa tu primer nivel en Aventura." },
   { id: "streak5", icon: "🔥", name: "Racha x5", desc: "Consigue una racha de 5 aciertos." },
   { id: "streak10", icon: "⚡", name: "Racha x10", desc: "Consigue una racha de 10 aciertos." },
-  { id: "no_hints", icon: "🧠", name: "Sin pistas", desc: "Gana un mundo normal sin usar pistas." },
-  { id: "all_worlds", icon: "🌍", name: "Maestro de mundos", desc: "Completa el nivel 5 (Maestro) de todos los mundos." },
+  { id: "no_hints", icon: "🧠", name: "Sin pistas", desc: "Completa un nivel de Aventura sin usar pistas." },
+  { id: "all_worlds", icon: "🌍", name: "Trotamundos", desc: "Completa el nivel 1 de todos los mundos." },
   { id: "marathon", icon: "🏃", name: "Maratonista", desc: "Termina el modo Maratón." },
   { id: "boss_slayer", icon: "👹", name: "Cazador de jefes", desc: "Derrota un Desafío Boss." },
   { id: "all_bosses", icon: "👑", name: "Rey de jefes", desc: "Derrota el boss de cada mundo." },
   { id: "timer_ace", icon: "⏱️", name: "Contrarreloj", desc: "Gana una partida en modo Cronómetro." },
-  { id: "support_hero", icon: "🎫", name: "Héroe de soporte", desc: "Completa el mundo Soporte IT." },
+  { id: "support_hero", icon: "🎫", name: "Héroe de soporte", desc: "Completa el nivel 5 de Soporte IT." },
   { id: "level_master", icon: "⭐", name: "Maestro de niveles", desc: "Completa 25 niveles en total." },
   { id: "security_hero", icon: "🛡️", name: "Escudo digital", desc: "Completa el nivel 5 de Ciberseguridad." },
   { id: "hardware_hero", icon: "🔧", name: "Manitas de hardware", desc: "Completa el nivel 5 de Hardware." },

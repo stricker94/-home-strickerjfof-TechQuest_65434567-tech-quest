@@ -4,6 +4,8 @@ Juego educativo interactivo de IT/tecnología en **español (México)**, creado 
 
 Abre `index.html` en un navegador moderno. **No requiere** npm, build ni CDN.
 
+Guía paso a paso (fusionar cambios, jugar, añadir o corregir preguntas): [INSTRUCCIONES.md](INSTRUCCIONES.md).
+
 ## Niveles (5 por mundo)
 
 Cada mundo tiene **5 niveles** con desbloqueo en cascada:
@@ -37,11 +39,14 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 
 ## Modos
 
-- **Aventura** — vidas + 5 niveles con desbloqueo
-- **Práctica** — sin vidas; elige nivel
-- **Maratón** — 20 preguntas mezcladas
-- **Cronómetro** — tiempo por pregunta (elige nivel)
-- **Boss** — desafío difícil por mundo
+- **Aventura** — 3 vidas + 5 niveles con desbloqueo
+- **Práctica** — sin vidas ni pistas; cualquier mundo y nivel
+- **Maratón** — 20 preguntas mezcladas de todos los mundos (sin las de Boss); 3 vidas
+- **Cronómetro** — hasta 12 preguntas del nivel elegido, 25 s por pregunta; 3 vidas
+- **Boss** — desafío difícil por mundo, 20 s por pregunta y 3 vidas (requiere el mundo desbloqueado en Aventura)
+- **Repasar errores** — practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista
+
+Al terminar una partida puedes desplegar la lista de preguntas falladas con su respuesta correcta. En **Stats** hay un botón para reiniciar todo el progreso (conserva la preferencia de sonido).
 
 ## Controles
 
@@ -50,8 +55,8 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 | Opción | Clic / `1`–`4` |
 | V/F | `V` / `F` |
 | Enviar | **Comprobar** o `Enter` |
-| Pista | Botón o `H` |
-| Silencio | Botón o `M` |
+| Pista | Botón o `H` (no dentro del campo de «completar») |
+| Silencio | Botón o `M` (no dentro del campo de «completar») |
 | Salir | **Salir** o `Esc` |
 
 ## Estructura
@@ -60,6 +65,9 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 tech-quest/
 ├── index.html
 ├── README.md
+├── INSTRUCCIONES.md         # Guía paso a paso
+├── herramientas/
+│   └── validar-preguntas.js # node herramientas/validar-preguntas.js
 ├── css/style.css
 └── js/
     ├── data.js              # Mundos base + logros + config
@@ -84,8 +92,9 @@ tech-quest/
 | `techQuestBossWins` | Bosses derrotados |
 | `techQuestCompletedWorlds` | Mundos completados (nivel 5) |
 | `techQuestLevelClears` | Niveles 1–5 completados por mundo |
+| `techQuestMistakes` | Preguntas falladas pendientes de repaso |
 
-No hay claves nuevas de storage: se reutiliza `techQuestLevelClears` ahora con niveles `"4"` y `"5"`.
+`techQuestLevelClears` guarda los niveles `"1"` a `"5"` de cada mundo.
 
 ## Config
 

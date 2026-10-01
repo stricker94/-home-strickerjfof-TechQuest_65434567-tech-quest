@@ -5,16 +5,56 @@ const UI = (() => {
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
 
+  let screenAt = 0;
+
+  /** Milisegundos desde el último cambio de pantalla (para ignorar el segundo clic de un doble clic). */
+  function sinceScreen() { return performance.now() - screenAt; }
+
   function showScreen(id) {
+    screenAt = performance.now();
+    let target = null;
     $all(".screen").forEach((el) => {
       const on = el.id === id;
       el.classList.toggle("active", on);
       if (on) {
+        target = el;
         el.classList.remove("screen-enter");
         void el.offsetWidth;
         el.classList.add("screen-enter");
       }
     });
+    // La pantalla nueva empieza arriba (si no, en móvil hereda el scroll de una lista larga)
+    window.scrollTo(0, 0);
+    // Si el foco quedó en una pantalla oculta, llévalo al título de la nueva para teclado y lector de pantalla
+    const a = document.activeElement;
+    if (target && (!a || a === document.body || !target.contains(a))) {
+      const h = target.querySelector("h1, h2");
+      if (h) {
+        if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+        h.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  /**
+   * Anuncia un texto a lectores de pantalla mediante la región viva persistente #sr-status.
+   * Los avisos que llegan casi a la vez (p. ej. varios logros) se leen juntos; con replace solo el último.
+   */
+  function announce(text, replace) {
+    const el = $("#sr-status");
+    if (!el || !text) return;
+    const prev = !replace && el._q ? el._q : "";
+    el._q = prev ? prev + (/[.!?…]$/.test(prev) ? " " : ". ") + text : text;
+    el.textContent = "";
+    clearTimeout(el._t);
+    clearTimeout(el._c);
+    // Vaciar y rellenar en otro turno hace que el lector lo lea aunque el texto se repita
+    el._t = setTimeout(() => {
+      el.textContent = el._q;
+      el._q = "";
+      // Luego se vacía para que el aviso viejo no aparezca al recorrer otras pantallas
+      el._c = setTimeout(() => { el.textContent = ""; }, 7000);
+    }, 60);
   }
 
   function setText(sel, text) {
@@ -32,7 +72,8 @@ const UI = (() => {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function shuffle(arr) {
@@ -48,13 +89,18 @@ const UI = (() => {
     const btn = $("#btn-mute");
     if (!btn) return;
     const m = TechAudio.isMuted();
-    btn.textContent = m ? "🔇 Silencio" : "🔊 Sonido";
-    btn.setAttribute("aria-pressed", m ? "true" : "false");
+    // Interruptor con nombre fijo igual al texto visible ("Sonido") y aria-pressed = sonido activado
+    btn.innerHTML = '<span aria-hidden="true">' + (m ? "🔇" : "🔊") + "</span> Sonido";
+    btn.setAttribute("aria-pressed", m ? "false" : "true");
+    btn.title = m ? "Activar sonido (M)" : "Silenciar (M)";
   }
 
   function updateHUD(st) {
     const livesWrap = $("#hud-lives-wrap");
     if (livesWrap) livesWrap.hidden = !!st.practice;
+    // Práctica y Repaso no tienen pistas: "Pistas 0" parecería que se gastaron
+    const hintsWrap = $("#hud-hints-wrap");
+    if (hintsWrap) hintsWrap.hidden = !!st.practice;
     if (!st.practice) {
       setText("#hud-lives", "❤️".repeat(Math.max(0, st.lives)) + (st.lives <= 0 ? "💀" : ""));
     }
@@ -72,6 +118,7 @@ const UI = (() => {
     }
     let label = "—";
     if (st.mode === "marathon") label = "🏃 Maratón";
+    else if (st.mode === "review") label = "🔁 Repaso de errores";
     else if (st.mode === "boss") {
       const w = getWorldById(st.worldId);
       label = "👹 Boss" + (w ? " · " + w.icon + " " + w.name : "");
@@ -89,14 +136,13 @@ const UI = (() => {
   }
 
   function getHighScore() {
-    try { return parseInt(localStorage.getItem(GAME_CONFIG.storageKey) || "0", 10) || 0; }
-    catch (_) { return 0; }
+    return Math.max(0, parseInt(Progress.readRaw(GAME_CONFIG.storageKey) || "0", 10) || 0);
   }
 
   function saveHighScore(score) {
     const prev = getHighScore();
     if (score > prev) {
-      try { localStorage.setItem(GAME_CONFIG.storageKey, String(score)); } catch (_) {}
+      Progress.writeRaw(GAME_CONFIG.storageKey, String(score));
       return true;
     }
     return false;
@@ -108,10 +154,13 @@ const UI = (() => {
       el = document.createElement("div");
       el.id = "tq-toast";
       el.className = "tq-toast";
+      // Lo visual no se lee: el aviso va por la región viva #sr-status
+      el.setAttribute("aria-hidden", "true");
       document.body.appendChild(el);
     }
     el.textContent = msg;
     el.classList.add("show");
+    announce(msg);
     clearTimeout(el._t);
     el._t = setTimeout(() => el.classList.remove("show"), 2800);
   }
@@ -125,7 +174,7 @@ const UI = (() => {
   }
 
   return {
-    $, $all, showScreen, setText, setHTML, escapeHtml, shuffle,
-    updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback
+    $, $all, showScreen, sinceScreen, setText, setHTML, escapeHtml, shuffle,
+    updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback, announce
   };
 })();

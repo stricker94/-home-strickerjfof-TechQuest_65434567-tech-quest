@@ -21,66 +21,132 @@
     matchSelections: {},
     orderItems: [],
     hintUsedThisQ: false,
+    hintCost: 0,
+    shownAt: 0,
+    feedbackAt: 0,
+    hintAt: 0,
+    feedbackTimedOut: false,
+    matchPending: null,
     correctCount: 0,
     wrongCount: 0,
     timeLeft: 0,
     timerId: null,
-    pendingAchievements: []
+    pendingAchievements: [],
+    runAchievements: [],
+    missed: []
   };
 
   let worldPickMode = "campaign";
   let selectedWorldForLevels = null;
+  // Cómo llegó el foco al elemento actual: "pointer" (clic/toque) o "keyboard" (Tab)
+  let navMode = "pointer";
+  // Tiempo mínimo tras mostrar una pregunta (o un resultado) antes de aceptar clics: evita que el segundo
+  // clic de un doble clic responda la pregunta nueva o pulse "Continuar" sin haber visto el resultado
+  const ANSWER_CLICK_GUARD_MS = 350;
+  // Tras "¡Tiempo agotado!" se ignoran Enter y los atajos un momento: el jugador quizá seguía escribiendo
+  const TIMEOUT_KEY_GUARD_MS = 1000;
 
   function init() {
     bindEvents();
     refreshMenu();
     UI.showScreen("screen-menu");
     UI.updateMuteButton();
-    TechAudio.unlock();
   }
 
   function bindEvents() {
-    document.addEventListener("pointerdown", () => TechAudio.unlock(), { passive: true });
+    // Los navegadores solo permiten iniciar audio tras un gesto del usuario (clic, toque o tecla)
+    document.addEventListener("pointerdown", () => { navMode = "pointer"; TechAudio.unlock(); }, { passive: true });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") navMode = "keyboard";
+      TechAudio.unlock();
+    });
 
     document.body.addEventListener("click", (e) => {
       const t = e.target.closest("[data-action]");
       if (!t) return;
-      onAction(t.getAttribute("data-action"), t);
+      const action = t.getAttribute("data-action");
+      // El segundo clic/toque de un doble clic cae en el botón que ocupa ese lugar en la pantalla o pregunta
+      // recién mostrada (Continuar, un nivel, Pista, Salir, Elegir mundo…): se ignora
+      const sinceShown = Math.min(UI.sinceScreen(), performance.now() - state.shownAt);
+      if (e.detail > 0 && action !== "mute" && sinceShown < ANSWER_CLICK_GUARD_MS) return;
+      onAction(action, t, e);
     });
 
     document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const playOn = document.getElementById("screen-play")?.classList.contains("active");
       const fbOn = document.getElementById("screen-feedback")?.classList.contains("active");
+      if (e.repeat) {
+        // Mantener Enter (o Espacio en el resultado) pulsado no debe activar de forma nativa "Continuar"
+        // y saltarse el resultado
+        if ((e.key === "Enter" && (playOn || fbOn)) || (e.key === " " && fbOn)) e.preventDefault();
+        return;
+      }
+      const focusedBtn = e.target instanceof HTMLButtonElement ? e.target : null;
+      // Al escribir en el campo de texto, las letras no son atajos (p. ej. "chmod" no debe usar pista ni silenciar)
+      const typing = e.target instanceof HTMLElement && e.target.matches("input, textarea, [contenteditable]");
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
 
-      if (e.key === "Escape" && (playOn || fbOn)) confirmQuit();
+      if (fbOn && state.feedbackTimedOut && performance.now() - state.feedbackAt < TIMEOUT_KEY_GUARD_MS &&
+          (key === "Enter" || key === " " || key.length === 1)) {
+        e.preventDefault();
+        return;
+      }
 
-      if (playOn && !state.answered && /^[1-4]$/.test(e.key)) {
-        const btn = document.querySelector(`#options .option-btn[data-index="${+e.key - 1}"]`);
+      if (key === "Escape" && (playOn || fbOn)) {
+        e.preventDefault();
+        confirmQuit();
+        return;
+      }
+
+      if (key === "Enter") {
+        if (playOn) {
+          // Enter activa el botón enfocado (opciones, ▲/▼, ítems de emparejar, Pista, Sonido…), salvo cuando
+          // el foco quedó en un ítem de emparejar/ordenar por un clic: ahí Enter envía la respuesta
+          const pointerOnItem = navMode === "pointer" && focusedBtn && focusedBtn.closest(".match-board, #order-list");
+          if (focusedBtn && focusedBtn.id !== "btn-submit" && !pointerOnItem) return;
+          e.preventDefault();
+          // Un segundo Enter justo tras "Continuar" o un nivel no debe enviar el puzzle que acaba de aparecer
+          // (en "completar" no hace falta: el campo vacío no se envía)
+          const t = currentQ()?.type;
+          if ((t === "order" || t === "match") && performance.now() - state.shownAt < ANSWER_CLICK_GUARD_MS) return;
+          // En "completar" la pista devuelve el foco al campo: un Enter doble sobre Pista no debe enviar lo escrito
+          if (t === "fill" && performance.now() - state.hintAt < ANSWER_CLICK_GUARD_MS) return;
+          submitAnswer();
+        } else if (fbOn) {
+          // Otro botón elegido con Tab (p. ej. Sonido) conserva su Enter nativo
+          if (focusedBtn && focusedBtn.id !== "btn-next-feedback" && navMode === "keyboard") return;
+          // preventDefault evita que el botón enfocado reciba un segundo clic y salte una pregunta
+          e.preventDefault();
+          // Un segundo Enter justo tras responder no debe saltarse el resultado sin verlo
+          if (performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) return;
+          TechAudio.playClick();
+          advance();
+        }
+        return;
+      }
+
+      if (typing) return;
+
+      if (playOn && !state.answered && /^[1-4]$/.test(key)) {
+        const btn = document.querySelector(`#options .option-btn[data-index="${+key - 1}"]`);
         if (btn && !btn.disabled) btn.click();
       }
 
-      if (e.key === "Enter") {
-        if (playOn) {
-          const sub = document.querySelector("#btn-submit:not([disabled])");
-          if (sub && !sub.hidden) sub.click();
-        }
-        if (fbOn) document.querySelector("#btn-next-feedback")?.click();
-      }
-
-      if ((e.key === "h" || e.key === "H") && playOn && !state.practice) {
+      if (key === "h" && playOn && !state.practice) {
         document.querySelector("#btn-hint:not([disabled])")?.click();
       }
 
-      if (e.key === "m" || e.key === "M") onAction("mute");
+      if (key === "m") onAction("mute");
 
       if (playOn && !state.answered) {
-        if (e.key === "v" || e.key === "V") document.querySelector('.tf-btn[data-val="true"]')?.click();
-        if (e.key === "f" || e.key === "F") document.querySelector('.tf-btn[data-val="false"]')?.click();
+        if (key === "v") document.querySelector('.tf-btn[data-val="true"]')?.click();
+        if (key === "f") document.querySelector('.tf-btn[data-val="false"]')?.click();
       }
     });
   }
 
-  function onAction(action, el) {
+  function onAction(action, el, ev) {
     switch (action) {
       case "mute":
         TechAudio.toggleMute();
@@ -102,6 +168,19 @@
       case "marathon":
         TechAudio.playClick();
         beginMarathon();
+        break;
+      case "review":
+        TechAudio.playClick();
+        beginReview();
+        break;
+      case "reset-progress":
+        TechAudio.playClick();
+        if (confirm("¿Borrar todo tu progreso, logros, estadísticas y récord? Esto no se puede deshacer.")) {
+          Progress.resetAll();
+          renderStats();
+          refreshMenu();
+          UI.toast("Progreso reiniciado.");
+        }
         break;
       case "timer":
         TechAudio.playClick();
@@ -156,6 +235,15 @@
         else beginCampaign(id, level);
         break;
       }
+      case "pick-again": {
+        // "Elegir mundo" en la pantalla final vuelve al selector del modo que se acaba de jugar
+        TechAudio.playClick();
+        const again = { practice: "practice", timer: "timer", boss: "boss" };
+        worldPickMode = again[state.mode] || "campaign";
+        renderWorlds();
+        UI.showScreen("screen-worlds");
+        break;
+      }
       case "back-worlds":
         TechAudio.playClick();
         renderWorlds();
@@ -168,6 +256,8 @@
         submitAnswer();
         break;
       case "next":
+        // Un segundo clic, toque o Espacio justo tras responder no debe saltarse el resultado sin verlo
+        if (ev && performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) break;
         TechAudio.playClick();
         advance();
         break;
@@ -194,6 +284,7 @@
 
   function retry() {
     if (state.mode === "marathon") beginMarathon();
+    else if (state.mode === "review") beginReview();
     else if (state.mode === "boss") beginBoss(state.worldId);
     else if (state.mode === "timer") beginTimer(state.worldId, state.level);
     else if (state.practice) beginPractice(state.worldId, state.level);
@@ -212,6 +303,10 @@
     UI.setText("#menu-highscore", String(UI.getHighScore()));
     UI.setText("#menu-total-q", String(countQuestions()));
     UI.setText("#menu-worlds", String(WORLDS.length));
+    const pendingReview = pendingMistakeQuestions().length;
+    UI.setText("#menu-review-count", String(pendingReview));
+    const reviewBtn = UI.$("#btn-review");
+    if (reviewBtn) reviewBtn.disabled = pendingReview === 0;
     const unlocked = Progress.getAchievements();
     UI.setText("#menu-ach-count", Object.keys(unlocked).length + " / " + ACHIEVEMENTS.length);
     const wrap = UI.$("#menu-badges");
@@ -235,8 +330,9 @@
 
     UI.$("#world-grid").innerHTML = WORLDS.map((w, i) => {
       if (worldPickMode === "boss" && !(w.boss && w.boss.length)) return "";
-      const open =
-        worldPickMode !== "campaign" || Progress.isUnlocked(w.id) || i === 0;
+      // Práctica y Cronómetro abren todo; Aventura y Boss requieren el mundo desbloqueado
+      const needsUnlock = worldPickMode === "campaign" || worldPickMode === "boss";
+      const open = !needsUnlock || Progress.isUnlocked(w.id) || i === 0;
       const pct = Progress.worldProgressPct(w.id);
       const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
       const stars = Array.from({ length: maxL }, (_, i) => Progress.isLevelCleared(w.id, i + 1) ? "⭐" : "☆").join("");
@@ -249,7 +345,7 @@
         <span class="world-name">${UI.escapeHtml(w.name)}${open ? "" : " 🔒"}</span>
         <span class="world-desc">${UI.escapeHtml(w.description)}</span>
         <span class="world-progress">${stars} · ${pct}%</span>
-        <span class="world-count">${w.questions.length} retos · ${maxL} niveles${w.boss ? " · boss" : ""}</span>
+        <span class="world-count">${w.questions.length} retos · ${maxL} niveles${w.boss && w.boss.length ? " · boss" : ""}</span>
       </button>`;
     }).join("");
   }
@@ -277,7 +373,8 @@
       .map((L) => {
         const open = worldPickMode === "practice" || worldPickMode === "timer" || Progress.isLevelUnlocked(worldId, L);
         const cleared = Progress.isLevelCleared(worldId, L);
-        const n = counts[L] || 0;
+        // Cronómetro juega como mucho timerMaxQuestions del nivel
+        const n = worldPickMode === "timer" ? Math.min(GAME_CONFIG.timerMaxQuestions, counts[L] || 0) : counts[L] || 0;
         return `<button type="button" class="level-card ${open ? "" : "locked"} ${cleared ? "cleared" : ""}"
           style="--accent:${w.color}"
           ${open ? `data-action="pick-level" data-world="${worldId}" data-level="${L}"` : "disabled"}>
@@ -297,7 +394,9 @@
     state.timed = !!opts.timed;
     state.worldId = opts.worldId || null;
     state.level = opts.level != null ? opts.level : null;
-    state.questions = opts.questions;
+    // Un hueco en una lista de preguntas (",," en los datos) no debe colgar la partida
+    const questions = opts.questions.filter((q) => q && typeof q === "object");
+    state.questions = questions.map(prepareQuestion);
     state.qIndex = 0;
     state.lives = opts.practice ? 99 : GAME_CONFIG.maxLives;
     state.score = 0;
@@ -305,14 +404,29 @@
     state.bestStreakRun = 0;
     state.hintsLeft = opts.practice ? 0 : opts.mode === "boss" ? 1 : GAME_CONFIG.hintsPerWorld;
     state.hintsUsedRun = 0;
-    state.totalQ = opts.questions.length;
+    state.totalQ = questions.length;
     state.answered = false;
     state.correctCount = 0;
     state.wrongCount = 0;
     state.pendingAchievements = [];
-    Progress.recordGameStart();
+    state.runAchievements = [];
+    state.missed = [];
+    // Práctica y Repaso no tienen vidas (no se pueden perder): no cuentan como partidas en Stats
+    if (!state.practice) Progress.recordGameStart();
     UI.showScreen("screen-play");
     showQuestion();
+  }
+
+  const CHOICE_TYPES = ["mc", "identify", "scenario"];
+
+  /** Copia la pregunta y baraja sus opciones para que la correcta no quede siempre en la misma posición. */
+  function prepareQuestion(q) {
+    if (!CHOICE_TYPES.includes(q.type) || !Array.isArray(q.options)) return q;
+    const order = UI.shuffle(q.options.map((_, i) => i));
+    return Object.assign({}, q, {
+      options: order.map((i) => q.options[i]),
+      answer: order.indexOf(q.answer)
+    });
   }
 
   function questionsFor(worldId, level) {
@@ -361,7 +475,7 @@
       UI.toast("Este nivel aún no tiene desafíos.");
       return;
     }
-    qs = qs.slice(0, Math.min(12, qs.length));
+    qs = qs.slice(0, GAME_CONFIG.timerMaxQuestions);
     startRun({ mode: "timer", timed: true, worldId, level, questions: qs });
   }
 
@@ -372,9 +486,39 @@
     startRun({ mode: "marathon", worldId: null, questions: qs });
   }
 
+  /** Preguntas (incluidas las de boss) cuyo id sigue en la lista de errores por repasar. */
+  function pendingMistakeQuestions() {
+    const pending = Progress.getMistakes();
+    const out = [];
+    WORLDS.forEach((w) => {
+      w.questions.concat(w.boss || []).forEach((q) => {
+        if (q.id && Object.prototype.hasOwnProperty.call(pending, q.id)) out.push(q);
+      });
+    });
+    return out;
+  }
+
+  function beginReview() {
+    const qs = pendingMistakeQuestions();
+    if (!qs.length) {
+      UI.toast("No tienes errores pendientes. ¡Bien hecho!");
+      refreshMenu();
+      return;
+    }
+    startRun({
+      mode: "review",
+      practice: true,
+      questions: UI.shuffle(qs).slice(0, GAME_CONFIG.marathonCount)
+    });
+  }
+
   function beginBoss(worldId) {
     const w = getWorldById(worldId);
     if (!w || !w.boss) return;
+    if (!Progress.isUnlocked(worldId)) {
+      UI.toast("Mundo bloqueado. Desbloquéalo en Aventura.");
+      return;
+    }
     startRun({ mode: "boss", timed: true, worldId, questions: w.boss.slice() });
   }
 
@@ -415,7 +559,8 @@
       state.mode === "boss" ? GAME_CONFIG.bossTimerSeconds : GAME_CONFIG.timerSeconds;
     UI.updateHUD(hud());
     state.timerId = setInterval(() => {
-      if (state.answered) return;
+      // Pausa el reloj si la pestaña está oculta, para no perder por cambiar de ventana
+      if (state.answered || document.hidden) return;
       state.timeLeft--;
       if (state.timeLeft > 0 && state.timeLeft <= 5) {
         if (state.timeLeft <= 3) TechAudio.playUrgentTick();
@@ -432,7 +577,10 @@
   function showQuestion() {
     state.answered = false;
     state.hintUsedThisQ = false;
+    state.hintCost = 0;
     state.matchSelections = {};
+    state.matchPending = null;
+    state.shownAt = performance.now();
 
     const q = currentQ();
     UI.updateHUD(hud());
@@ -454,11 +602,14 @@
     const hintBtn = UI.$("#btn-hint");
     if (hintBtn) {
       hintBtn.hidden = state.practice;
-      hintBtn.disabled = state.hintsLeft <= 0;
+      // En Verdadero/Falso no hay pista útil que no regale la respuesta
+      hintBtn.disabled = state.hintsLeft <= 0 || q.type === "tf";
+      hintBtn.removeAttribute("aria-disabled");
+      hintBtn.title = q.type === "tf" ? "Sin pista en Verdadero / Falso" : "";
     }
     if (submitBtn) submitBtn.disabled = false;
 
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") {
+    if (CHOICE_TYPES.includes(q.type)) {
       submitBtn.hidden = true;
       renderChoices(area, q.options);
     } else if (q.type === "tf") {
@@ -469,16 +620,11 @@
       area.innerHTML = `
         <label class="fill-label" for="fill-input">Tu respuesta:</label>
         <input id="fill-input" class="fill-input" type="text" autocomplete="off" spellcheck="false"
-          placeholder="Escribe aquí…" aria-label="Respuesta" />
+          placeholder="Escribe aquí…" aria-describedby="question-text" />
         <p class="fill-tip">Mayúsculas flexibles · Enter para enviar</p>`;
+      // Enter se maneja en el listener global de teclado
       const input = UI.$("#fill-input");
       setTimeout(() => input && input.focus(), 40);
-      input.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") {
-          ev.preventDefault();
-          submitAnswer();
-        }
-      });
     } else if (q.type === "match") {
       submitBtn.hidden = false;
       renderMatch(area, q);
@@ -486,6 +632,8 @@
       submitBtn.hidden = false;
       renderOrder(area, q);
     }
+    // El foco va a la pregunta nueva (el campo de texto lo toma en "completar"), no se pierde en <body>
+    if (q.type !== "fill") UI.$("#question-text")?.focus({ preventScroll: true });
 
     armTimer();
   }
@@ -502,6 +650,11 @@
     })[t] || t;
   }
 
+  /** true si el clic llega demasiado pronto tras mostrar la pregunta (segundo clic de un doble clic). */
+  function tooSoon(ev) {
+    return ev.detail > 0 && performance.now() - state.shownAt < ANSWER_CLICK_GUARD_MS;
+  }
+
   function renderChoices(area, options) {
     const wrap = document.createElement("div");
     wrap.id = "options";
@@ -512,8 +665,8 @@
       btn.className = "option-btn";
       btn.dataset.index = String(i);
       btn.innerHTML = `<span class="opt-key">${i + 1}</span><span class="opt-text">${UI.escapeHtml(opt)}</span>`;
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         gradeChoice(i);
       });
       wrap.appendChild(btn);
@@ -531,8 +684,8 @@
       btn.className = "option-btn tf-btn";
       btn.dataset.val = val;
       btn.innerHTML = `<span class="opt-key">${key}</span><span class="opt-text">${label}</span>`;
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         gradeTF(val === "true");
       });
       wrap.appendChild(btn);
@@ -540,40 +693,54 @@
     area.appendChild(wrap);
   }
 
+  /** Baraja sin devolver el orden original (si hay más de un elemento), para no mostrar el puzzle ya resuelto. */
+  function shuffleUnsolved(arr, isSolved) {
+    let out = UI.shuffle(arr);
+    for (let t = 0; t < 20 && arr.length > 1 && isSolved(out); t++) out = UI.shuffle(arr);
+    return out;
+  }
+
   function renderMatch(area, q) {
     const lefts = q.pairs.map((p, i) => ({ text: p.left, i }));
-    const rights = UI.shuffle(q.pairs.map((p, i) => ({ text: p.right, i })));
+    // Si cada pareja quedara justo enfrente de su concepto, el ejercicio saldría resuelto
+    const rights = shuffleUnsolved(q.pairs.map((p, i) => ({ text: p.right, i })), (a) => a.every((r, k) => r.i === k));
     area.innerHTML = `
-      <p class="match-help">Elige izquierda y luego su pareja a la derecha.</p>
+      <p class="match-help">Toca un concepto y luego su pareja (o al revés).</p>
       <div class="match-board">
-        <div class="match-col">${lefts.map((l) =>
-          `<button type="button" class="match-item" data-side="left" data-i="${l.i}">${UI.escapeHtml(l.text)}</button>`
+        <div class="match-col" role="group" aria-labelledby="match-col-left">
+          <p class="match-col-title" id="match-col-left">Concepto</p>${lefts.map((l) =>
+          `<button type="button" class="match-item" data-side="left" data-i="${l.i}" aria-pressed="false">${UI.escapeHtml(l.text)}</button>`
         ).join("")}</div>
-        <div class="match-col">${rights.map((r) =>
-          `<button type="button" class="match-item" data-side="right" data-i="${r.i}">${UI.escapeHtml(r.text)}</button>`
+        <div class="match-col" role="group" aria-labelledby="match-col-right">
+          <p class="match-col-title" id="match-col-right">Pareja</p>${rights.map((r) =>
+          `<button type="button" class="match-item" data-side="right" data-i="${r.i}" aria-pressed="false">${UI.escapeHtml(r.text)}</button>`
         ).join("")}</div>
       </div>
       <div class="match-links" id="match-links"></div>`;
-    let pending = null;
     area.querySelectorAll(".match-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (state.answered) return;
+      btn.addEventListener("click", (ev) => {
+        if (state.answered || tooSoon(ev)) return;
         TechAudio.playClick();
         const side = btn.dataset.side;
         const i = +btn.dataset.i;
-        if (side === "left") {
-          area.querySelectorAll('[data-side="left"]').forEach((b) => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          pending = i;
-        } else if (pending != null) {
+        const pend = state.matchPending;
+        if (pend && pend.side !== side) {
+          // Se puede empezar por cualquiera de las dos columnas
+          const l = side === "left" ? i : pend.i;
+          const r = side === "right" ? i : pend.i;
           Object.keys(state.matchSelections).forEach((k) => {
-            if (state.matchSelections[k] === i || +k === pending) delete state.matchSelections[k];
+            if (state.matchSelections[k] === r || +k === l) delete state.matchSelections[k];
           });
-          state.matchSelections[pending] = i;
-          pending = null;
-          area.querySelectorAll(".match-item").forEach((b) => b.classList.remove("selected"));
-          paintMatch();
+          state.matchSelections[l] = r;
+          state.matchPending = null;
+          UI.announce("Emparejado: " + q.pairs[l].left + " con " + q.pairs[r].right, true);
+        } else if (pend && pend.i === i) {
+          // Volver a tocar el ítem pendiente lo suelta
+          state.matchPending = null;
+        } else {
+          state.matchPending = { side, i };
         }
+        paintMatch();
       });
     });
   }
@@ -586,19 +753,32 @@
         `<span class="match-chip">${UI.escapeHtml(q.pairs[+l].left)} ↔ ${UI.escapeHtml(q.pairs[r].right)}</span>`
       )
       .join("");
+    const pend = state.matchPending;
     UI.$all(".match-item").forEach((btn) => {
       const side = btn.dataset.side;
       const i = +btn.dataset.i;
-      const paired =
-        side === "left"
-          ? state.matchSelections[i] != null
-          : Object.values(state.matchSelections).includes(i);
-      btn.classList.toggle("paired", paired);
+      let partner = null;
+      if (side === "left") {
+        if (state.matchSelections[i] != null) partner = q.pairs[state.matchSelections[i]].right;
+      } else {
+        const l = Object.keys(state.matchSelections).find((k) => state.matchSelections[k] === i);
+        if (l != null) partner = q.pairs[+l].left;
+      }
+      const selected = !!pend && pend.side === side && pend.i === i;
+      btn.classList.toggle("paired", partner != null);
+      btn.classList.toggle("selected", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+      // El lector de pantalla también dice con qué quedó emparejado (el color solo no basta)
+      if (partner != null) btn.setAttribute("aria-label", btn.textContent + ", emparejado con " + partner);
+      else btn.removeAttribute("aria-label");
     });
   }
 
   function renderOrder(area, q) {
-    state.orderItems = UI.shuffle(q.items.map((text, orig) => ({ text, orig })));
+    state.orderItems = shuffleUnsolved(
+      q.items.map((text, orig) => ({ text, orig })),
+      (a) => a.every((x, i) => x.orig === q.answer[i])
+    );
     const list = document.createElement("ul");
     list.className = "order-list";
     list.id = "order-list";
@@ -612,22 +792,28 @@
           <span class="order-num">${idx + 1}</span>
           <span class="order-text">${UI.escapeHtml(item.text)}</span>
           <span class="order-controls">
-            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir" ${idx === 0 ? "disabled" : ""}>▲</button>
-            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar" ${idx === state.orderItems.length - 1 ? "disabled" : ""}>▼</button>
+            <button type="button" class="icon-btn" data-dir="-1" data-idx="${idx}" aria-label="Subir: ${UI.escapeHtml(item.text)}" ${idx === 0 ? 'aria-disabled="true"' : ""}>▲</button>
+            <button type="button" class="icon-btn" data-dir="1" data-idx="${idx}" aria-label="Bajar: ${UI.escapeHtml(item.text)}" ${idx === state.orderItems.length - 1 ? 'aria-disabled="true"' : ""}>▼</button>
           </span>`;
         list.appendChild(li);
       });
       list.querySelectorAll("[data-dir]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (state.answered) return;
+        btn.addEventListener("click", (ev) => {
+          if (state.answered || tooSoon(ev)) return;
           TechAudio.playClick();
+          const dir = +btn.dataset.dir;
           const idx = +btn.dataset.idx;
-          const j = idx + +btn.dataset.dir;
+          const j = idx + dir;
+          // Las flechas de los extremos no se desactivan de verdad (el foco se perdería): solo no hacen nada
           if (j < 0 || j >= state.orderItems.length) return;
           const tmp = state.orderItems[idx];
           state.orderItems[idx] = state.orderItems[j];
           state.orderItems[j] = tmp;
           paint();
+          // paint() reconstruye los botones: el foco vuelve a la misma flecha del ítem movido, así con teclado
+          // se puede seguir pulsando en la misma dirección
+          list.querySelector(`[data-dir="${dir}"][data-idx="${j}"]`)?.focus();
+          UI.announce("«" + tmp.text + "» ahora en la posición " + (j + 1) + " de " + state.orderItems.length, true);
         });
       });
     }
@@ -637,44 +823,59 @@
   }
 
   function useHint() {
-    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice) return;
+    const q = currentQ();
+    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice || q.type === "tf") return;
     TechAudio.playClick();
     state.hintsLeft--;
     state.hintsUsedRun++;
     state.hintUsedThisQ = true;
-    state.score = Math.max(0, state.score - GAME_CONFIG.pointsHintPenalty);
+    state.hintAt = performance.now();
+    // El coste se cobra al resolver la pregunta (finishRound), así siempre es el mismo y se ve en el resultado
+    state.hintCost = GAME_CONFIG.pointsHintPenalty;
     Progress.recordHint();
     UI.updateHUD(hud());
+    // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan. Se marca con
+    // aria-disabled en vez de disabled para que, si tenía el foco, no caiga a <body> (y un segundo
+    // Enter no envíe la respuesta a medias)
     const hintBtn = UI.$("#btn-hint");
-    if (hintBtn) hintBtn.disabled = state.hintsLeft <= 0;
+    if (hintBtn) hintBtn.setAttribute("aria-disabled", "true");
 
-    const q = currentQ();
     const box = UI.$("#hint-box");
     box.hidden = false;
     let tip = "Pista activa.";
 
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") {
+    if (CHOICE_TYPES.includes(q.type)) {
       const wrong = q.options.map((_, i) => i).filter((i) => i !== q.answer);
       const elim = wrong[Math.floor(Math.random() * wrong.length)];
       tip = "Pista: elimina «" + q.options[elim] + "».";
       const btn = document.querySelector(`#options .option-btn[data-index="${elim}"]`);
       if (btn) {
+        if (btn === document.activeElement) UI.$("#question-text")?.focus({ preventScroll: true });
         btn.disabled = true;
         btn.classList.add("eliminated");
       }
-    } else if (q.type === "tf") {
-      tip = "Pista: revisa la definición estándar del concepto.";
     } else if (q.type === "fill") {
-      const ans = (q.accept && q.accept[0]) || q.answer;
-      tip = "Pista: empieza con «" + ans.slice(0, Math.min(4, ans.length)) + "…»";
+      // Revela como mucho la mitad: con respuestas cortas (p. ej. "53", "DNS") no regala la respuesta
+      const ans = String(q.answer);
+      const n = ans.length <= 2 ? 0 : ans.length <= 4 ? 1 : Math.min(4, Math.floor(ans.length / 2));
+      tip = n
+        ? "Pista: empieza con «" + ans.slice(0, n) + "…» (" + ans.length + " caracteres)."
+        : "Pista: la respuesta tiene " + ans.length + " caracteres.";
     } else if (q.type === "match") {
       tip = "Pista: «" + q.pairs[0].left + "» ↔ «" + q.pairs[0].right + "».";
+      Object.keys(state.matchSelections).forEach((k) => {
+        if (state.matchSelections[k] === 0) delete state.matchSelections[k];
+      });
       state.matchSelections[0] = 0;
+      state.matchPending = null;
       paintMatch();
     } else if (q.type === "order") {
       tip = "Pista: el primero es «" + q.items[q.answer[0]] + "».";
     }
-    box.textContent = tip;
+    box.textContent = tip + " (−" + state.hintCost + " pts)";
+    UI.announce(box.textContent, true);
+    // En "completar" se vuelve al campo para seguir escribiendo (con el foco en Pista las letras serían atajos)
+    if (q.type === "fill") UI.$("#fill-input")?.focus();
   }
 
   function submitAnswer() {
@@ -692,7 +893,7 @@
   }
 
   function correctLabel(q) {
-    if (q.type === "mc" || q.type === "identify" || q.type === "scenario") return q.options[q.answer];
+    if (CHOICE_TYPES.includes(q.type)) return q.options[q.answer];
     if (q.type === "tf") return q.answer ? "Verdadero" : "Falso";
     if (q.type === "fill") return q.answer;
     if (q.type === "match") return q.pairs.map((p) => p.left + " → " + p.right).join("; ");
@@ -724,11 +925,13 @@
     finishRound(ok, q.answer ? "Verdadero" : "Falso");
   }
 
-  function norm(s) { return s.trim().toLowerCase().replace(/\s+/g, " "); }
+  function norm(s) { return String(s).trim().toLowerCase().replace(/\s+/g, " "); }
 
   function gradeFill(raw) {
     const q = currentQ();
-    const accept = (q.accept || [q.answer]).map(norm);
+    let accept = q.accept || [q.answer];
+    if (typeof accept === "string") accept = accept.split("|");
+    accept = accept.map(norm);
     finishRound(accept.includes(norm(raw)), q.answer);
   }
 
@@ -736,7 +939,7 @@
     const q = currentQ();
     const n = q.pairs.length;
     if (Object.keys(state.matchSelections).length < n) {
-      alert("Empareja todos los ítems antes de comprobar.");
+      UI.toast("Empareja todos los ítems antes de comprobar.");
       return;
     }
     let ok = true;
@@ -754,6 +957,7 @@
   function grant(id) {
     if (Progress.unlockAchievement(id)) {
       state.pendingAchievements.push(id);
+      state.runAchievements.push(id);
       TechAudio.playAchievement();
       const a = ACHIEVEMENTS.find((x) => x.id === id);
       if (a) UI.toast("Logro: " + a.icon + " " + a.name);
@@ -769,7 +973,15 @@
     if (hint) hint.disabled = true;
 
     Progress.recordAnswer(ok);
+    const q = currentQ();
+    // Lo fallado se guarda para el modo Repasar errores; acertarlo después lo quita de la lista
+    if (ok) Progress.removeMistake(q.id);
+    else {
+      Progress.addMistake(q.id);
+      state.missed.push({ q: q.q, correct: correctText });
+    }
     let gained = 0;
+    let hintPaid = 0;
 
     if (ok) {
       TechAudio.playCorrect();
@@ -781,8 +993,9 @@
         GAME_CONFIG.pointsCorrect +
         (state.streak > 1 ? GAME_CONFIG.pointsStreakBonus * (state.streak - 1) : 0);
       if (state.mode === "boss") gained = Math.round(gained * 1.5);
-      if (state.hintUsedThisQ) gained = Math.max(20, gained - GAME_CONFIG.pointsHintPenalty);
       if (state.timed && state.timeLeft > 0) gained += Math.min(50, state.timeLeft * 2);
+      hintPaid = Math.min(gained, state.hintCost);
+      gained -= hintPaid;
       state.score += gained;
       if (state.streak >= 5) grant("streak5");
       if (state.streak >= 10) grant("streak10");
@@ -791,13 +1004,18 @@
       state.streak = 0;
       state.wrongCount++;
       if (!state.practice) state.lives--;
+      // Al fallar, la pista se cobra de lo que haya en el marcador (nunca queda negativo)
+      hintPaid = Math.min(state.score, state.hintCost);
+      state.score -= hintPaid;
     }
 
     UI.updateHUD(hud());
-    showFeedback(ok, gained, correctText, currentQ().explain, timedOut);
+    showFeedback(ok, gained, correctText, q.explain, timedOut, hintPaid);
   }
 
-  function showFeedback(ok, gained, correctText, explain, timedOut) {
+  function showFeedback(ok, gained, correctText, explain, timedOut, hintPaid) {
+    state.feedbackAt = performance.now();
+    state.feedbackTimedOut = !!timedOut;
     UI.showScreen("screen-feedback");
     UI.flashFeedback(ok);
     UI.$("#feedback-icon").textContent = ok ? "✅" : timedOut ? "⏰" : "❌";
@@ -805,35 +1023,61 @@
     if (ok) {
       title.textContent = "¡Correcto!";
       title.className = "ok";
-      UI.setText("#feedback-detail", "+" + gained + " pts" + (state.streak > 1 ? " · Racha x" + state.streak : ""));
+      UI.setText(
+        "#feedback-detail",
+        "+" + gained + " pts" + (hintPaid ? " (pista −" + hintPaid + ")" : "") +
+          (state.streak > 1 ? " · Racha x" + state.streak : "")
+      );
     } else {
       title.textContent = timedOut ? "¡Tiempo agotado!" : "Incorrecto";
       title.className = "bad";
       UI.setText(
         "#feedback-detail",
-        "Respuesta: " + correctText + (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
+        "Respuesta: " + correctText + (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives)) +
+          (hintPaid ? " · Pista −" + hintPaid + " pts" : "")
       );
     }
     UI.setText("#feedback-explain", explain || "");
+    showPendingAchievements("#feedback-ach");
+    // Un solo aviso con el resultado y los logros de esta pregunta (sustituye al del toast del logro)
     const ach = UI.$("#feedback-ach");
-    if (ach) {
-      if (state.pendingAchievements.length) {
-        ach.hidden = false;
-        ach.textContent =
-          "¡Logro! " +
-          state.pendingAchievements
-            .map((id) => {
-              const a = ACHIEVEMENTS.find((x) => x.id === id);
-              return a ? a.icon + " " + a.name : id;
-            })
-            .join(" · ");
-        state.pendingAchievements = [];
-      } else ach.hidden = true;
+    const t = title.textContent;
+    UI.announce(
+      t + (/[!?.]$/.test(t) ? " " : ". ") + UI.$("#feedback-detail").textContent +
+        (ach && !ach.hidden ? ". " + ach.textContent : ""),
+      true
+    );
+    // preventScroll: en pantallas pequeñas el título y la respuesta deben seguir visibles arriba
+    UI.$("#btn-next-feedback")?.focus({ preventScroll: true });
+  }
+
+  /** Muestra (y vacía) los logros obtenidos desde la última vez; los toasts solo dejan ver el último. */
+  function showPendingAchievements(sel) {
+    renderAchievementList(sel, state.pendingAchievements);
+    state.pendingAchievements = [];
+  }
+
+  function renderAchievementList(sel, ids) {
+    const el = UI.$(sel);
+    if (!el) return;
+    if (!ids.length) {
+      el.hidden = true;
+      return;
     }
-    UI.$("#btn-next-feedback")?.focus();
+    el.hidden = false;
+    el.textContent =
+      "¡Logro! " +
+      ids
+        .map((id) => {
+          const a = ACHIEVEMENTS.find((x) => x.id === id);
+          return a ? a.icon + " " + a.name : id;
+        })
+        .join(" · ");
   }
 
   function advance() {
+    // Evita avanzar dos veces (clic + Enter) o desde fuera de la pantalla de resultado
+    if (!state.answered || !UI.$("#screen-feedback")?.classList.contains("active")) return;
     if (!state.practice && state.lives <= 0) {
       endGame(false);
       return;
@@ -847,19 +1091,34 @@
     showQuestion();
   }
 
+  const MODE_LABELS = {
+    campaign: "Aventura",
+    practice: "Práctica",
+    review: "Repaso de errores",
+    marathon: "Maratón",
+    timer: "Cronómetro",
+    boss: "Boss"
+  };
+
   function endGame(victory) {
     clearTimer();
     const isNew = UI.saveHighScore(state.score);
     const world = state.worldId ? getWorldById(state.worldId) : null;
     const levelCleared = !!(victory && state.mode === "campaign" && state.worldId && state.level);
-    Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
+    if (!state.practice) Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
+    // Al repetir un nivel ya superado no se desbloquea nada nuevo: el aviso solo sale la primera vez
+    let nextWasOpen = false;
 
     if (victory) {
       if (state.mode === "campaign" && state.worldId && state.level) {
+        const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
+        const wi = WORLDS.findIndex((w) => w.id === state.worldId);
+        nextWasOpen = state.level < maxL
+          ? Progress.isLevelUnlocked(state.worldId, state.level + 1)
+          : wi >= 0 && wi < WORLDS.length - 1 && Progress.isUnlocked(WORLDS[wi + 1].id);
         Progress.markLevelCleared(state.worldId, state.level);
         grant("first_win");
         if (state.hintsUsedRun === 0) grant("no_hints");
-        const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.worldId === "support" && state.level >= maxL) grant("support_hero");
         if (state.worldId === "security" && state.level >= maxL) grant("security_hero");
         if (state.worldId === "hardware" && state.level >= maxL) grant("hardware_hero");
@@ -867,7 +1126,7 @@
         if (state.worldId === "database" && state.level >= maxL) grant("database_hero");
         if (Progress.allLevelsCleared(state.worldId)) grant("world_maestro");
         if (Progress.countClearedLevels() >= 25) grant("level_master");
-        if (Progress.allWorldsCompleted()) grant("all_worlds");
+        if (WORLDS.every((w) => Progress.isLevelCleared(w.id, 1))) grant("all_worlds");
         if (WORLDS.every((w) => Progress.allLevelsCleared(w.id))) grant("all_levels");
       }
       if (state.mode === "marathon") grant("marathon");
@@ -892,26 +1151,30 @@
     const acc = totalAns ? Math.round((state.correctCount / totalAns) * 100) : 0;
     UI.setText(
       "#end-summary",
-      (world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "") + "\\n" : state.mode === "marathon" ? "Maratón mixta\\n" : "") +
-        "Modo: " + state.mode +
-        "\\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "") +
-        "\\nAciertos: " + state.correctCount + "/" + totalAns + " (" + acc + "%)" +
-        "\\nMejor racha: " + state.bestStreakRun +
+      (world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "") + "\n" : state.mode === "marathon" ? "Maratón mixta\n" : "") +
+        "Modo: " + (MODE_LABELS[state.mode] || state.mode) +
+        "\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "") +
+        "\nAciertos: " + state.correctCount + "/" + totalAns + " (" + acc + "%)" +
+        "\nMejor racha: " + state.bestStreakRun +
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
+    // La pantalla final lista todos los logros de la partida (también las rachas ya vistas en un resultado)
+    state.pendingAchievements = [];
+    renderAchievementList("#end-ach", state.runAchievements);
+    renderMissed();
 
     const unlockEl = UI.$("#end-unlock");
     if (unlockEl) {
       if (victory && state.mode === "campaign" && world && state.level) {
         const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.level < maxL) {
-          unlockEl.hidden = false;
+          unlockEl.hidden = nextWasOpen;
           unlockEl.textContent = "Desbloqueado: Nivel " + (state.level + 1) + " de " + world.name;
         } else {
           const idx = WORLDS.findIndex((w) => w.id === world.id);
           if (idx >= 0 && idx < WORLDS.length - 1) {
-            unlockEl.hidden = false;
+            unlockEl.hidden = nextWasOpen;
             unlockEl.textContent = "Mundo desbloqueado: " + WORLDS[idx + 1].icon + " " + WORLDS[idx + 1].name;
           } else {
             unlockEl.hidden = false;
@@ -923,6 +1186,23 @@
 
     if (victory) TechAudio.playLevelComplete();
     else TechAudio.playGameOver();
+  }
+
+  function renderMissed() {
+    const box = UI.$("#end-mistakes");
+    if (!box) return;
+    if (!state.missed.length) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML =
+      `<summary>Repasa lo que fallaste (${state.missed.length})</summary><ol>` +
+      state.missed
+        .map((m) => `<li><span class="mistake-q">${UI.escapeHtml(m.q)}</span><span class="mistake-a">✔ ${UI.escapeHtml(m.correct)}</span></li>`)
+        .join("") +
+      "</ol>";
   }
 
   function renderStats() {
@@ -939,7 +1219,8 @@
         <li><strong>Maratones ganadas:</strong> ${s.marathonWins}</li>
         <li><strong>Cronómetro ganados:</strong> ${s.timerWins}</li>
         <li><strong>Boss (partidas ganadas):</strong> ${s.bossWins}</li>
-        <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * 3}</li>
+        <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * Progress.levelsPerWorld()}</li>
+        <li><strong>Errores por repasar:</strong> ${pendingMistakeQuestions().length}</li>
         <li><strong>Récord puntos:</strong> ${UI.getHighScore()}</li>
       </ul>`
     );
