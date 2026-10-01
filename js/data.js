@@ -19,6 +19,7 @@ const GAME_CONFIG = {
   levelsPerWorld: 5,
   marathonCount: 20,
   timerSeconds: 25,
+  timerMaxQuestions: 12,
   bossTimerSeconds: 20,
   unlockScoreThreshold: 600
 };
@@ -45,7 +46,7 @@ const WORLDS = [
         q: "¿Qué comando cambia el directorio de trabajo actual?",
         options: ["mv", "cd", "cp", "rm"],
         answer: 1,
-        explain: "cd (change directory) te mueve entre carpetas. cd .. sube un nivel; cd ~ va al home."
+        explain: "cd (change directory) te mueve entre carpetas, con ruta absoluta (cd /etc) o relativa (cd Documentos)."
       },
       {
         id: "lx03",
@@ -141,7 +142,16 @@ const WORLDS = [
         type: "fill",
         q: "Comando para cambiar permisos a 644 en config.txt:",
         answer: "chmod 644 config.txt",
-        accept: ["chmod 644 config.txt", "chmod 0644 config.txt"],
+        accept: [
+          "chmod 644 config.txt",
+          "chmod 0644 config.txt",
+          "sudo chmod 644 config.txt",
+          "sudo chmod 0644 config.txt",
+          "chmod 644 ./config.txt",
+          "chmod 0644 ./config.txt",
+          "sudo chmod 644 ./config.txt",
+          "sudo chmod 0644 ./config.txt"
+        ],
         explain: "644 = dueño rw, grupo/otros solo lectura. Común en archivos de configuración."
       },
       {
@@ -198,7 +208,7 @@ const WORLDS = [
           "Monitor de confiabilidad"
         ],
         answer: 1,
-        explain: "Task Manager (Ctrl+Shift+Esc): procesos, rendimiento, inicio y usuarios."
+        explain: "El Administrador de tareas (taskmgr) muestra procesos, rendimiento, inicio y usuarios."
       },
       {
         id: "wn03",
@@ -240,10 +250,15 @@ const WORLDS = [
       {
         id: "wn07",
         type: "mc",
-        q: "¿Qué tipo de cuenta de Windows tiene privilegios elevados por defecto?",
-        options: ["Usuario estándar", "Administrador", "Invitado", "Cuenta local sin contraseña"],
+        q: "¿Qué tipo de cuenta de Windows puede instalar software para todos los usuarios y cambiar la configuración del sistema?",
+        options: [
+          "Usuario estándar",
+          "Administrador",
+          "Invitado",
+          "Cuenta local sin contraseña"
+        ],
         answer: 1,
-        explain: "Las cuentas Administrador (o con rol admin) pueden instalar software y cambiar sistema. UAC pide elevación."
+        explain: "Las cuentas Administrador pueden instalar software y cambiar el sistema. Con UAC trabajan con permisos estándar hasta que apruebas la elevación."
       },
       {
         id: "wn08",
@@ -646,7 +661,7 @@ const WORLDS = [
           "Un mensaje que el programa muestra en consola"
         ],
         answer: 0,
-        explain: "Ej.: let edad = 20; puedes leer y (si no es const) reasignar el valor."
+        explain: "Ej.: edad = 20 guarda el valor 20 con el nombre edad; puedes leerlo y, si no es una constante, reasignarlo."
       },
       {
         id: "pg02",
@@ -667,7 +682,7 @@ const WORLDS = [
           "Elegir entre dos caminos según una condición"
         ],
         answer: 0,
-        explain: "for (let i = 0; i < n; i++) { … }. while repite mientras la condición sea true."
+        explain: "El for reúne inicio (i = 0), condición (i < n) y paso (i++): así el bloque se ejecuta n veces, con i de 0 a n-1."
       },
       {
         id: "pg04",
@@ -808,7 +823,7 @@ const ACHIEVEMENTS = [
   { id: "streak5", icon: "🔥", name: "Racha x5", desc: "Consigue una racha de 5 aciertos." },
   { id: "streak10", icon: "⚡", name: "Racha x10", desc: "Consigue una racha de 10 aciertos." },
   { id: "no_hints", icon: "🧠", name: "Sin pistas", desc: "Completa un nivel de Aventura sin usar pistas." },
-  { id: "all_worlds", icon: "🌍", name: "Maestro de mundos", desc: "Completa el nivel 5 (Maestro) de todos los mundos." },
+  { id: "all_worlds", icon: "🌍", name: "Trotamundos", desc: "Completa el nivel 1 de todos los mundos." },
   { id: "marathon", icon: "🏃", name: "Maratonista", desc: "Termina el modo Maratón." },
   { id: "boss_slayer", icon: "👹", name: "Cazador de jefes", desc: "Derrota un Desafío Boss." },
   { id: "all_bosses", icon: "👑", name: "Rey de jefes", desc: "Derrota el boss de cada mundo." },

@@ -24,6 +24,7 @@
     hintCost: 0,
     shownAt: 0,
     feedbackAt: 0,
+    hintAt: 0,
     feedbackTimedOut: false,
     matchPending: null,
     correctCount: 0,
@@ -31,6 +32,7 @@
     timeLeft: 0,
     timerId: null,
     pendingAchievements: [],
+    runAchievements: [],
     missed: []
   };
 
@@ -62,7 +64,12 @@
     document.body.addEventListener("click", (e) => {
       const t = e.target.closest("[data-action]");
       if (!t) return;
-      onAction(t.getAttribute("data-action"), t, e);
+      const action = t.getAttribute("data-action");
+      // El segundo clic/toque de un doble clic cae en el botón que ocupa ese lugar en la pantalla o pregunta
+      // recién mostrada (Continuar, un nivel, Pista, Salir, Elegir mundo…): se ignora
+      const sinceShown = Math.min(UI.sinceScreen(), performance.now() - state.shownAt);
+      if (e.detail > 0 && action !== "mute" && sinceShown < ANSWER_CLICK_GUARD_MS) return;
+      onAction(action, t, e);
     });
 
     document.addEventListener("keydown", (e) => {
@@ -70,8 +77,9 @@
       const playOn = document.getElementById("screen-play")?.classList.contains("active");
       const fbOn = document.getElementById("screen-feedback")?.classList.contains("active");
       if (e.repeat) {
-        // Mantener Enter pulsado no debe activar de forma nativa "Continuar" y saltarse el resultado
-        if (e.key === "Enter" && (playOn || fbOn)) e.preventDefault();
+        // Mantener Enter (o Espacio en el resultado) pulsado no debe activar de forma nativa "Continuar"
+        // y saltarse el resultado
+        if ((e.key === "Enter" && (playOn || fbOn)) || (e.key === " " && fbOn)) e.preventDefault();
         return;
       }
       const focusedBtn = e.target instanceof HTMLButtonElement ? e.target : null;
@@ -102,12 +110,16 @@
           // (en "completar" no hace falta: el campo vacío no se envía)
           const t = currentQ()?.type;
           if ((t === "order" || t === "match") && performance.now() - state.shownAt < ANSWER_CLICK_GUARD_MS) return;
+          // En "completar" la pista devuelve el foco al campo: un Enter doble sobre Pista no debe enviar lo escrito
+          if (t === "fill" && performance.now() - state.hintAt < ANSWER_CLICK_GUARD_MS) return;
           submitAnswer();
         } else if (fbOn) {
           // Otro botón elegido con Tab (p. ej. Sonido) conserva su Enter nativo
           if (focusedBtn && focusedBtn.id !== "btn-next-feedback" && navMode === "keyboard") return;
           // preventDefault evita que el botón enfocado reciba un segundo clic y salte una pregunta
           e.preventDefault();
+          // Un segundo Enter justo tras responder no debe saltarse el resultado sin verlo
+          if (performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) return;
           TechAudio.playClick();
           advance();
         }
@@ -244,9 +256,8 @@
         submitAnswer();
         break;
       case "next":
-        // El segundo clic/toque de un doble clic en una opción cae sobre "Continuar": sin esta guarda
-        // se saltaría el resultado sin verlo
-        if (ev && ev.detail > 0 && performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) break;
+        // Un segundo clic, toque o Espacio justo tras responder no debe saltarse el resultado sin verlo
+        if (ev && performance.now() - state.feedbackAt < ANSWER_CLICK_GUARD_MS) break;
         TechAudio.playClick();
         advance();
         break;
@@ -334,7 +345,7 @@
         <span class="world-name">${UI.escapeHtml(w.name)}${open ? "" : " 🔒"}</span>
         <span class="world-desc">${UI.escapeHtml(w.description)}</span>
         <span class="world-progress">${stars} · ${pct}%</span>
-        <span class="world-count">${w.questions.length} retos · ${maxL} niveles${w.boss ? " · boss" : ""}</span>
+        <span class="world-count">${w.questions.length} retos · ${maxL} niveles${w.boss && w.boss.length ? " · boss" : ""}</span>
       </button>`;
     }).join("");
   }
@@ -362,7 +373,8 @@
       .map((L) => {
         const open = worldPickMode === "practice" || worldPickMode === "timer" || Progress.isLevelUnlocked(worldId, L);
         const cleared = Progress.isLevelCleared(worldId, L);
-        const n = counts[L] || 0;
+        // Cronómetro juega como mucho timerMaxQuestions del nivel
+        const n = worldPickMode === "timer" ? Math.min(GAME_CONFIG.timerMaxQuestions, counts[L] || 0) : counts[L] || 0;
         return `<button type="button" class="level-card ${open ? "" : "locked"} ${cleared ? "cleared" : ""}"
           style="--accent:${w.color}"
           ${open ? `data-action="pick-level" data-world="${worldId}" data-level="${L}"` : "disabled"}>
@@ -382,7 +394,9 @@
     state.timed = !!opts.timed;
     state.worldId = opts.worldId || null;
     state.level = opts.level != null ? opts.level : null;
-    state.questions = opts.questions.map(prepareQuestion);
+    // Un hueco en una lista de preguntas (",," en los datos) no debe colgar la partida
+    const questions = opts.questions.filter((q) => q && typeof q === "object");
+    state.questions = questions.map(prepareQuestion);
     state.qIndex = 0;
     state.lives = opts.practice ? 99 : GAME_CONFIG.maxLives;
     state.score = 0;
@@ -390,13 +404,15 @@
     state.bestStreakRun = 0;
     state.hintsLeft = opts.practice ? 0 : opts.mode === "boss" ? 1 : GAME_CONFIG.hintsPerWorld;
     state.hintsUsedRun = 0;
-    state.totalQ = opts.questions.length;
+    state.totalQ = questions.length;
     state.answered = false;
     state.correctCount = 0;
     state.wrongCount = 0;
     state.pendingAchievements = [];
+    state.runAchievements = [];
     state.missed = [];
-    Progress.recordGameStart();
+    // Práctica y Repaso no tienen vidas (no se pueden perder): no cuentan como partidas en Stats
+    if (!state.practice) Progress.recordGameStart();
     UI.showScreen("screen-play");
     showQuestion();
   }
@@ -459,7 +475,7 @@
       UI.toast("Este nivel aún no tiene desafíos.");
       return;
     }
-    qs = qs.slice(0, Math.min(12, qs.length));
+    qs = qs.slice(0, GAME_CONFIG.timerMaxQuestions);
     startRun({ mode: "timer", timed: true, worldId, level, questions: qs });
   }
 
@@ -476,7 +492,7 @@
     const out = [];
     WORLDS.forEach((w) => {
       w.questions.concat(w.boss || []).forEach((q) => {
-        if (q.id && pending[q.id]) out.push(q);
+        if (q.id && Object.prototype.hasOwnProperty.call(pending, q.id)) out.push(q);
       });
     });
     return out;
@@ -813,6 +829,7 @@
     state.hintsLeft--;
     state.hintsUsedRun++;
     state.hintUsedThisQ = true;
+    state.hintAt = performance.now();
     // El coste se cobra al resolver la pregunta (finishRound), así siempre es el mismo y se ve en el resultado
     state.hintCost = GAME_CONFIG.pointsHintPenalty;
     Progress.recordHint();
@@ -857,6 +874,8 @@
     }
     box.textContent = tip + " (−" + state.hintCost + " pts)";
     UI.announce(box.textContent, true);
+    // En "completar" se vuelve al campo para seguir escribiendo (con el foco en Pista las letras serían atajos)
+    if (q.type === "fill") UI.$("#fill-input")?.focus();
   }
 
   function submitAnswer() {
@@ -938,6 +957,7 @@
   function grant(id) {
     if (Progress.unlockAchievement(id)) {
       state.pendingAchievements.push(id);
+      state.runAchievements.push(id);
       TechAudio.playAchievement();
       const a = ACHIEVEMENTS.find((x) => x.id === id);
       if (a) UI.toast("Logro: " + a.icon + " " + a.name);
@@ -1033,22 +1053,26 @@
 
   /** Muestra (y vacía) los logros obtenidos desde la última vez; los toasts solo dejan ver el último. */
   function showPendingAchievements(sel) {
+    renderAchievementList(sel, state.pendingAchievements);
+    state.pendingAchievements = [];
+  }
+
+  function renderAchievementList(sel, ids) {
     const el = UI.$(sel);
     if (!el) return;
-    if (!state.pendingAchievements.length) {
+    if (!ids.length) {
       el.hidden = true;
       return;
     }
     el.hidden = false;
     el.textContent =
       "¡Logro! " +
-      state.pendingAchievements
+      ids
         .map((id) => {
           const a = ACHIEVEMENTS.find((x) => x.id === id);
           return a ? a.icon + " " + a.name : id;
         })
         .join(" · ");
-    state.pendingAchievements = [];
   }
 
   function advance() {
@@ -1081,14 +1105,20 @@
     const isNew = UI.saveHighScore(state.score);
     const world = state.worldId ? getWorldById(state.worldId) : null;
     const levelCleared = !!(victory && state.mode === "campaign" && state.worldId && state.level);
-    Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
+    if (!state.practice) Progress.recordGameEnd({ victory, mode: state.mode, levelCleared });
+    // Al repetir un nivel ya superado no se desbloquea nada nuevo: el aviso solo sale la primera vez
+    let nextWasOpen = false;
 
     if (victory) {
       if (state.mode === "campaign" && state.worldId && state.level) {
+        const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
+        const wi = WORLDS.findIndex((w) => w.id === state.worldId);
+        nextWasOpen = state.level < maxL
+          ? Progress.isLevelUnlocked(state.worldId, state.level + 1)
+          : wi >= 0 && wi < WORLDS.length - 1 && Progress.isUnlocked(WORLDS[wi + 1].id);
         Progress.markLevelCleared(state.worldId, state.level);
         grant("first_win");
         if (state.hintsUsedRun === 0) grant("no_hints");
-        const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.worldId === "support" && state.level >= maxL) grant("support_hero");
         if (state.worldId === "security" && state.level >= maxL) grant("security_hero");
         if (state.worldId === "hardware" && state.level >= maxL) grant("hardware_hero");
@@ -1096,7 +1126,7 @@
         if (state.worldId === "database" && state.level >= maxL) grant("database_hero");
         if (Progress.allLevelsCleared(state.worldId)) grant("world_maestro");
         if (Progress.countClearedLevels() >= 25) grant("level_master");
-        if (Progress.allWorldsCompleted()) grant("all_worlds");
+        if (WORLDS.every((w) => Progress.isLevelCleared(w.id, 1))) grant("all_worlds");
         if (WORLDS.every((w) => Progress.allLevelsCleared(w.id))) grant("all_levels");
       }
       if (state.mode === "marathon") grant("marathon");
@@ -1129,7 +1159,9 @@
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
     UI.setText("#end-highscore", String(UI.getHighScore()));
-    showPendingAchievements("#end-ach");
+    // La pantalla final lista todos los logros de la partida (también las rachas ya vistas en un resultado)
+    state.pendingAchievements = [];
+    renderAchievementList("#end-ach", state.runAchievements);
     renderMissed();
 
     const unlockEl = UI.$("#end-unlock");
@@ -1137,12 +1169,12 @@
       if (victory && state.mode === "campaign" && world && state.level) {
         const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.level < maxL) {
-          unlockEl.hidden = false;
+          unlockEl.hidden = nextWasOpen;
           unlockEl.textContent = "Desbloqueado: Nivel " + (state.level + 1) + " de " + world.name;
         } else {
           const idx = WORLDS.findIndex((w) => w.id === world.id);
           if (idx >= 0 && idx < WORLDS.length - 1) {
-            unlockEl.hidden = false;
+            unlockEl.hidden = nextWasOpen;
             unlockEl.textContent = "Mundo desbloqueado: " + WORLDS[idx + 1].icon + " " + WORLDS[idx + 1].name;
           } else {
             unlockEl.hidden = false;

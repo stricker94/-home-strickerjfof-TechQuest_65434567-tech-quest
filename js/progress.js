@@ -5,10 +5,12 @@ const Progress = (() => {
   // Copia en memoria: si el navegador bloquea localStorage o no deja escribir, el progreso
   // se conserva al menos durante la sesión en lugar de perderse en cada lectura.
   const mem = {};
-  let storageWritable = true;
+  // Claves cuya última escritura falló (almacenamiento lleno o bloqueado): localStorage aún tiene un valor
+  // viejo, así que se leen de memoria aunque otras claves sí se hayan podido guardar después
+  const failed = new Set();
 
   function readRaw(key) {
-    if (!storageWritable && key in mem) return mem[key];
+    if (failed.has(key)) return mem[key];
     try {
       return localStorage.getItem(key);
     } catch (_) {
@@ -20,14 +22,15 @@ const Progress = (() => {
     mem[key] = raw;
     try {
       localStorage.setItem(key, raw);
-      storageWritable = true;
+      failed.delete(key);
     } catch (_) {
-      storageWritable = false;
+      failed.add(key);
     }
   }
 
   function removeRaw(key) {
     delete mem[key];
+    failed.delete(key);
     try { localStorage.removeItem(key); } catch (_) {}
   }
 
@@ -154,7 +157,10 @@ const Progress = (() => {
     save(GAME_CONFIG.storageBoss, b);
   }
 
-  function allBossesBeaten() { return WORLDS.every((w) => getBossWins()[w.id]); }
+  function allBossesBeaten() {
+    const wins = getBossWins();
+    return WORLDS.filter((w) => w.boss && w.boss.length).every((w) => wins[w.id]);
+  }
 
   function getCompleted() { return parse("techQuestCompletedWorlds", {}); }
 

@@ -39,11 +39,11 @@ Cada mundo incluye un **Boss** (incidente cronometrado).
 
 ## Modos
 
-- **Aventura** — vidas + 5 niveles con desbloqueo
-- **Práctica** — sin vidas; elige nivel
-- **Maratón** — 20 preguntas mezcladas
-- **Cronómetro** — tiempo por pregunta (elige nivel)
-- **Boss** — desafío difícil por mundo (requiere el mundo desbloqueado en Aventura)
+- **Aventura** — 3 vidas + 5 niveles con desbloqueo
+- **Práctica** — sin vidas ni pistas; cualquier mundo y nivel
+- **Maratón** — 20 preguntas mezcladas de todos los mundos (sin las de Boss); 3 vidas
+- **Cronómetro** — hasta 12 preguntas del nivel elegido, 25 s por pregunta; 3 vidas
+- **Boss** — desafío difícil por mundo, 20 s por pregunta y 3 vidas (requiere el mundo desbloqueado en Aventura)
 - **Repasar errores** — practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista
 
 Al terminar una partida puedes desplegar la lista de preguntas falladas con su respuesta correcta. En **Stats** hay un botón para reiniciar todo el progreso (conserva la preferencia de sonido).
@@ -55,8 +55,8 @@ Al terminar una partida puedes desplegar la lista de preguntas falladas con su r
 | Opción | Clic / `1`–`4` |
 | V/F | `V` / `F` |
 | Enviar | **Comprobar** o `Enter` |
-| Pista | Botón o `H` |
-| Silencio | Botón o `M` |
+| Pista | Botón o `H` (no dentro del campo de «completar») |
+| Silencio | Botón o `M` (no dentro del campo de «completar») |
 | Salir | **Salir** o `Esc` |
 
 ## Estructura

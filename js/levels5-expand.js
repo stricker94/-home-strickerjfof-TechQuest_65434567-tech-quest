@@ -31,7 +31,7 @@
     "id": "lxL4a",
     "level": 4,
     "type": "mc",
-    "q": "¿Qué hace `nice -n 10 comando`?",
+    "q": "¿Qué hace 'nice -n 10 comando'?",
     "options": [
       "Ejecuta el comando con menor prioridad de CPU",
       "Ejecuta el comando con mayor prioridad de CPU",
@@ -45,9 +45,9 @@
     "id": "lxL4b",
     "level": 4,
     "type": "tf",
-    "q": "`journalctl -u ssh` muestra logs del servicio ssh en sistemas con systemd.",
+    "q": "En Debian/Ubuntu, 'journalctl -u ssh' muestra los registros del servicio SSH.",
     "answer": true,
-    "explain": "journalctl consulta el journal; -u filtra por unidad."
+    "explain": "journalctl consulta el journal; -u filtra por unidad (sin sufijo asume .service). Ojo: el nombre de la unidad varía entre distros: ssh.service en Debian/Ubuntu y sshd.service en RHEL/Fedora/Arch."
   },
   {
     "id": "lxL4c",
@@ -84,7 +84,7 @@
     "type": "scenario",
     "q": "Disco al 100% en /. Mejor primer paso:",
     "options": [
-      "Identificar qué crece (du/ncdu) y limpiar logs/tmp con cuidado",
+      "Ver qué ocupa espacio y limpiar logs/tmp con cuidado",
       "Reiniciar el servidor para que se vacíe el disco solo",
       "Ejecutar fsck sobre / montado para recuperar bloques",
       "Borrar todo /var/lib para ganar espacio de inmediato"
@@ -96,7 +96,7 @@
     "id": "lxL4e",
     "level": 4,
     "type": "mc",
-    "q": "`setfacl` se usa para…",
+    "q": "'setfacl' se usa para…",
     "options": [
       "Listas de control de acceso extendidas (ACL)",
       "Atributos inmutables de archivos (como chattr +i)",
@@ -192,14 +192,19 @@
     "type": "fill",
     "q": "Herramienta para inspeccionar tráfico en interfaz (clásica):",
     "answer": "tcpdump",
-    "accept": ["tcpdump","wireshark"],
+    "accept": [
+      "tcpdump",
+      "wireshark",
+      "tshark",
+      "sudo tcpdump"
+    ],
     "explain": "tcpdump captura paquetes; requiere privilegios."
   },
   {
     "id": "lxL5d",
     "level": 5,
     "type": "mc",
-    "q": "`chroot` sirve para…",
+    "q": "'chroot' sirve para…",
     "options": [
       "Cambiar la raíz aparente del proceso (jaula ligera)",
       "Ejecutar un comando con privilegios de root temporalmente",
@@ -285,7 +290,7 @@
     "id": "wnL4b",
     "level": 4,
     "type": "tf",
-    "q": "`Get-WinEvent` consulta el Visor de eventos desde PowerShell.",
+    "q": "'Get-WinEvent' consulta el Visor de eventos desde PowerShell.",
     "answer": true,
     "explain": "Más potente que Get-EventLog legacy."
   },
@@ -315,9 +320,13 @@
       "gpresult /f /h report.html",
       "gpresult.exe /h report.html",
       "gpresult /h .\\report.html",
-      "gpresult /h \"report.html\""
+      "gpresult /h \"report.html\"",
+      "Get-GPResultantSetOfPolicy -ReportType Html -Path report.html",
+      "Get-GPResultantSetOfPolicy -Path report.html -ReportType Html",
+      "Get-GPResultantSetOfPolicy -ReportType Html -Path .\\report.html",
+      "Get-GPResultantSetOfPolicy -Path .\\report.html -ReportType Html"
     ],
-    "explain": "gpresult /h <archivo>.html genera el informe RSoP en HTML (la opción /h exige nombre de archivo; /f sobrescribe si ya existe). gpresult /r da un resumen en consola; rsop.msc es la consola gráfica legacy."
+    "explain": "gpresult /h <archivo>.html genera el informe RSoP en HTML (la opción /h exige nombre de archivo; /f sobrescribe si ya existe). gpresult /r da un resumen en consola; rsop.msc es la consola gráfica legacy. En PowerShell (módulo GroupPolicy/RSAT) el equivalente es Get-GPResultantSetOfPolicy -ReportType Html -Path report.html."
   },
   {
     "id": "wnL4e",
@@ -340,8 +349,8 @@
     "q": "Empareja la consola de Windows (.msc) con su función:",
     "pairs": [
       {
-        "left": "rsop.msc",
-        "right": "Conjunto de directivas resultante (GUI legacy)"
+        "left": "wf.msc",
+        "right": "Firewall con seguridad avanzada"
       },
       {
         "left": "certmgr.msc",
@@ -481,9 +490,9 @@
     "id": "wnL5h",
     "level": 5,
     "type": "scenario",
-    "q": "Impresión vía servidor falla solo a un OU. Sospecha:",
+    "q": "La impresión vía servidor falla solo en una OU. Sospecha:",
     "options": [
-      "GPO/deploy de impresoras o permisos de cola en ese OU",
+      "GPO de impresoras o permisos de cola en esa OU",
       "Tóner agotado en la impresora compartida",
       "Puerto 9100 bloqueado en el firewall de la impresora",
       "Spooler detenido en el servidor de impresión central"
@@ -1185,7 +1194,7 @@
     "id": "pgL4g",
     "level": 4,
     "type": "order",
-    "q": "Ordena flujo git feature:",
+    "q": "Ordena el flujo de una feature en equipo:",
     "items": [
       "branch",
       "commits",

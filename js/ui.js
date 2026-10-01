@@ -5,7 +5,13 @@ const UI = (() => {
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
 
+  let screenAt = 0;
+
+  /** Milisegundos desde el último cambio de pantalla (para ignorar el segundo clic de un doble clic). */
+  function sinceScreen() { return performance.now() - screenAt; }
+
   function showScreen(id) {
+    screenAt = performance.now();
     let target = null;
     $all(".screen").forEach((el) => {
       const on = el.id === id;
@@ -92,6 +98,9 @@ const UI = (() => {
   function updateHUD(st) {
     const livesWrap = $("#hud-lives-wrap");
     if (livesWrap) livesWrap.hidden = !!st.practice;
+    // Práctica y Repaso no tienen pistas: "Pistas 0" parecería que se gastaron
+    const hintsWrap = $("#hud-hints-wrap");
+    if (hintsWrap) hintsWrap.hidden = !!st.practice;
     if (!st.practice) {
       setText("#hud-lives", "❤️".repeat(Math.max(0, st.lives)) + (st.lives <= 0 ? "💀" : ""));
     }
@@ -165,7 +174,7 @@ const UI = (() => {
   }
 
   return {
-    $, $all, showScreen, setText, setHTML, escapeHtml, shuffle,
+    $, $all, showScreen, sinceScreen, setText, setHTML, escapeHtml, shuffle,
     updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback, announce
   };
 })();
