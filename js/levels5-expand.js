@@ -722,7 +722,7 @@
     "items": [
       "Inventariar colas/puertos/drivers/permisos",
       "Montar drivers firmados en destino",
-      "Recrear/exportar colas",
+      "Importar/recrear colas en el destino",
       "Cortar DNS/alias y validar clientes"
     ],
     "answer": [
@@ -773,10 +773,10 @@
     "id": "prL5j",
     "level": 5,
     "type": "match",
-    "q": "Empareja fallo:",
+    "q": "Empareja cada falla con su causa probable:",
     "pairs": [
       {
-        "left": "Páginas en símbolo de basura",
+        "left": "Páginas con caracteres basura",
         "right": "Driver/lenguaje incorrecto (PCL vs PS)"
       },
       {
@@ -788,8 +788,8 @@
         "right": "Calibración/belt/drum"
       },
       {
-        "left": "No imprime de un app",
-        "right": "Spool formato / aislamiento de driver"
+        "left": "No imprime desde una app",
+        "right": "Formato de spool / aislamiento de driver"
       }
     ],
     "explain": "Diagnóstico por síntoma."
@@ -826,7 +826,7 @@
     "q": "Impresoras en VLAN 40; PCs en VLAN 20. ¿Qué permite imprimir?",
     "options": [
       "Enrutamiento inter-VLAN + ACL que permita puertos de impresión",
-      "Desactivar Spanning Tree para que las tramas crucen VLANs",
+      "Configurar como trunk los puertos de acceso de los PCs",
       "Un servidor DHCP común que dé IPs a las dos VLANs a la vez",
       "Dar a las impresoras una IP de la VLAN 20 sin cambiar su VLAN"
     ],
@@ -965,7 +965,7 @@
       "Agotar el pool DHCP con solicitudes masivas"
     ],
     "answer": 0,
-    "explain": "Desactiva DTP innecesario; native VLAN careful."
+    "explain": "Desactiva DTP donde no haga falta y no uses como native VLAN una VLAN con usuarios: el doble tagging abusa de ella."
   },
   {
     "id": "netL5b",
@@ -1458,7 +1458,7 @@
     "id": "suL5b",
     "level": 5,
     "type": "scenario",
-    "q": "Métricas muestran MTTR alto y FCR bajo. Interpreta:",
+    "q": "Las métricas muestran un tiempo medio de resolución alto y un FCR bajo. Interpreta:",
     "options": [
       "Se reabre mucho / poca resolución real en primer contacto",
       "Casi todo se resuelve en la primera llamada, sin escalar",
@@ -1466,7 +1466,7 @@
       "Hay muchos tickets nuevos, pero se cierran enseguida"
     ],
     "answer": 0,
-    "explain": "FCR (first contact resolution) bajo = muchos tickets requieren escalar o recontactar/reabrir, lo que alarga el MTTR."
+    "explain": "FCR (first contact resolution) bajo = muchos tickets requieren escalar o recontactar/reabrir, lo que alarga el tiempo medio de resolución."
   },
   {
     "id": "suL5c",
@@ -1511,7 +1511,7 @@
     "type": "order",
     "q": "Ordena mejora continua del service desk:",
     "items": [
-      "Medir (CSAT/MTTR/FCR)",
+      "Medir (CSAT, tiempos de resolución, FCR)",
       "Identificar cuellos",
       "Actualizar KB/automatizar",
       "Reentrenar y repetir"
@@ -1637,7 +1637,7 @@
     "id": "secL4g",
     "level": 4,
     "type": "order",
-    "q": "Ordena endurecer cuenta cloud admin:",
+    "q": "Ordena los pasos para endurecer una cuenta admin en la nube (empieza por la contraseña y deja el monitoreo al final):",
     "items": [
       "Password manager + única",
       "MFA fuerte (FIDO2)",
@@ -1650,7 +1650,7 @@
       2,
       3
     ],
-    "explain": "Admin always-on es riesgo."
+    "explain": "Contraseña única en gestor → MFA resistente a phishing (FIDO2) → PIM/JIT, que exige ese MFA al elevar privilegios → alertas y revisión de logs. Una cuenta admin con privilegios siempre activos es un riesgo."
   },
   {
     "id": "secL4h",
@@ -1811,7 +1811,13 @@
     "type": "fill",
     "q": "Bus de expansión dominante para GPUs (sigla):",
     "answer": "PCIe",
-    "accept": ["PCIe","PCI-E","pci-e"],
+    "accept": [
+      "PCIe",
+      "PCI-E",
+      "pci-e",
+      "PCI Express",
+      "PCI-Express"
+    ],
     "explain": "Peripheral Component Interconnect Express."
   },
   {
@@ -1912,9 +1918,12 @@
     "id": "hwL5c",
     "level": 5,
     "type": "fill",
-    "q": "Interfaz de gestión remota Dell common (sigla 5 letras):",
+    "q": "Interfaz de gestión remota de los servidores Dell (sigla de 5 letras):",
     "answer": "iDRAC",
-    "accept": ["iDRAC","idrac"],
+    "accept": [
+      "iDRAC",
+      "idrac"
+    ],
     "explain": "Integrated Dell Remote Access Controller."
   },
   {
@@ -1976,9 +1985,9 @@
     "id": "hwL5h",
     "level": 5,
     "type": "scenario",
-    "q": "Cluster pierde quorum tras un nodo. Diseño adecuado incluye…",
+    "q": "El clúster pierde el quórum al caer un solo nodo. Un diseño adecuado incluye…",
     "options": [
-      "Quorum/witness y fencing correctos",
+      "Quórum/witness y fencing correctos",
       "Un número par de nodos sin testigo",
       "Desactivar el heartbeat entre nodos",
       "Un solo switch sin redundancia"
@@ -2029,16 +2038,23 @@
         "Funciones que corren por evento sin gestionar servidores"
       ],
       "answer": 0,
-      "explain": "Tú administras más la stack."
+      "explain": "Con IaaS rentas la infraestructura base (cómputo, red y almacenamiento) y sobre ella armas tu propio entorno."
     },
     {
       "id": "cl04",
       "level": 1,
       "type": "fill",
-      "q": "Sigla de software como servicio:",
-      "answer": "SaaS",
-      "accept": ["SaaS","saas"],
-      "explain": "Software as a Service."
+      "q": "Completa: nube ______ (combina nube pública con tu propia infraestructura on-premise).",
+      "answer": "híbrida",
+      "accept": [
+        "híbrida",
+        "hibrida",
+        "nube híbrida",
+        "nube hibrida",
+        "hybrid",
+        "hybrid cloud"
+      ],
+      "explain": "Nube híbrida: combina nube pública con tu nube privada u on-premise, conectadas entre sí."
     },
     {
       "id": "cl05",
@@ -2102,7 +2118,7 @@
         "Cada cliente audita físicamente el datacenter del proveedor"
       ],
       "answer": 0,
-      "explain": "Varía entre IaaS/PaaS/SaaS."
+      "explain": "El reparto cambia según el modelo de servicio: mientras más gestionado, más cubre el proveedor."
     },
     {
       "id": "cl10",
@@ -2164,8 +2180,8 @@
           "right": "Plataforma para tu código"
         },
         {
-          "left": "IaaS",
-          "right": "VMs/red/discos"
+          "left": "DBaaS",
+          "right": "Base de datos gestionada"
         },
         {
           "left": "FaaS/serverless",
@@ -2275,7 +2291,7 @@
           "right": "Recuperar desde respaldos"
         }
       ],
-      "explain": "DR de menor a mayor costo (y menor RTO): backup & restore < pilot light < warm standby < multi-site activo."
+      "explain": "DR de menor a mayor costo (y menor tiempo de recuperación): backup & restore < pilot light < warm standby < multi-site activo."
     },
     {
       "id": "cl22",
@@ -2286,7 +2302,7 @@
         "Elegir backup",
         "Restaurar a entorno aislado",
         "Validar integridad/app",
-        "Documentar tiempo real (RTO)"
+        "Documentar cuánto tardó la restauración"
       ],
       "answer": [
         0,
@@ -2327,7 +2343,7 @@
         "Red virtual aislada en la nube",
         "Un balanceador de carga administrado",
         "Un bucket de almacenamiento de objetos",
-        "Una VPN de acceso remoto para usuarios"
+        "Un túnel cifrado para usuarios remotos"
       ],
       "answer": 0,
       "explain": "Subnets, route tables, security groups."
@@ -2543,13 +2559,13 @@
       "type": "scenario",
       "q": "BOSS: Bucket público con PII. Contención:",
       "options": [
-        "Bloquear acceso público, rotar datos/credenciales, forense de accesos",
+        "Bloquear acceso público, rotar credenciales, forense de accesos",
         "Borrar el bucket de inmediato, sin conservar logs ni copias legales",
         "Renombrar el bucket para ocultarlo, manteniendo el acceso público",
         "Esperar a confirmar abuso real antes de tocar permisos"
       ],
       "answer": 0,
-      "explain": "Data exposure class-1."
+      "explain": "Exposición de datos personales: cierra el acceso ya, rota credenciales expuestas, preserva logs para el forense y evalúa la notificación legal."
     },
     {
       "id": "clB2",
@@ -2751,15 +2767,13 @@
       "id": "db12",
       "level": 2,
       "type": "fill",
-      "q": "Palabra SQL para borrar filas:",
-      "answer": "DELETE",
+      "q": "Cláusula SQL para ordenar los resultados (dos palabras):",
+      "answer": "ORDER BY",
       "accept": [
-        "DELETE",
-        "delete",
-        "DELETE FROM",
-        "delete from"
+        "ORDER BY",
+        "order by"
       ],
-      "explain": "DELETE FROM t WHERE ..."
+      "explain": "SELECT ... ORDER BY columna ASC|DESC. Sin ORDER BY, el orden de las filas no está garantizado."
     },
     {
       "id": "db13",
@@ -2920,7 +2934,7 @@
         2,
         3
       ],
-      "explain": "Backup ≠ archivo copiado sin prueba: restaura desde la copia offsite (la que usarías en un desastre) y documenta el resultado y el tiempo real (tu RTO). El RPO se define antes, porque determina cada cuánto respaldar."
+      "explain": "Backup ≠ archivo copiado sin prueba: restaura desde la copia offsite (la que usarías en un desastre) y documenta el resultado y el tiempo real de restauración, para compararlo con tu RTO. El RPO se define antes, porque determina cada cuánto respaldar."
     },
     {
       "id": "db23",
@@ -2986,7 +3000,11 @@
       "type": "fill",
       "q": "Comando SQL para quitar una tabla entera (peligroso):",
       "answer": "DROP TABLE",
-      "accept": ["DROP TABLE","drop table"],
+      "accept": [
+        "DROP TABLE",
+        "drop table",
+        "DROP"
+      ],
       "explain": "DDL destructivo; no es DELETE."
     },
     {
@@ -3199,7 +3217,7 @@
       "items": [
         "Contener: WAF/bloquear endpoint y preservar logs",
         "Parchear el código con consultas parametrizadas",
-        "Reprobar el payload de los logs: debe fallar",
+        "Probar de nuevo el payload de los logs: debe fallar",
         "Cierre: rotar secretos, auditar datos, postmortem"
       ],
       "answer": [

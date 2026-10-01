@@ -30,6 +30,33 @@ const fuentes = {};
 const ctx = { console };
 ctx.window = ctx;
 vm.createContext(ctx);
+// De qué archivo viene cada posición de cada lista (para señalar el archivo correcto ante un hueco o un null)
+const origen = Object.create(null);
+const descripcion = (q) => (q && q.id ? q.id : "una pregunta sin id");
+function revisarNuevas(rel) {
+  let mundos;
+  try { mundos = vm.runInContext("typeof WORLDS === 'undefined' ? [] : WORLDS", ctx); } catch (e) { return; }
+  for (const w of mundos) {
+    if (!w || typeof w !== "object" || !w.id) continue;
+    const o = origen[w.id] || (origen[w.id] = { questions: [], boss: [], bossRef: null });
+    const qs = Array.isArray(w.questions) ? w.questions : [];
+    const bs = Array.isArray(w.boss) ? w.boss : [];
+    // add() hace concat (las posiciones anteriores se conservan); setBoss() sustituye la lista entera
+    if (bs !== o.bossRef) { o.boss = []; o.bossRef = bs; }
+    for (const [lista, marcas, nombre] of [[qs, o.questions, "de preguntas"], [bs, o.boss, "del Boss"]]) {
+      const desde = Math.min(marcas.length, lista.length);
+      marcas.length = desde;
+      for (let i = desde; i < lista.length; i++) {
+        marcas.push(rel);
+        // Un null rompe al cargar el archivo siguiente y el error apuntaría a ese otro archivo: se avisa aquí
+        if (i in lista && (lista[i] == null || typeof lista[i] !== "object")) {
+          const antes = i > desde ? "justo después de " + descripcion(lista[i - 1]) : "al inicio de lo que este archivo agrega";
+          fallo(`${rel}: hay un elemento vacío (${JSON.stringify(lista[i])}) en la lista ${nombre} de ${w.id}, ${antes}. Suele ser una coma de más o un null: bórralo.`);
+        }
+      }
+    }
+  }
+}
 for (const rel of ARCHIVOS) {
   try {
     fuentes[rel] = fs.readFileSync(path.join(RAIZ, rel), "utf8");
@@ -52,6 +79,7 @@ for (const rel of ARCHIVOS) {
           `  Suele ser un null o un elemento vacío en una lista de preguntas. Mientras exista, el navegador ignora el resto de ${rel}.`
     );
   }
+  revisarNuevas(rel);
 }
 vm.runInContext("this.WORLDS = WORLDS; this.GAME_CONFIG = GAME_CONFIG;", ctx);
 const WORLDS = ctx.WORLDS;
@@ -60,10 +88,35 @@ const idsMundos = WORLDS.map((w) => w.id);
 
 // ——— 2. Preguntas escritas en los archivos que no llegan al juego ———
 const lineaDe = (src, pos) => src.slice(0, pos).split("\n").length;
+/** Copia del código con los comentarios cambiados por espacios (respeta textos entre comillas y saltos de línea). */
+function sinComentarios(src) {
+  let out = "";
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (c === '"' || c === "'" || c === "`") {
+      let j = i + 1;
+      while (j < src.length && src[j] !== c && src[j] !== "\n") j += src[j] === "\\" ? 2 : 1;
+      out += src.slice(i, j + 1);
+      i = j;
+    } else if (c === "/" && src[i + 1] === "/") {
+      while (i < src.length && src[i] !== "\n") { out += " "; i++; }
+      if (i < src.length) out += "\n";
+    } else if (c === "/" && src[i + 1] === "*") {
+      const fin = src.indexOf("*/", i + 2);
+      const trozo = src.slice(i, fin < 0 ? src.length : fin + 2);
+      out += trozo.replace(/[^\n]/g, " ");
+      i += trozo.length - 1;
+    } else out += c;
+  }
+  return out;
+}
+const limpias = {};
+for (const rel of ARCHIVOS) limpias[rel] = sinComentarios(fuentes[rel]);
 for (const rel of ARCHIVOS) {
-  const src = fuentes[rel];
-  // add("mundo", [...]) o setBoss("mundo", [...]) con un mundo que no existe: sus preguntas se pierden sin aviso
-  for (const m of src.matchAll(/\b(add|setBoss)\(\s*["']([^"']*)["']/g)) {
+  const src = limpias[rel];
+  // add("mundo", [...]) o setBoss("mundo", [...]) con un mundo que no existe: sus preguntas se pierden sin aviso.
+  // Solo llamadas al inicio de una línea: un add('…') dentro del texto de una pregunta no cuenta
+  for (const m of src.matchAll(/^[ \t]*(add|setBoss)\(\s*["']([^"']*)["']/gm)) {
     if (!idsMundos.includes(m[2])) {
       errores.push(`${rel}, línea ${lineaDe(src, m.index)}: no existe el mundo ${JSON.stringify(m[2])} en ${m[1]}(...); sus preguntas no llegan al juego. Mundos válidos: ${idsMundos.join(", ")}`);
     }
@@ -73,7 +126,7 @@ const enJuego = new Set();
 WORLDS.forEach((w) => (w.questions || []).concat(w.boss || []).forEach((q) => q && q.id && enJuego.add(q.id)));
 for (const rel of ARCHIVOS) {
   const perdidas = [];
-  for (const m of fuentes[rel].matchAll(/["']?\bid["']?\s*:\s*["']([^"']+)["']\s*,\s*["']?(?:level|type)\b/g)) {
+  for (const m of limpias[rel].matchAll(/["']?\bid["']?\s*:\s*["']([^"']+)["']\s*,\s*["']?(?:level|type)\b/g)) {
     if (!enJuego.has(m[1])) perdidas.push(m[1]);
   }
   if (perdidas.length) {
@@ -107,8 +160,12 @@ for (const w of WORLDS) {
       const q = lista[i];
       const nombreLista = dondeEsta === "boss" ? "del Boss" : "de preguntas";
       if (!q || typeof q !== "object") {
-        const previa = i > 0 && lista[i - 1] && lista[i - 1].id ? "después de " + lista[i - 1].id : "cerca del inicio";
-        errores.push(`${w.id}: hay un hueco en la lista ${nombreLista}, ${previa} (¿dos comas seguidas ",,"?). Borra la coma sobrante`);
+        const marcas = (origen[w.id] || {})[dondeEsta === "boss" ? "boss" : "questions"] || [];
+        const archivo = marcas[i] ? marcas[i] + ", " : "";
+        const previa = i > 0 && marcas[i - 1] === marcas[i] && lista[i - 1] && lista[i - 1].id
+          ? "después de " + lista[i - 1].id
+          : i === 0 ? "al inicio de la lista" : "al inicio de lo que agrega ese archivo";
+        errores.push(`${archivo}${w.id}: hay un hueco en la lista ${nombreLista}, ${previa} (¿dos comas seguidas ",,"?). Borra la coma sobrante`);
         continue;
       }
       total++;
@@ -211,7 +268,7 @@ for (const w of WORLDS) {
     else if (porNivel[L] < 5) avisos.push(`${w.id}: el nivel ${L} solo tiene ${porNivel[L]} preguntas`);
   }
   if (!(w.boss || []).length) {
-    errores.push(`${w.id}: sin preguntas de Boss (el mundo no aparece en el modo Boss y el logro "Rey de jefes" sería imposible)`);
+    avisos.push(`${w.id}: sin preguntas de Boss (el mundo no aparece en el modo Boss)`);
   }
   const nVF = vf.true + vf.false;
   if (nVF >= 4 && (vf.true / nVF > 0.75 || vf.false / nVF > 0.75)) {

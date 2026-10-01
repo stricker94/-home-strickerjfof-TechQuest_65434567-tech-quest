@@ -89,24 +89,24 @@
   add("printers", [
     { id: "prL1a", level: 1, type: "mc", q: "Si la impresora no enciende, lo primero es revisar…", options: ["Alimentación y cable de corriente", "El driver y la cola del Spooler en el PC", "La dirección IP y la máscara de subred", "El nivel de tóner y el contador de páginas"], answer: 0, explain: "Siempre empieza por lo físico: corriente, cable, interruptor." },
     { id: "prL1b", level: 1, type: "tf", q: "Si la página de prueba de la impresora sale bien, el problema está seguro en el hardware de la impresora.", answer: false, explain: "Falso: si la página de prueba sale bien, la impresora funciona; el fallo suele estar en el documento, la aplicación o el driver." },
-    { id: "prL1c", level: 1, type: "identify", q: "Indicador típico de papel atascado:", options: ["Mensaje/LED de jam o paper jam", "Mensaje/LED de 'toner low'", "Aviso 'Replace drum' en el panel", "LED de Wi‑Fi parpadeando en azul"], answer: 0, explain: "Abre tapas y retira papel en el sentido del paso sin forzar." },
+    { id: "prL1c", level: 1, type: "identify", q: "Indicador típico de papel atascado:", options: ["Mensaje/LED de jam o paper jam", "Mensaje/LED de 'toner low'", "Aviso 'Replace drum' en el panel", "LED de Wi‑Fi parpadeando en azul"], answer: 0, explain: "'Jam' o 'paper jam' indica papel atascado; 'toner low' y 'Replace drum' son avisos de consumibles." },
     { id: "prL1d", level: 1, type: "mc", q: "USB vs red para una sola persona en casa: suele ser más simple…", options: ["USB directo al PC", "Un print server Windows dedicado", "Cola LPR en un servidor Linux", "Impresión SMB vía otro PC del dominio"], answer: 0, explain: "USB es plug-and-play. Red brilla cuando hay varios usuarios." },
     { id: "prL1e", level: 1, type: "fill", q: "Desde Win+R, para abrir Dispositivos e impresoras escribe: control ______", answer: "printers", accept: ["printers", "control printers"], explain: "control printers abre Dispositivos e impresoras (en versiones recientes puede llevar a Configuración → Impresoras y escáneres)." },
     { id: "prL2a", level: 2, type: "mc", q: "WSD en impresión Windows significa a grandes rasgos…", options: ["Web Services for Devices (descubrimiento)", "Windows Shared Driver (paquete de drivers)", "Wireless Secure Direct (conexión Wi‑Fi Direct)", "Web Spool Directory (carpeta de spool)"], answer: 0, explain: "WSD ayuda a descubrir dispositivos; a veces se prefiere puerto TCP/IP estándar por estabilidad." },
     { id: "prL2b", level: 2, type: "scenario", q: "Cola en 'Error - imprimiendo' eternamente. Paso frecuente:", options: ["Reiniciar Spooler y limpiar trabajos atascados", "Reemplazar el cartucho de tóner y la unidad de tambor", "Renovar la IP del PC con ipconfig /renew", "Reiniciar el servicio DHCP del servidor"], answer: 0, explain: "Spooler + carpeta de spool + driver correcto resuelven muchos atascos lógicos." },
     { id: "prL2c", level: 2, type: "order", q: "Ordena cómo compartir una impresora desde un print server Windows:", items: ["Instalar la impresora y su driver en el servidor", "Compartirla con un nombre y ajustar sus permisos", "Conectar desde el cliente a \\\\servidor\\impresora", "Imprimir una página de prueba desde el cliente"], answer: [0, 1, 2, 3], explain: "Primero la impresora debe funcionar en el servidor; luego se comparte con sus permisos, el cliente se conecta a la cola compartida (y descarga el driver) y al final se valida con una página de prueba." },
-    { id: "prL2d", level: 2, type: "mc", q: "SNMP en impresoras de red sirve para…", options: ["Monitorear estado (tóner, bandejas, errores)", "Enviar trabajos de impresión raw al puerto 9100", "Cifrar los trabajos entre el PC y la impresora", "Autenticar a los usuarios antes de liberar sus trabajos"], answer: 0, explain: "Muchas consolas de flota leen OID SNMP del dispositivo." },
+    { id: "prL2d", level: 2, type: "mc", q: "SNMP en impresoras de red sirve para…", options: ["Monitorear estado (tóner, bandejas, errores)", "Asignar la IP de la impresora en lugar de DHCP", "Cifrar los trabajos entre el PC y la impresora", "Autenticar a los usuarios antes de liberar sus trabajos"], answer: 0, explain: "Muchas consolas de flota leen OID SNMP del dispositivo." },
     { id: "prL2e", level: 2, type: "tf", q: "Un print server puede desplegar drivers a clientes vía point-and-print (con políticas adecuadas).", answer: true, explain: "En dominio facilita estandarizar modelos; revisa restricciones de seguridad modernas." },
     { id: "prL3a", level: 3, type: "mc", q: "AirPrint típicamente se apoya en…", options: ["mDNS/Bonjour + IPP", "WS-Discovery + SMB", "NetBIOS + LPR/LPD", "SNMP + raw 9100"], answer: 0, explain: "Dispositivos Apple descubren la impresora y hablan IPP." },
-    { id: "prL3b", level: 3, type: "scenario", q: "Print server imprime a 9100 pero clientes SMB ven acceso denegado. Enfoque:", options: ["Permisos del share/seguridad de impresora + grupos", "Abrir el puerto 9100 en el firewall del print server", "Cambiar el driver PCL del cliente por PostScript", "Reservar otra IP para la impresora en DHCP"], answer: 0, explain: "Capa de red al dispositivo OK; falla la autorización SMB: permisos de seguridad de la impresora compartida y pertenencia a grupos." },
+    { id: "prL3b", level: 3, type: "scenario", q: "El print server print01 imprime bien por 9100, pero al conectarse a sus colas los clientes ven 'No se encuentra la ruta de acceso de la red'. Enfoque:", options: ["DNS del servidor y SMB (445/tcp) desde el cliente", "Abrir el puerto 9100 en el firewall del print server", "Cambiar el driver PCL del cliente por PostScript", "Reservar otra IP para la impresora en DHCP"], answer: 0, explain: "El tramo server → impresora (9100) funciona; falla cliente → server. Comprueba que print01 resuelve por DNS y que el firewall permite SMB (445/tcp) hacia el print server." },
     { id: "prL3c", level: 3, type: "match", q: "Empareja PDL/idea:", pairs: [
       { left: "PCL", right: "Lenguaje típico HP / amplio en oficina" },
       { left: "PostScript", right: "Lenguaje Adobe; artes gráficas" },
       { left: "PDF direct", right: "Algunas MFP imprimen PDF nativo" },
       { left: "Raw 9100", right: "Bytes al puerto sin cola compleja" }
     ], explain: "Mismatch de PDL = basura en página." },
-    { id: "prL3d", level: 3, type: "fill", q: "Puerto LPR/LPD clásico (número):", answer: "515", accept: ["515"], explain: "515/tcp LPR. IPP=631, raw=9100." },
-    { id: "prL3e", level: 3, type: "order", q: "Incidente: flota offline tras cambio de VLAN. Ordena:", items: ["Confirmar gateway/máscara nueva en impresoras", "Probar ping y 9100/631 desde print server", "Actualizar puertos TCP/IP o DNS con las IP ya verificadas", "Página de prueba y comunicar a usuarios"], answer: [0, 1, 2, 3], explain: "Cambio de L3 rompe puertos antiguos: valida conectividad en la nueva red, luego actualiza puertos/DNS e inventario, y confirma con página de prueba." }
+    { id: "prL3d", level: 3, type: "fill", q: "Puerto LPR/LPD clásico (número):", answer: "515", accept: ["515"], explain: "LPR/LPD (Line Printer Daemon) usa el puerto 515/tcp." },
+    { id: "prL3e", level: 3, type: "order", q: "Incidente: flota offline tras cambio de VLAN. Ordena:", items: ["Confirmar gateway/máscara nueva en impresoras", "Probar ping y puertos de impresión desde el print server", "Actualizar puertos TCP/IP o DNS con las IP ya verificadas", "Página de prueba y comunicar a usuarios"], answer: [0, 1, 2, 3], explain: "Cambio de L3 rompe puertos antiguos: valida conectividad en la nueva red, luego actualiza puertos/DNS e inventario, y confirma con página de prueba." }
   ]);
 
   add("networks", [
@@ -116,20 +116,27 @@
     { id: "netL1d", level: 1, type: "mc", q: "¿Qué puerto TCP usa SSH por defecto?", options: ["22", "23", "80", "3389"], answer: 0, explain: "SSH usa 22/tcp. El 23 es Telnet (sin cifrar), el 80 HTTP y el 3389 RDP." },
     { id: "netL1e", level: 1, type: "identify", q: "¿Qué identifica a la tarjeta de red dentro de la LAN (capa 2)?", options: ["Dirección MAC", "Dirección IP", "Máscara de subred", "Puerto TCP"], answer: 0, explain: "La MAC (48 bits, p. ej. 00:1A:2B:…) identifica la interfaz en la LAN; la IP es lógica (capa 3) y puede cambiar." },
     { id: "netL2a", level: 2, type: "mc", q: "¿Cuántos hosts útiles aprox. en /26?", options: ["62", "254", "6", "1022"], answer: 0, explain: "2^(32-26)-2 = 62." },
-    { id: "netL2b", level: 2, type: "scenario", q: "Dos PCs con IP 192.168.1.10/24 y 192.168.2.10/24 no se hacen ping. ¿Por qué típico?", options: ["Están en subredes distintas sin router entre ellas", "Les falta un servidor DNS configurado en el adaptador", "El switch no reenvía tráfico ICMP entre sus puertos", "Ambas terminan en .10 y eso genera un conflicto de IP"], answer: 0, explain: "Con /24, 192.168.1.0/24 y 192.168.2.0/24 son redes distintas: cada PC ve a la otra fuera de su red y necesita un router (gateway) para alcanzarla, aunque compartan switch. Que ambas terminen en .10 no es conflicto de IP: un conflicto exige la misma dirección completa." },
+    { id: "netL2b", level: 2, type: "scenario", q: "Dos PCs con IP 192.168.1.10/24 y 192.168.2.10/24 no se hacen ping. ¿Causa típica?", options: ["Están en subredes distintas sin router entre ellas", "Les falta un servidor DNS configurado en el adaptador", "El switch no reenvía tráfico ICMP entre sus puertos", "Ambas terminan en .10 y eso genera un conflicto de IP"], answer: 0, explain: "Con /24, 192.168.1.0/24 y 192.168.2.0/24 son redes distintas: cada PC ve a la otra fuera de su red y necesita un router (gateway) para alcanzarla, aunque compartan switch. Que ambas terminen en .10 no es conflicto de IP: un conflicto exige la misma dirección completa." },
     { id: "netL2c", level: 2, type: "order", q: "Ordena las primeras 4 capas del modelo OSI (de abajo hacia arriba):", items: ["Física", "Enlace de datos", "Red", "Transporte"], answer: [0, 1, 2, 3], explain: "1 Física (cable/señal), 2 Enlace de datos (MAC, switch), 3 Red (IP, router), 4 Transporte (TCP/UDP, puertos)." },
     { id: "netL2d", level: 2, type: "fill", q: "Máscara decimal de /24:", answer: "255.255.255.0", accept: ["255.255.255.0"], explain: "/24 = 24 bits de red." },
-    { id: "netL2e", level: 2, type: "tf", q: "NAT permite que muchas IPs privadas salgan a Internet con pocas IPs públicas.", answer: true, explain: "PAT/NAT overload es lo habitual en hogares y oficinas." },
+    { id: "netL2e", level: 2, type: "tf", q: "Con PAT (NAT overload), el router distingue las conexiones de cada host interno por el puerto de origen.", answer: true, explain: "Verdadero: PAT reescribe IP y puerto de origen y guarda la asociación en su tabla NAT para devolver cada respuesta al host correcto." },
     { id: "netL3a", level: 3, type: "mc", q: "Una ACL de firewall que deniega 3389/tcp entrante desde Internet reduce exposición a…", options: ["RDP no autorizado", "SSH hacia servidores Linux", "Tráfico web HTTPS entrante", "Consultas DNS recursivas"], answer: 0, explain: "Exponer RDP a Internet es alto riesgo sin VPN/hardening." },
     { id: "netL3b", level: 3, type: "scenario", q: "Usuarios de VLAN invitados no deben ver servidores de finanzas. Solución típica:", options: ["Segmentación VLAN + ACL/firewall inter-VLAN", "Una VLAN plana /8 con contraseñas fuertes", "Ocultar el SSID de invitados y subir la potencia", "Dar a invitados IPs fijas en la subred de finanzas"], answer: 0, explain: "Seguridad por segmentación y mínimo privilegio de red." },
-    { id: "netL3c", level: 3, type: "match", q: "Empareja concepto avanzado:", pairs: [
-      { left: "Split tunnel", right: "Solo parte del tráfico por VPN" },
-      { left: "Full tunnel", right: "Todo el tráfico por VPN" },
-      { left: "CDN", right: "Contenido cerca del usuario (edge)" },
-      { left: "Proxy", right: "Intermediario HTTP/S de salida" }
-    ], explain: "Diseño de salida y rendimiento van juntos." },
-    { id: "netL3d", level: 3, type: "fill", q: "Puerto SSH por defecto:", answer: "22", accept: ["22"], explain: "22/tcp SSH. Cambia el puerto solo como capa extra, no como única defensa." },
-    { id: "netL3e", level: 3, type: "order", q: "Ordena diagnóstico WAN caída (LAN OK):", items: ["Verificar enlace físico ONT/modem", "Revisar IP WAN/PPP en router", "Probar ping a DNS público desde router", "Abrir ticket ISP con evidencias"], answer: [0, 1, 2, 3], explain: "Separa CPE vs proveedor con datos." }
+    {
+      id: "netL3c",
+      level: 3,
+      type: "match",
+      q: "Empareja concepto avanzado:",
+      pairs: [
+        { left: "DMZ", right: "Zona aislada para servidores públicos" },
+        { left: "Port forwarding", right: "Publica un puerto interno hacia Internet" },
+        { left: "MTU", right: "Tamaño máximo de paquete del enlace" },
+        { left: "QoS", right: "Prioriza tráfico sensible como la voz" }
+      ],
+      explain: "La DMZ aísla lo que se expone; el port forwarding publica un servicio concreto; un MTU mal ajustado fragmenta o rompe túneles; QoS prioriza voz/video frente a best-effort."
+    },
+    { id: "netL3d", level: 3, type: "fill", q: "Puerto SSH por defecto:", answer: "22", accept: ["22", "22/tcp", "tcp/22", "tcp 22"], explain: "22/tcp SSH. Cambia el puerto solo como capa extra, no como única defensa." },
+    { id: "netL3e", level: 3, type: "order", q: "Ordena diagnóstico WAN caída (LAN OK):", items: ["Verificar enlace físico ONT/módem", "Revisar IP WAN/PPP en router", "Probar ping a DNS público desde router", "Abrir ticket ISP con evidencias"], answer: [0, 1, 2, 3], explain: "Separa CPE vs proveedor con datos." }
   ]);
 
   add("programming", [
@@ -162,8 +169,8 @@
   add("support", [
     { id: "suL1a", level: 1, type: "mc", q: "Al atender un ticket, lo primero suele ser…", options: ["Saludar, identificarte y confirmar el problema", "Reiniciar el equipo del usuario en remoto sin preguntar", "Escalar a N2 antes de conocer el problema", "Pedirle su contraseña para entrar a su sesión"], answer: 0, explain: "Rapport + clarificación ahorran tiempo." },
     { id: "suL1b", level: 1, type: "tf", q: "Anotar la hora del error ayuda a buscar en logs.", answer: true, explain: "Correlación temporal es clave." },
-    { id: "suL1c", level: 1, type: "mc", q: "P1 suele significar…", options: ["Impacto crítico / urgencia alta", "Impacto bajo / sin urgencia", "Primer nivel de soporte (N1)", "Problema con causa raíz conocida"], answer: 0, explain: "Define severidad con impacto × urgencia." },
-    { id: "suL1d", level: 1, type: "fill", q: "Sigla del acuerdo de nivel de servicio:", answer: "SLA", accept: ["SLA", "sla"], explain: "Service Level Agreement." },
+    { id: "suL1c", level: 1, type: "mc", q: "P1 suele significar…", options: ["Impacto crítico / urgencia alta", "Impacto bajo / sin urgencia", "Primer nivel de soporte (N1)", "Problema con causa raíz conocida"], answer: 0, explain: "P1 es la prioridad más alta: una falla en un servicio crítico que afecta a muchos usuarios y no admite espera." },
+    { id: "suL1d", level: 1, type: "fill", q: "Sigla del acuerdo de nivel de servicio:", answer: "SLA", accept: ["SLA", "sla", "ANS"], explain: "Service Level Agreement (en español también ANS: acuerdo de nivel de servicio)." },
     { id: "suL2a", level: 2, type: "scenario", q: "Usuario dice 'nada funciona'. Mejor pregunta:", options: ["¿Desde cuándo? ¿Qué app/URL? ¿Solo tu PC u otros?", "¿Me das tu contraseña y el código MFA para entrar?", "¿Reinstalamos Windows ya o restauramos la imagen?", "¿Formateamos el disco y empezamos desde cero?"], answer: 0, explain: "Acota alcance antes de actuar." },
     { id: "suL2b", level: 2, type: "order", q: "Ordena el flujo de un escalamiento útil a N2:", items: ["Confirmar el síntoma y medir el impacto", "Aplicar los pasos N1 del runbook/KB", "Confirmar que excede N1 (alcance, permisos o SLA)", "Escalar a N2 con resumen, pasos, logs y contacto"], answer: [0, 1, 2, 3], explain: "Primero acota el problema y agota lo que N1 puede resolver; si excede tu alcance o el SLA, escala con un handoff completo (síntoma, pasos probados, evidencia, contacto) para no duplicar trabajo." },
     { id: "suL2c", level: 2, type: "mc", q: "Un workaround es…", options: ["Solución temporal mientras llega el fix definitivo", "Corrección permanente que elimina la causa raíz del problema", "Cambio de emergencia aprobado por el CAB fuera de ventana", "Escalado funcional del ticket a un equipo especialista"], answer: 0, explain: "Documenta el workaround en el ticket/KB." },
@@ -184,7 +191,7 @@
       ],
       explain: "Vocabulario ITIL básico en help desk."
     },
-    { id: "suL3d", level: 3, type: "fill", q: "Sigla de autenticación multifactor (inglés):", answer: "MFA", accept: ["MFA", "mfa", "2FA", "2fa"], explain: "MFA/2FA añade un segundo factor además de la contraseña." },
+    { id: "suL3d", level: 3, type: "fill", q: "Sigla de autenticación multifactor (inglés):", answer: "MFA", accept: ["MFA", "mfa"], explain: "MFA (Multi-Factor Authentication) exige dos o más factores; 2FA es el caso particular de exactamente dos." },
     { id: "suL3e", level: 3, type: "tf", q: "Un post-mortem debe centrarse en encontrar al culpable del incidente.", answer: false, explain: "Falso: el post-mortem es sin culpas (blameless): busca causas y mejoras del sistema y del proceso para que no se repita." }
   ]);
 
@@ -211,7 +218,7 @@
       { id: "sec11", level: 2, type: "mc", q: "El ransomware típicamente…", options: ["Cifra archivos y pide rescate", "Muestra anuncios emergentes en el navegador", "Registra tus teclas y las envía al atacante", "Mina criptomonedas con tu CPU"], answer: 0, explain: "Backups offline/inmutables son críticos." },
       { id: "sec12", level: 2, type: "scenario", q: "USB desconocido en el estacionamiento. Acción correcta:", options: ["No conectarlo; reportar", "Probarlo en el DC", "Abrirlo en finanzas", "Instalar drivers del USB"], answer: 0, explain: "USB baiting es un vector real." },
       { id: "sec13", level: 2, type: "mc", q: "Principio de mínimo privilegio significa…", options: ["Dar solo los permisos necesarios para la tarea", "Dar permisos amplios y retirarlos si hay un incidente", "Registrar en logs solo los eventos de menor prioridad", "Heredar los permisos del jefe directo"], answer: 0, explain: "Reduce el blast radius de una cuenta comprometida." },
-      { id: "sec14", level: 2, type: "tf", q: "Un VPN corporativo cifra el tráfico hacia la red de la empresa.", answer: true, explain: "Útil en Wi‑Fi públicos; no sustituye buen juicio." },
+      { id: "sec14", level: 2, type: "tf", q: "Una VPN corporativa cifra el tráfico hacia la red de la empresa.", answer: true, explain: "Útil en Wi‑Fi públicos; no sustituye buen juicio." },
       { id: "sec15", level: 2, type: "fill", q: "Ataque que satura un servicio para tumbarlo (sigla):", answer: "DDoS", accept: ["DDoS", "ddos", "DoS", "dos"], explain: "Denial of Service / Distributed DoS." },
       { id: "sec16", level: 2, type: "match", q: "Empareja amenaza:", pairs: [
         { left: "Phishing", right: "Engaño para robar datos" },
@@ -245,7 +252,7 @@
       { id: "secB2", level: 3, type: "mc", q: "BOSS: Ransomware en un file share. Prioridad:", options: ["Aislar hosts, preservar evidencias, restaurar desde backup limpio", "Pagar el rescate de inmediato para recuperar los archivos", "Restaurar el backup sobre los hosts infectados sin aislarlos", "Apagar los logs para que el atacante no detecte la respuesta"], answer: 0, explain: "Contención y recuperación probada." },
       { id: "secB3", level: 3, type: "order", q: "BOSS: Cuenta admin comprometida:", items: ["Deshabilitar la cuenta y cerrar sus sesiones activas", "Revocar tokens y rotar secretos a los que tuvo acceso", "Auditar los cambios que hizo la cuenta", "Revertir cambios maliciosos y documentar"], answer: [0, 1, 2, 3], explain: "Primero corta todo acceso (cuenta, sesiones, tokens y secretos); luego investiga qué cambió y al final remedia lo encontrado." },
       { id: "secB4", level: 3, type: "tf", q: "BOSS: El logging centralizado ayuda a detectar y investigar incidentes.", answer: true, explain: "SIEM/consultas correlacionan eventos." },
-      { id: "secB5", level: 3, type: "fill", q: "BOSS: Factor 'algo que tienes' en MFA (ejemplo corto: app o …):", answer: "token", accept: ["token", "llave", "key", "app", "telefono", "teléfono", "telefono celular", "teléfono celular", "otp", "totp", "celular", "movil", "móvil", "smartphone", "sms", "yubikey", "fido", "fido2", "passkey", "llave fisica", "llave física", "llave usb", "llave de seguridad", "security key", "token fisico", "token físico", "hardware token", "token de hardware", "tarjeta inteligente", "smartcard", "smart card", "autenticador", "authenticator"], explain: "Token/app/llave física complementan la password." }
+      { id: "secB5", level: 3, type: "fill", q: "BOSS: Factor 'algo que tienes' en MFA (ejemplo corto: app o …):", answer: "token", accept: ["token", "llave", "key", "app", "telefono", "teléfono", "telefono celular", "teléfono celular", "otp", "totp", "celular", "movil", "móvil", "smartphone", "sms", "yubikey", "fido", "fido2", "passkey", "llave fisica", "llave física", "llave usb", "llave de seguridad", "security key", "token fisico", "token físico", "hardware token", "token de hardware", "tarjeta inteligente", "smartcard", "smart card", "autenticador", "authenticator", "telefono movil", "teléfono móvil", "llave fido", "llave fido2", "llave de hardware", "token usb", "token bancario", "tarjeta", "tarjeta de coordenadas"], explain: "Token/app/llave física complementan la password." }
     ]
   });
 
@@ -272,36 +279,50 @@
       { id: "hw13", level: 2, type: "mc", q: "NVMe se conecta típicamente por…", options: ["Slot M.2 PCIe", "Puerto SATA III", "Conector IDE/PATA", "eSATA externo"], answer: 0, explain: "NVMe es mucho más rápido que SATA SSD en muchos casos." },
       { id: "hw14", level: 2, type: "tf", q: "Al mezclar módulos de RAM de distinta velocidad, todos funcionan a la velocidad del más rápido.", answer: false, explain: "Falso: normalmente todos bajan a la velocidad del más lento. Lo ideal es un kit de módulos iguales." },
       { id: "hw15", level: 2, type: "fill", q: "Sigla del firmware de arranque clásico anterior a UEFI:", answer: "BIOS", accept: ["BIOS", "bios"], explain: "Basic Input/Output System." },
-      { id: "hw16", level: 2, type: "match", q: "Empareja puerto:", pairs: [
-        { left: "RJ-45", right: "Red Ethernet" },
-        { left: "SATA", right: "Discos/Optical legacy-ish" },
-        { left: "PCIe", right: "Slots de expansión (GPU, etc.)" },
-        { left: "Socket CPU", right: "Encaje del procesador" }
-      ], explain: "Identificar conectores evita daños." },
+      {
+        id: "hw16",
+        level: 2,
+        type: "match",
+        q: "Empareja puerto:",
+        pairs: [
+          { left: "RJ-45", right: "Red Ethernet" },
+          { left: "SATA", right: "Discos HDD/SSD y unidades ópticas" },
+          { left: "PCIe", right: "Slots de expansión (GPU, etc.)" },
+          { left: "Socket CPU", right: "Encaje del procesador" }
+        ],
+        explain: "Identificar conectores evita daños."
+      },
       { id: "hw17", level: 2, type: "scenario", q: "Fuente con olor a quemado y PC muerto. Acción:", options: ["No encender; reemplazar PSU y revisar daños", "Seguir encendiéndolo hasta que arranque de nuevo", "Actualizar la BIOS para que reconozca la fuente", "Rociar la fuente con aire comprimido y reintentar"], answer: 0, explain: "Una PSU fallida puede dañar otros componentes." },
       { id: "hw18", level: 2, type: "mc", q: "Thermal paste se usa entre…", options: ["CPU (IHS) y el disipador", "Disipador y su ventilador", "Módulo RAM y su ranura DIMM", "Fuente (PSU) y el chasis"], answer: 0, explain: "Mejora transferencia térmica; cantidad correcta importa." },
       { id: "hw19", level: 2, type: "order", q: "Ordena upgrade de RAM en laptop (genérico):", items: ["Apagar y retirar batería si es posible", "Abrir tapa de servicio", "Insertar SODIMM en ángulo/presión según diseño", "Encender y verificar en el SO"], answer: [0, 1, 2, 3], explain: "Consulta el manual: algunas RAM van soldadas." },
       { id: "hw20", level: 2, type: "tf", q: "Secure Boot ayuda a impedir bootloaders no firmados.", answer: true, explain: "Parte de la cadena de confianza UEFI." },
-      { id: "hw21", level: 3, type: "mc", q: "Un PSU 80 Plus Bronze/Gold indica…", options: ["Eficiencia energética certificada bajo cargas dadas", "Potencia máxima en vatios que entrega la fuente", "Nivel de ruido del ventilador de la fuente en dB", "Años de garantía que ofrece el fabricante de la PSU"], answer: 0, explain: "Más eficiencia = menos calor/consumo, no siempre más 'potencia pico mágica'." },
-      { id: "hw22", level: 3, type: "scenario", q: "Servidor con ECC RAM reporta corrected errors crecientes. Implica:", options: ["Posible módulo/DIMM degradándose; planear reemplazo", "Funcionamiento normal; ECC los corrige y no hace falta nada", "Fallo del disco duro; hay que reconstruir el RAID", "Virus en memoria; reinstalar el sistema operativo"], answer: 0, explain: "ECC corrige errores; el aumento sostiene fallo inminente." },
+      { id: "hw21", level: 3, type: "mc", q: "Una PSU 80 Plus Bronze/Gold indica…", options: ["Eficiencia energética certificada bajo cargas dadas", "Potencia máxima en vatios que entrega la fuente", "Nivel de ruido del ventilador de la fuente en dB", "Años de garantía que ofrece el fabricante de la PSU"], answer: 0, explain: "Más eficiencia = menos calor/consumo, no siempre más 'potencia pico mágica'." },
+      { id: "hw22", level: 3, type: "scenario", q: "Servidor con ECC RAM reporta corrected errors crecientes. Implica:", options: ["Posible módulo/DIMM degradándose; planear reemplazo", "Funcionamiento normal; ECC los corrige y no hace falta nada", "Fallo del disco duro; hay que reconstruir el RAID", "Virus en memoria; reinstalar el sistema operativo"], answer: 0, explain: "ECC corrige esos errores, pero si van en aumento, el DIMM probablemente se está degradando y conviene planear su reemplazo." },
       { id: "hw23", level: 3, type: "mc", q: "El chipset/VRM sobrecalentado puede causar…", options: ["Inestabilidad, throttling o apagados", "Más rendimiento por mayor frecuencia de la CPU", "Pérdida de la configuración IP de la red", "Borrado de la clave de licencia de Windows"], answer: 0, explain: "Buena refrigeración y pasta/pads importan en boards exigentes." },
       { id: "hw24", level: 3, type: "fill", q: "Protocolo diseñado para SSD flash que corre sobre PCIe en slots M.2 (sigla de 4 letras):", answer: "NVMe", accept: ["NVMe", "nvme", "NVM Express"], explain: "NVM Express: protocolo para flash sobre el bus PCIe (un slot M.2 también puede ser SATA)." },
-      { id: "hw25", level: 3, type: "match", q: "Empareja síntoma-causa frecuente:", pairs: [
-        { left: "No POST / beeps", right: "RAM/CPU/GPU mal asentados" },
-        { left: "Apagones bajo carga", right: "PSU insuficiente/falla" },
-        { left: "BSOD memoria", right: "RAM defectuosa/XMP inestable" },
-        { left: "No detecta NVMe", right: "Modo M.2/BIOS o slot deshabilitado" }
-      ], explain: "Divide por etapa: POST vs OS vs carga." },
-      { id: "hw26", level: 3, type: "order", q: "Ordena diagnóstico 'no enciende' (0 LEDs):", items: ["Verificar cable/corriente/switch PSU", "Probar outlet y cable conocido buenos", "Puenteo de power switch / PSU tester", "Probar PSU o board mínima (CPU/RAM)"], answer: [0, 1, 2, 3], explain: "Descarta alimentación antes de condenar el board." },
+      {
+        id: "hw25",
+        level: 3,
+        type: "match",
+        q: "Empareja síntoma-causa frecuente:",
+        pairs: [
+          { left: "No POST / beeps", right: "RAM/CPU/GPU mal asentados" },
+          { left: "Se apaga bajo carga", right: "PSU insuficiente/falla" },
+          { left: "BSOD memoria", right: "RAM defectuosa/XMP inestable" },
+          { left: "No detecta el SSD nuevo", right: "Modo M.2/BIOS o slot deshabilitado" }
+        ],
+        explain: "Divide por etapa: POST vs OS vs carga."
+      },
+      { id: "hw26", level: 3, type: "order", q: "Ordena diagnóstico 'no enciende' (0 LEDs):", items: ["Verificar cable/corriente/switch PSU", "Probar contacto y cable conocidos buenos", "Puenteo de power switch / PSU tester", "Probar con PSU conocida buena o configuración mínima (CPU/RAM)"], answer: [0, 1, 2, 3], explain: "Descarta alimentación antes de condenar el board." },
       { id: "hw27", level: 3, type: "tf", q: "Si se va la luz durante una actualización de BIOS/UEFI, no pasa nada: se reanuda sola.", answer: false, explain: "Falso: interrumpir el flasheo puede dejar la placa inservible (brick). Hazlo con energía estable (UPS) y el archivo correcto para tu modelo; algunas placas tienen BIOS dual o recuperación." },
       { id: "hw28", level: 3, type: "scenario", q: "Tras agregar GPU potente, el PC reinicia al jugar. Causa probable:", options: ["PSU al límite / cables PCIe de potencia insuficientes", "Monitor con frecuencia de refresco incompatible", "Driver de audio HDMI desactualizado en Windows", "Poca memoria de vídeo para la resolución elegida"], answer: 0, explain: "Revisa wattage, rieles y conectores nativos (evitar daisy-chain dudoso)." },
-      { id: "hw29", level: 3, type: "mc", q: "AHCI vs RAID en SATA (idea):", options: ["AHCI para discos individuales típicos; RAID según arreglo", "AHCI es solo para HDD y RAID solo para SSD NVMe", "RAID es siempre más rápido; AHCI está obsoleto", "AHCI une varios discos en uno; RAID es para un solo disco"], answer: 0, explain: "Cambiar modo tras instalar el SO puede impedir el boot." },
+      { id: "hw29", level: 3, type: "mc", q: "AHCI vs RAID en SATA (idea):", options: ["AHCI para discos individuales típicos; RAID según arreglo", "AHCI sirve solo para HDD y RAID solo para unidades SSD", "RAID es siempre más rápido; AHCI está obsoleto", "AHCI une varios discos en uno; RAID es para un solo disco"], answer: 0, explain: "Cambiar modo tras instalar el SO puede impedir el boot." },
       { id: "hw30", level: 3, type: "identify", q: "Herramienta para probar memoria RAM en Windows (incluida):", options: ["Diagnóstico de memoria de Windows / mdsched", "Monitor de recursos de Windows / resmon", "Comprobación de errores de disco / chkdsk", "Monitor de rendimiento / perfmon"], answer: 0, explain: "También MemTest86 en entornos más exhaustivos." }
     ],
     boss: [
       { id: "hwB1", level: 3, type: "scenario", q: "BOSS: Flota de laptops con hinchazón de batería. Acción correcta:", options: ["Retirar de servicio, no cargar, reemplazo seguro según política", "Seguir usándolas conectadas al cargador hasta que fallen", "Perforar la batería para liberar el gas acumulado en su interior", "Enfriarlas en el congelador y volver a cargarlas"], answer: 0, explain: "Riesgo de incendio: protocolo de baterías dañadas." },
       { id: "hwB2", level: 3, type: "mc", q: "BOSS: Servidor no arranca tras corte; PSU clickea. Siguiente:", options: ["Probar PSU conocida buena / rails; revisar shorts", "Reinstalar el sistema operativo desde la ISO", "Actualizar la BIOS por red antes de probar nada", "Cambiar la VLAN del puerto de gestión del servidor"], answer: 0, explain: "Click = protección PSU o cortocircuito." },
-      { id: "hwB3", level: 3, type: "order", q: "BOSS: Upgrade de almacenamiento con clonación:", items: ["Imagen/clon del disco viejo al nuevo", "Verificar boot en firmware (orden NVMe/SATA)", "Tras arrancar desde el disco nuevo, confirmar datos y SMART", "Ya validado, retirar o reutilizar (borrar) el disco viejo"], answer: [0, 1, 2, 3], explain: "UEFI boot order suele ser el paso que falta." },
+      { id: "hwB3", level: 3, type: "order", q: "BOSS: Upgrade de almacenamiento con clonación:", items: ["Imagen/clon del disco viejo al nuevo", "Verificar boot en firmware (orden NVMe/SATA)", "Tras arrancar desde el disco nuevo, confirmar datos y SMART", "Ya validado, retirar o reutilizar (borrar) el disco viejo"], answer: [0, 1, 2, 3], explain: "El orden de arranque en el firmware suele ser el paso que falta." },
       { id: "hwB4", level: 3, type: "tf", q: "BOSS: Mezclar conectores PCIe de potencia de baja calidad puede dañar la GPU.", answer: true, explain: "Usa cables del fabricante de la PSU / especificación adecuada." },
       { id: "hwB5", level: 3, type: "fill", q: "BOSS: Firmware de placa base moderno (sigla de 4 letras):", answer: "UEFI", accept: ["UEFI", "uefi"], explain: "Unified Extensible Firmware Interface." }
     ]

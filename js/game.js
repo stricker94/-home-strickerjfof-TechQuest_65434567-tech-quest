@@ -134,6 +134,8 @@
       }
 
       if (key === "h" && playOn && !state.practice) {
+        // La pista en «completar» lleva el foco al campo durante esta tecla: sin esto la "h" se escribiría ahí
+        e.preventDefault();
         document.querySelector("#btn-hint:not([disabled])")?.click();
       }
 
@@ -412,7 +414,8 @@
     state.runAchievements = [];
     state.missed = [];
     // Práctica y Repaso no tienen vidas (no se pueden perder): no cuentan como partidas en Stats
-    if (!state.practice) Progress.recordGameStart();
+    if (state.practice) Progress.recordPracticeRun();
+    else Progress.recordGameStart();
     UI.showScreen("screen-play");
     showQuestion();
   }
@@ -1212,8 +1215,9 @@
     UI.setHTML(
       "#stats-body",
       `<ul class="stats-list">
-        <li><strong>Partidas:</strong> ${s.gamesPlayed} (ganadas ${s.gamesWon})</li>
-        <li><strong>Respuestas:</strong> ${s.correct} bien / ${s.wrong} mal (${pct}% acierto)</li>
+        <li><strong>Partidas con vidas:</strong> ${s.gamesPlayed} (ganadas ${s.gamesWon})</li>
+        <li><strong>Partidas de práctica o repaso:</strong> ${s.practiceRuns}</li>
+        <li><strong>Respuestas (todos los modos):</strong> ${s.correct} bien / ${s.wrong} mal (${pct}% acierto)</li>
         <li><strong>Mejor racha:</strong> ${s.bestStreak}</li>
         <li><strong>Pistas usadas:</strong> ${s.hintsUsed}</li>
         <li><strong>Maratones ganadas:</strong> ${s.marathonWins}</li>

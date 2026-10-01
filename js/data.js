@@ -378,12 +378,12 @@ const WORLDS = [
           "Integrated Print Processor"
         ],
         answer: 0,
-        explain: "IPP (suele puerto 631) permite imprimir por IP/hostname. AirPrint y muchas MFP lo usan."
+        explain: "IPP (suele usar el puerto 631) permite imprimir por IP/hostname. AirPrint y muchas MFP lo usan."
       },
       {
         id: "pr05",
         type: "identify",
-        q: "¿Qué indica un LED o mensaje de 'Toner bajo'?",
+        q: "¿Qué indica un LED o mensaje de 'Tóner bajo'?",
         options: [
           "El cartucho de tóner está casi agotado",
           "La bandeja de papel principal está vacía",
@@ -425,7 +425,11 @@ const WORLDS = [
           "inkjet",
           "ink jet",
           "ink-jet",
-          "impresora inkjet"
+          "impresora inkjet",
+          "de inyección",
+          "de inyeccion",
+          "impresora de inyección",
+          "impresora de inyeccion"
         ],
         explain: "Las de inyección (o chorro) de tinta, inkjet, usan tinta líquida; las láser usan tóner en polvo y un tambor."
       },
@@ -542,7 +546,7 @@ const WORLDS = [
         type: "fill",
         q: "Puerto TCP por defecto de HTTPS:",
         answer: "443",
-        accept: ["443"],
+        accept: ["443", "443/tcp", "tcp/443", "tcp 443"],
         explain: "HTTP usa 80; HTTPS (TLS) usa 443. El candado indica cifrado, no necesariamente sitio 'seguro' al 100%."
       },
       {
@@ -578,13 +582,13 @@ const WORLDS = [
         type: "order",
         q: "Ordena el flujo típico al abrir https://sitio.com:",
         items: [
-          "Consulta DNS → obtiene IP",
-          "TCP handshake al puerto 443",
+          "Resolver el nombre sitio.com a su IP",
+          "Abrir la conexión con el servidor",
           "TLS handshake (certificado)",
           "HTTP GET cifrado y respuesta"
         ],
         answer: [0, 1, 2, 3],
-        explain: "DNS → TCP → TLS → HTTP. Fallos en cualquiera rompen la carga de la página."
+        explain: "Primero se obtiene la IP del nombre, luego se abre la conexión, después se negocia TLS y al final viaja la petición HTTP. Si falla cualquier paso, la página no carga."
       },
       {
         id: "net09",

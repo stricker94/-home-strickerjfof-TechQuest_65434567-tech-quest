@@ -186,7 +186,8 @@ const Progress = (() => {
 
   function removeMistake(id) {
     const m = getMistakes();
-    if (!m[id]) return false;
+    // Igual que el repaso (hasOwnProperty): cualquier entrada que se muestre también se puede quitar
+    if (!Object.prototype.hasOwnProperty.call(m, id)) return false;
     delete m[id];
     save(MISTAKES_KEY, m);
     return true;
@@ -204,7 +205,7 @@ const Progress = (() => {
   function defaultStats() {
     return {
       gamesPlayed: 0, gamesWon: 0, correct: 0, wrong: 0, bestStreak: 0,
-      hintsUsed: 0, marathonWins: 0, timerWins: 0, bossWins: 0, levelsCleared: 0
+      hintsUsed: 0, marathonWins: 0, timerWins: 0, bossWins: 0, levelsCleared: 0, practiceRuns: 0
     };
   }
 
@@ -220,6 +221,8 @@ const Progress = (() => {
   function recordStreak(n) { patchStats((s) => { if (n > s.bestStreak) s.bestStreak = n; }); }
   function recordHint() { patchStats((s) => { s.hintsUsed++; }); }
   function recordGameStart() { patchStats((s) => { s.gamesPlayed++; }); }
+  /** Práctica y Repaso no tienen vidas: se cuentan aparte para no inflar ni rebajar las partidas ganadas. */
+  function recordPracticeRun() { patchStats((s) => { s.practiceRuns = (s.practiceRuns || 0) + 1; }); }
   function recordGameEnd(meta) {
     patchStats((s) => {
       if (meta.victory) s.gamesWon++;
@@ -237,7 +240,7 @@ const Progress = (() => {
     getAchievements, unlockAchievement,
     getBossWins, markBossWin, allBossesBeaten,
     getCompleted, markWorldCompleted, allWorldsCompleted,
-    getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordGameEnd,
+    getStats, recordAnswer, recordStreak, recordHint, recordGameStart, recordPracticeRun, recordGameEnd,
     getMistakes, addMistake, removeMistake, resetAll,
     readRaw, writeRaw
   };
