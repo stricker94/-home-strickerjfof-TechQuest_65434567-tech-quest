@@ -1,0 +1,4 @@
+# Dependencias y resultados de las pruebas automáticas (npm install / npx playwright test)
+node_modules/
+test-results/
+playwright-report/

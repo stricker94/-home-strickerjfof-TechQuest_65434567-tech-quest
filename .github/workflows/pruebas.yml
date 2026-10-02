@@ -1,0 +1,53 @@
+# Pruebas automáticas: corren solas en GitHub en cada cambio a main y en cada propuesta de cambios (pull request).
+# El resultado se ve en la pestaña «Actions» y junto a cada propuesta (✔ verde o ✘ rojo).
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    name: Preguntas y validador
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Revisar todas las preguntas
+        run: node herramientas/validar-preguntas.js
+      - name: Pruebas del validador
+        run: node pruebas/validador.js
+
+  navegador:
+    name: Juego en el navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Instalar Playwright
+        run: npm ci
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Jugar en Chromium (todas las pruebas de pruebas/*.spec.js)
+        run: npx playwright test
+        env:
+          CI: "true"
+      - name: Guardar capturas y trazas si algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-de-las-pruebas
+          path: test-results/
+          retention-days: 7
