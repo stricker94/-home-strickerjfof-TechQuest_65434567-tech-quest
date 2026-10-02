@@ -106,7 +106,7 @@ addWorld({
       try: "Presiona Win+R y escribe `winver` para ver tu versión de Windows y el número de compilación (build)."
     },
 
-    // ——— Nivel 2: Intermedio (10 preguntas) ———
+    // ——— Nivel 2: Intermedio (13 preguntas) ———
     {
       id: "wn07", level: 2, type: "mc",
       q: "¿Qué tipo de cuenta de Windows puede instalar software para todos los usuarios y cambiar la configuración del sistema?",
@@ -211,8 +211,34 @@ addWorld({
       explain: "Get-Content lee archivos (alias gc, cat, type). Con -Tail 20 -Wait sigue un log en vivo.",
       try: "En PowerShell escribe `Get-Content C:\\Windows\\System32\\drivers\\etc\\hosts -Tail 5` para leer las últimas 5 líneas del archivo hosts."
     },
+    {
+      id: "wnN01", level: 2, type: "fill",
+      q: "Escribe el comando de cmd que lista las unidades de red mapeadas en tu sesión:",
+      answer: "net use",
+      accept: ["net use", "net.exe use"],
+      explain: "net use sin parámetros muestra las conexiones de red de tu sesión con su estado, su letra de unidad (si tiene) y su ruta \\\\servidor\\recurso.",
+      try: "En cmd o PowerShell escribe `net use` para ver tus unidades de red mapeadas; si no tienes ninguna, dirá que no hay entradas en la lista."
+    },
+    {
+      id: "wnN02", level: 2, type: "mc",
+      q: "En PowerShell, ¿qué hace este código? foreach ($pc in $equipos) { Test-Connection $pc -Count 1 }",
+      options: [
+        "Hace un ping a cada equipo guardado en $equipos",
+        "Hace un ping solo al primer equipo de $equipos",
+        "Hace ping a $equipos hasta que un equipo responda",
+        "Guarda en $pc el resultado del ping de cada uno"
+      ],
+      answer: 0,
+      explain: "foreach recorre la colección y en cada vuelta guarda un elemento en $pc; Test-Connection -Count 1 envía un solo ping a ese equipo."
+    },
+    {
+      id: "wnN03", level: 2, type: "tf",
+      q: "De forma predeterminada en Windows, hacer doble clic en un archivo .ps1 lo ejecuta en PowerShell.",
+      answer: false,
+      explain: "Falso: por seguridad, el doble clic abre el .ps1 en el Bloc de notas. Para ejecutarlo usas .\\script.ps1 dentro de PowerShell o la opción Ejecutar con PowerShell."
+    },
 
-    // ——— Nivel 3: Avanzado (10 preguntas) ———
+    // ——— Nivel 3: Avanzado (13 preguntas) ———
     {
       id: "wn13", level: 3, type: "tf",
       q: "Win+R → services.msc abre la consola de servicios.",
@@ -333,8 +359,40 @@ addWorld({
       explain: "Cada .msc abre una consola MMC: diskmgmt para discos y particiones, devmgmt para dispositivos y drivers, eventvwr para registros de eventos y lusrmgr para usuarios y grupos locales.",
       try: "Presiona Win+R, escribe `devmgmt.msc` y revisa si algún dispositivo tiene un triángulo amarillo, señal de un problema con su driver."
     },
+    {
+      id: "wnN04", level: 3, type: "scenario",
+      q: "Escenario: un técnico ejecutó robocopy C:\\Datos E:\\Respaldo /MIR y desaparecieron de E:\\Respaldo archivos viejos que ya no estaban en C:\\Datos. ¿Qué pasó?",
+      options: [
+        "/MIR deja el destino igual al origen y borra lo que sobra",
+        "/MIR mueve los archivos y después los borra del origen",
+        "/MIR comprime en un .zip los archivos viejos del destino",
+        "/MIR solo copia archivos nuevos y oculta los ya existentes"
+      ],
+      answer: 0,
+      explain: "/MIR equivale a /E más /PURGE: copia el árbol y elimina del destino lo que ya no existe en el origen. Antes de usarlo conviene probar con /L, que solo lista."
+    },
+    {
+      id: "wnN05", level: 3, type: "scenario",
+      q: "Escenario: al correr .\\inventario.ps1 aparece que la ejecución de scripts está deshabilitada. No eres administrador. ¿Qué comando lo permite solo para tu usuario?",
+      options: [
+        "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser",
+        "Set-ExecutionPolicy RemoteSigned -Scope LocalMachine",
+        "Set-ExecutionPolicy AllSigned -Scope CurrentUser",
+        "Set-ExecutionPolicy Restricted -Scope CurrentUser"
+      ],
+      answer: 0,
+      explain: "RemoteSigned en CurrentUser deja correr tus scripts locales sin firma y no pide administrador; LocalMachine sí lo pide y AllSigned exigiría que el script esté firmado.",
+      try: "En PowerShell escribe `Get-ExecutionPolicy -List` para ver la directiva de cada ámbito, como CurrentUser y LocalMachine."
+    },
+    {
+      id: "wnN06", level: 3, type: "order",
+      q: "Ordena las líneas de respaldo.bat para que no muestre los comandos, copie la carpeta que recibe como primer argumento y espere una tecla al final:",
+      items: ["@echo off", "set origen=%1", "robocopy %origen% D:\\Respaldo /E", "pause"],
+      answer: [0, 1, 2, 3],
+      explain: "@echo off va primero para ocultar todos los comandos, la variable se define antes de usarla en robocopy y pause va al final para leer el resultado antes de que se cierre la ventana."
+    },
 
-    // ——— Nivel 4: Experto (8 preguntas) ———
+    // ——— Nivel 4: Experto (11 preguntas) ———
     {
       id: "wnL4a", level: 4, type: "mc",
       q: "¿Qué es WinRM?",
@@ -426,8 +484,45 @@ addWorld({
       answer: false,
       explain: "Falso: Hyper-V requiere Windows Pro, Enterprise o Education y la virtualización habilitada en el firmware. Home no lo incluye."
     },
+    {
+      id: "wnN07", level: 4, type: "fill",
+      q: "Completa la opción que guarda la salida en C:\\Logs\\copia.txt, reemplazando el registro anterior: robocopy C:\\Datos E:\\Respaldo /E ___",
+      answer: "/LOG:C:\\Logs\\copia.txt",
+      accept: [
+        "/LOG:C:\\Logs\\copia.txt",
+        "/LOG:\"C:\\Logs\\copia.txt\"",
+        "/TEE /LOG:C:\\Logs\\copia.txt",
+        "/LOG:C:\\Logs\\copia.txt /TEE",
+        "/TEE /LOG:\"C:\\Logs\\copia.txt\"",
+        "/LOG:\"C:\\Logs\\copia.txt\" /TEE",
+        "/UNILOG:C:\\Logs\\copia.txt",
+        "/UNILOG:\"C:\\Logs\\copia.txt\"",
+        "/TEE /UNILOG:C:\\Logs\\copia.txt",
+        "/UNILOG:C:\\Logs\\copia.txt /TEE",
+        "/TEE /UNILOG:\"C:\\Logs\\copia.txt\"",
+        "/UNILOG:\"C:\\Logs\\copia.txt\" /TEE"
+      ],
+      explain: "/LOG: escribe el registro en ese archivo y lo sobrescribe en cada ejecución; /LOG+: lo agregaría al final. Con /TEE además se ve en la consola y /UNILOG: es igual pero en Unicode."
+    },
+    {
+      id: "wnN08", level: 4, type: "match",
+      q: "Empareja cada opción de robocopy con lo que hace:",
+      pairs: [
+        { left: "/E", right: "Copia subcarpetas, incluidas las vacías" },
+        { left: "/Z", right: "Modo reiniciable: retoma un archivo cortado" },
+        { left: "/XO", right: "No copia si el destino tiene una versión más nueva" },
+        { left: "/MOV", right: "Borra los archivos del origen tras copiarlos" }
+      ],
+      explain: "/E incluye carpetas vacías (/S no), /Z permite continuar copias interrumpidas, /XO no pisa una copia más nueva del destino y /MOV copia y luego borra del origen."
+    },
+    {
+      id: "wnN09", level: 4, type: "tf",
+      q: "Si robocopy termina con código de salida 1, la copia fue exitosa y se copiaron archivos.",
+      answer: true,
+      explain: "En robocopy, de 0 a 7 es éxito (0 = nada que copiar, 1 = archivos copiados) y 8 o más indica fallas, así que un script no debe tratar todo lo distinto de 0 como error."
+    },
 
-    // ——— Nivel 5: Maestro (8 preguntas) ———
+    // ——— Nivel 5: Maestro (11 preguntas) ———
     {
       id: "wnL5a", level: 5, type: "mc",
       q: "Un Blue Screen con DRIVER_IRQL suele apuntar a…",
@@ -513,6 +608,43 @@ addWorld({
       ],
       answer: 0,
       explain: "Si solo falla una OU, sospecha de algo asignado a esa OU: la GPO que despliega impresoras o restringe Point and Print, o permisos de la cola. Tóner agotado o Spooler caído afectarían a todos."
+    },
+    {
+      id: "wnN10", level: 5, type: "scenario",
+      q: "Escenario: una tarea de robocopy lleva horas detenida en un archivo que otro programa tiene abierto. No usaste /R ni /W. ¿Qué explica y corrige el problema?",
+      options: [
+        "Reintenta un millón de veces cada 30 s; usa /R:2 /W:5",
+        "Faltó /Z; con /Z robocopy se salta los archivos en uso",
+        "Faltó /XO; con /XO ignora los archivos que están abiertos",
+        "Faltó /MIR; con /MIR omite los archivos bloqueados"
+      ],
+      answer: 0,
+      explain: "Sin /R ni /W, robocopy reintenta un millón de veces y espera 30 s entre intentos. /R:2 /W:5 lo limita a 2 reintentos de 5 s; /Z solo permite retomar copias interrumpidas."
+    },
+    {
+      id: "wnN11", level: 5, type: "scenario",
+      q: "Escenario: net use muestra E: conectada a \\\\srv01\\publico con tu cuenta y, al ejecutar net use F: \\\\srv01\\finanzas /user:CONTOSO\\admin1 /persistent:yes, sale el error 1219. ¿Qué lo resuelve?",
+      options: [
+        "Desconectar E: con net use E: /delete y volver a mapear",
+        "Usar otra letra de unidad libre en lugar de F: al mapear",
+        "Cambiar /persistent:yes por /persistent:no en el comando",
+        "Agregar /savecred para que guarde la nueva credencial"
+      ],
+      answer: 0,
+      explain: "El error 1219 indica que ya tienes una conexión a srv01 con otra cuenta, y Windows no permite usar dos cuentas con el mismo servidor. Borrar esa conexión lo resuelve; cambiar de letra no."
+    },
+    {
+      id: "wnN12", level: 5, type: "order",
+      q: "Ordena las partes del pipeline de PowerShell que exporta el nombre y el tamaño de los .log con más de 30 días:",
+      items: [
+        "Get-ChildItem C:\\Logs -Filter *.log",
+        "Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-30) }",
+        "Select-Object Name, Length",
+        "Export-Csv viejos.csv -NoTypeInformation"
+      ],
+      answer: [0, 1, 2, 3],
+      explain: "Get-ChildItem produce los archivos y Where-Object filtra por fecha antes de Select-Object, que descarta LastWriteTime; Export-Csv va al final porque escribe el CSV.",
+      try: "En PowerShell escribe `Get-ChildItem $env:TEMP | Where-Object Length -gt 1MB` para ver los archivos de más de 1 MB en tu carpeta temporal."
     }
   ],
 

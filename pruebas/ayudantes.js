@@ -82,9 +82,15 @@ const pantalla = (page) => page.evaluate(() => document.querySelector(".screen.a
 function preguntaActual(page) {
   return page.evaluate(() => {
     const texto = document.querySelector("#question-text").textContent;
+    // En un ticket, el paso N del caso en pantalla (varios casos comparten enunciados como «¿cuál es la causa?»)
+    if (!document.querySelector("#ticket-box").hidden) {
+      const titulo = document.querySelector("#ticket-head").textContent.replace(/^🎫 Ticket: /, "");
+      const paso = /Paso (\d+) de/.exec(document.querySelector("#question-type").textContent);
+      const t = TICKETS.find((x) => x.title === titulo);
+      return t && paso ? t.steps[paso[1] - 1] : null;
+    }
     const todas = [];
     WORLDS.forEach((w) => w.questions.concat(w.boss || []).forEach((q) => todas.push(q)));
-    TICKETS.forEach((t) => t.steps.forEach((q) => todas.push(q)));
     return todas.find((q) => q.q === texto) || null;
   });
 }

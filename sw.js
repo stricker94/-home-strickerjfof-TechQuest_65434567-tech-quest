@@ -24,6 +24,8 @@ const ARCHIVOS = [
   "js/mundos/hardware.js",
   "js/mundos/cloud.js",
   "js/mundos/database.js",
+  "js/mundos/identity.js",
+  "js/tickets.js",
   "js/audio.js",
   "js/progress.js",
   "js/ui.js",

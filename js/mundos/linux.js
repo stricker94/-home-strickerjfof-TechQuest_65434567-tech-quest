@@ -130,7 +130,7 @@ addWorld({
       try: "En una terminal de Linux o WSL escribe `cd /usr/share`, luego `cd ..` y `pwd`: verás que subiste a /usr."
     },
 
-    // ——— Nivel 2: Intermedio (10 preguntas) ———
+    // ——— Nivel 2: Intermedio (13 preguntas) ———
     {
       id: "lx07", level: 2, type: "identify",
       q: "¿Qué herramienta o comando usas para ver procesos en ejecución?",
@@ -241,8 +241,41 @@ addWorld({
       explain: "Partes de tu home con cd ~ para que la ruta relativa funcione; mkdir -p crea labs y demo de una sola vez, luego entras con cd labs/demo y pwd confirma la ruta final.",
       try: "En una terminal de Linux o WSL ejecuta `cd ~`, `mkdir -p labs/demo`, `cd labs/demo` y `pwd` para ver la ruta completa."
     },
+    {
+      id: "lxN01", level: 2, type: "mc",
+      q: "¿Qué comando extrae el contenido de respaldo.tar.gz en la carpeta actual?",
+      options: [
+        "tar -xzf respaldo.tar.gz",
+        "tar -czf respaldo.tar.gz",
+        "tar -tzf respaldo.tar.gz",
+        "tar -rzf respaldo.tar.gz"
+      ],
+      answer: 0,
+      explain: "-x extrae, -z descomprime con gzip y -f indica el archivo. Con -c crearías un archivo nuevo y con -t solo verías la lista de su contenido.",
+      try: "En Linux o WSL escribe `tar -czf ~/prueba.tar.gz -C ~ .bashrc` y luego `tar -tzf ~/prueba.tar.gz` para ver qué guardó."
+    },
+    {
+      id: "lxN02", level: 2, type: "order",
+      q: "Ordena los pasos para crear y probar el script hola.sh (de primero a último):",
+      items: [
+        "Crear hola.sh con #!/bin/bash en la primera línea",
+        "Darle permiso de ejecución con chmod +x hola.sh",
+        "Ejecutarlo con ./hola.sh mundo",
+        "Ver su código de salida con echo $?"
+      ],
+      answer: [0, 1, 2, 3],
+      explain: "chmod necesita que el archivo exista, ./hola.sh necesita el permiso x y $? guarda el código de salida del último comando, por eso va justo después."
+    },
+    {
+      id: "lxN03", level: 2, type: "fill",
+      q: "Escribe el comando que muestra las tareas de cron de tu usuario, sin abrir el editor:",
+      answer: "crontab -l",
+      accept: ["crontab -l"],
+      explain: "crontab -l lista tu tabla de cron y crontab -e la abre para editarla. Ojo: sudo crontab -l mostraría la de root, no la tuya.",
+      try: "En Linux o WSL escribe `crontab -l` para ver tus tareas programadas; si aún no tienes, dirá algo como 'no crontab for'."
+    },
 
-    // ——— Nivel 3: Avanzado (10 preguntas) ———
+    // ——— Nivel 3: Avanzado (13 preguntas) ———
     {
       id: "lx13", level: 3, type: "tf",
       q: "En Linux, el usuario root tiene UID 1000.",
@@ -469,8 +502,112 @@ addWorld({
       explain: "systemctl controla unidades: start/stop/restart/status/enable.",
       try: "En Linux o WSL con systemd escribe `systemctl list-units --type=service --state=running` para ver qué servicios están corriendo."
     },
+    {
+      id: "lxN04", level: 3, type: "fill",
+      q: "Escribe el comando find que busca, desde tu carpeta personal (~), los archivos cuyo nombre termina en .log:",
+      answer: "find ~ -name \"*.log\"",
+      accept: [
+        "find ~ -name \"*.log\"",
+        "find ~ -type f -name \"*.log\"",
+        "find ~ -name \"*.log\" -type f",
+        "find ~ -name '*.log'",
+        "find ~ -type f -name '*.log'",
+        "find ~ -name '*.log' -type f",
+        "find ~ -name \\*.log",
+        "find ~ -type f -name \\*.log",
+        "find ~ -name \\*.log -type f",
+        "find ~/ -name \"*.log\"",
+        "find ~/ -type f -name \"*.log\"",
+        "find ~/ -name \"*.log\" -type f",
+        "find ~/ -name '*.log'",
+        "find ~/ -type f -name '*.log'",
+        "find ~/ -name '*.log' -type f",
+        "find ~/ -name \\*.log",
+        "find ~/ -type f -name \\*.log",
+        "find ~/ -name \\*.log -type f",
+        "find $HOME -name \"*.log\"",
+        "find $HOME -type f -name \"*.log\"",
+        "find $HOME -name \"*.log\" -type f",
+        "find $HOME -name '*.log'",
+        "find $HOME -type f -name '*.log'",
+        "find $HOME -name '*.log' -type f",
+        "find $HOME -name \\*.log",
+        "find $HOME -type f -name \\*.log",
+        "find $HOME -name \\*.log -type f",
+        "find \"$HOME\" -name \"*.log\"",
+        "find \"$HOME\" -type f -name \"*.log\"",
+        "find \"$HOME\" -name \"*.log\" -type f",
+        "find \"$HOME\" -name '*.log'",
+        "find \"$HOME\" -type f -name '*.log'",
+        "find \"$HOME\" -name '*.log' -type f",
+        "find \"$HOME\" -name \\*.log",
+        "find \"$HOME\" -type f -name \\*.log",
+        "find \"$HOME\" -name \\*.log -type f",
+        "sudo find ~ -name \"*.log\"",
+        "sudo find ~ -type f -name \"*.log\"",
+        "sudo find ~ -name \"*.log\" -type f",
+        "sudo find ~ -name '*.log'",
+        "sudo find ~ -type f -name '*.log'",
+        "sudo find ~ -name '*.log' -type f",
+        "sudo find ~ -name \\*.log",
+        "sudo find ~ -type f -name \\*.log",
+        "sudo find ~ -name \\*.log -type f",
+        "sudo find ~/ -name \"*.log\"",
+        "sudo find ~/ -type f -name \"*.log\"",
+        "sudo find ~/ -name \"*.log\" -type f",
+        "sudo find ~/ -name '*.log'",
+        "sudo find ~/ -type f -name '*.log'",
+        "sudo find ~/ -name '*.log' -type f",
+        "sudo find ~/ -name \\*.log",
+        "sudo find ~/ -type f -name \\*.log",
+        "sudo find ~/ -name \\*.log -type f",
+        "sudo find $HOME -name \"*.log\"",
+        "sudo find $HOME -type f -name \"*.log\"",
+        "sudo find $HOME -name \"*.log\" -type f",
+        "sudo find $HOME -name '*.log'",
+        "sudo find $HOME -type f -name '*.log'",
+        "sudo find $HOME -name '*.log' -type f",
+        "sudo find $HOME -name \\*.log",
+        "sudo find $HOME -type f -name \\*.log",
+        "sudo find $HOME -name \\*.log -type f",
+        "sudo find \"$HOME\" -name \"*.log\"",
+        "sudo find \"$HOME\" -type f -name \"*.log\"",
+        "sudo find \"$HOME\" -name \"*.log\" -type f",
+        "sudo find \"$HOME\" -name '*.log'",
+        "sudo find \"$HOME\" -type f -name '*.log'",
+        "sudo find \"$HOME\" -name '*.log' -type f",
+        "sudo find \"$HOME\" -name \\*.log",
+        "sudo find \"$HOME\" -type f -name \\*.log",
+        "sudo find \"$HOME\" -name \\*.log -type f"
+      ],
+      explain: "-name filtra por nombre y las comillas evitan que la shell expanda *.log antes de que find lo reciba. Sin comillas puede fallar si hay .log en la carpeta actual.",
+      try: "En Linux o WSL escribe `find ~ -maxdepth 2 -name \"*.txt\"` para listar los .txt de tu carpeta personal (hasta 2 niveles)."
+    },
+    {
+      id: "lxN05", level: 3, type: "scenario",
+      q: "Escenario: necesitas que /home/ana/respaldo.sh se ejecute todos los días a las 2:30 a. m. ¿Qué línea agregas con crontab -e?",
+      options: [
+        "30 2 * * * /home/ana/respaldo.sh",
+        "2 30 * * * /home/ana/respaldo.sh",
+        "30 2 * * 1 /home/ana/respaldo.sh",
+        "* 2 30 * * /home/ana/respaldo.sh"
+      ],
+      answer: 0,
+      explain: "Los campos son minuto, hora, día del mes, mes y día de la semana: 30 2 * * * es a las 2:30 diario. Con 2 30 inviertes minuto y hora, y 30 no es una hora válida."
+    },
+    {
+      id: "lxN06", level: 3, type: "match",
+      q: "Empareja cada comando de cuentas de usuario (se ejecutan con sudo) con lo que hace:",
+      pairs: [
+        { left: "useradd -m -s /bin/bash luis", right: "Crea la cuenta con carpeta personal y bash" },
+        { left: "passwd luis", right: "Asigna o cambia la contraseña de luis" },
+        { left: "usermod -L luis", right: "Bloquea la contraseña de luis" },
+        { left: "userdel -r luis", right: "Borra la cuenta y su carpeta personal" }
+      ],
+      explain: "useradd -m crea /home/luis y -s fija la shell; passwd pone la contraseña; usermod -L la bloquea y userdel -r borra la cuenta junto con su carpeta."
+    },
 
-    // ——— Nivel 4: Experto (8 preguntas) ———
+    // ——— Nivel 4: Experto (11 preguntas) ———
     {
       id: "lxL4a", level: 4, type: "mc",
       q: "¿Qué hace 'nice -n 10 comando'?",
@@ -572,8 +709,39 @@ addWorld({
       answer: false,
       explain: "Falso: un bind mount no copia nada; muestra el mismo directorio en otra ruta, así que un cambio se ve en ambas. Útil en contenedores."
     },
+    {
+      id: "lxN07", level: 4, type: "scenario",
+      q: "Escenario: ejecutaste sudo usermod -G sudo ana para darle permisos de administrador y ahora Ana ya no está en sus grupos docker y dev. ¿Qué faltó?",
+      options: [
+        "La opción -a, para añadir sin quitar los demás grupos",
+        "Ejecutar sudo passwd ana para que se reactiven sus grupos",
+        "Que Ana cierre sesión para que recupere sus grupos",
+        "Agregar -m para que conserve los grupos que ya tenía"
+      ],
+      answer: 0,
+      explain: "usermod -G reemplaza toda la lista de grupos secundarios; usermod -aG añade sin quitar. Cerrar sesión solo aplica los cambios, no recupera docker y dev."
+    },
+    {
+      id: "lxN08", level: 4, type: "match",
+      q: "Empareja cada opción de find con lo que filtra:",
+      pairs: [
+        { left: "-iname \"*.pdf\"", right: "Nombre .pdf sin distinguir mayúsculas" },
+        { left: "-type d", right: "Solo directorios" },
+        { left: "-mtime -7", right: "Modificados en los últimos 7 días" },
+        { left: "-size +100M", right: "Archivos de más de 100 MiB" }
+      ],
+      explain: "-iname ignora mayúsculas, -type d limita a directorios, -mtime -7 es menos de 7 días desde la última modificación y -size +100M es más de 100 MiB.",
+      try: "En Linux o WSL escribe `find ~ -maxdepth 1 -type d` para ver solo las carpetas de primer nivel de tu carpeta personal."
+    },
+    {
+      id: "lxN09", level: 4, type: "tf",
+      q: "Un usuario sin sudo puede cambiar su propia contraseña con passwd, porque ese programa tiene el bit setuid de root.",
+      answer: true,
+      explain: "passwd es setuid root, así que puede escribir en /etc/shadow, pero pide tu contraseña actual y solo cambia la tuya. Para otra cuenta necesitas sudo passwd usuario.",
+      try: "En Linux o WSL escribe `ls -l /usr/bin/passwd` y fíjate en la s de los permisos del dueño (rws): es el bit setuid."
+    },
 
-    // ——— Nivel 5: Maestro (8 preguntas) ———
+    // ——— Nivel 5: Maestro (11 preguntas) ———
     {
       id: "lxL5a", level: 5, type: "mc",
       q: "En cgroups v2, ¿qué controlas típicamente?",
@@ -656,6 +824,36 @@ addWorld({
       ],
       answer: 0,
       explain: "Con montajes hard, si el servidor NFS o la red caen, los procesos quedan en estado D reintentando sin fin. Revisa servidor, red y export. soft (con timeo/retrans) devuelve error en vez de colgar, pero puede corromper datos: úsalo solo para datos no críticos. intr se ignora desde el kernel 2.6.25; solo SIGKILL interrumpe."
+    },
+    {
+      id: "lxN10", level: 5, type: "tf",
+      q: "En crontab, la línea * */5 * * * /home/ana/check.sh ejecuta el script una vez cada 5 horas.",
+      answer: false,
+      explain: "Falso: el primer * es cada minuto, así que corre 60 veces en cada una de las horas 0, 5, 10, 15 y 20. Para una sola ejecución en cada una de esas horas usa 0 */5 * * *."
+    },
+    {
+      id: "lxN11", level: 5, type: "scenario",
+      q: "Escenario: en crontab tienes 0 3 * * * /home/ana/respaldo.sh > /home/ana/respaldo.log y, cuando el script falla, el log no muestra ningún error. ¿Por qué?",
+      options: [
+        "Solo rediriges stdout; falta 2>&1 para guardar stderr",
+        "Usas > en vez de >>, y cada ejecución borra los errores",
+        "Cron no permite redirigir la salida desde la misma línea",
+        "El log debe estar en /var/log para que cron escriba"
+      ],
+      answer: 0,
+      explain: "> solo captura la salida estándar; los errores van por stderr y sin 2>&1 cron los manda por correo o se pierden. Cambiar a >> solo acumula, no captura errores."
+    },
+    {
+      id: "lxN12", level: 5, type: "mc",
+      q: "El script revisa.sh contiene: if [ -f \"$1\" ]; then echo existe; else echo no existe; fi. ¿Qué imprime ./revisa.sh /etc?",
+      options: [
+        "no existe",
+        "existe",
+        "Un error, porque /etc es un directorio",
+        "Nada, porque $1 llega vacío al script"
+      ],
+      answer: 0,
+      explain: "-f solo es verdadero si la ruta es un archivo regular; /etc es un directorio, así que entra al else. Para cualquier tipo usarías -e y para carpetas -d."
     }
   ],
 
