@@ -20,6 +20,9 @@ const GAME_CONFIG = {
   storageLevels: "techQuestLevelClears",
   levelsPerWorld: 5,
   marathonCount: 20,
+  // Reto del día: preguntas por reto y, como mucho, cuántas salen de tus errores pendientes
+  dailyCount: 10,
+  dailyMistakes: 3,
   // Repasar errores juega como mucho esta cantidad por partida (al azar entre los pendientes)
   reviewMaxQuestions: 20,
   timerSeconds: 25,
@@ -58,6 +61,19 @@ function getWorldById(id) {
   return WORLDS.find((w) => w.id === id);
 }
 
+// Casos del simulador de tickets (js/tickets.js): cada uno es un ticket que se resuelve en varios pasos
+const TICKETS = [];
+
+/** Registra un caso de ticket (lo llama js/tickets.js). Un id repetido se ignora: el validador lo señala. */
+function addTicket(t) {
+  const script = typeof document !== "undefined" && document.currentScript;
+  const src = script ? script.getAttribute("src") : null;
+  if (src) window.techQuestLoaded[src] = true;
+  if (!t || typeof t !== "object" || !t.id || TICKETS.some((x) => x.id === t.id)) return;
+  t.steps = Array.isArray(t.steps) ? t.steps.filter((q) => q && typeof q === "object") : [];
+  if (t.steps.length) TICKETS.push(t);
+}
+
 /** Preguntas de un nivel (sin las del Boss). */
 function getQuestionsForLevel(worldId, level) {
   const w = getWorldById(worldId);
@@ -89,6 +105,10 @@ const ACHIEVEMENTS = [
   { id: "hardware_hero", icon: "🔧", name: "Manitas de hardware", desc: "Completa el nivel 5 de Hardware." },
   { id: "cloud_hero", icon: "☁️", name: "Nómada cloud", desc: "Completa el nivel 5 de Cloud / servicios." },
   { id: "database_hero", icon: "🗄️", name: "DBA aprendiz", desc: "Completa el nivel 5 de Base de datos." },
+  { id: "identity_hero", icon: "🔑", name: "Guardián de cuentas", desc: "Completa el nivel 5 de Identidad y Microsoft 365." },
   { id: "world_maestro", icon: "🏅", name: "Maestro de un mundo", desc: "Completa los 5 niveles de un mismo mundo." },
-  { id: "all_levels", icon: "🌌", name: "Completista", desc: "Completa los 5 niveles de todos los mundos." }
+  { id: "all_levels", icon: "🌌", name: "Completista", desc: "Completa los 5 niveles de todos los mundos." },
+  { id: "stars3", icon: "🌟", name: "Perfeccionista", desc: "Consigue 3 estrellas en 10 niveles de Aventura." },
+  { id: "daily7", icon: "📅", name: "Constancia", desc: "Completa el Reto del día 7 días seguidos." },
+  { id: "tickets5", icon: "🧰", name: "Mesa de ayuda", desc: "Cierra 5 tickets distintos sin fallar ningún paso." }
 ];

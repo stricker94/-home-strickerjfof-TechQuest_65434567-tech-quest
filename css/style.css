@@ -682,7 +682,12 @@ kbd {
 .unlock-banner { color: var(--ok); font-weight: 600; }
 .end-summary { white-space: pre-line; color: var(--muted); }
 
-.world-card.locked { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.4); }
+/* Bloqueado: se apaga el icono y el borde, no el texto (dice cómo se abre y debe leerse bien) */
+.world-card.locked { cursor: not-allowed; border-style: dashed; border-top-style: solid; border-top-color: var(--border); }
+.world-card.locked .world-icon, .level-card.locked .level-icon { opacity: 0.35; filter: grayscale(1); }
+.world-card.locked .world-name, .level-card.locked .level-name { color: var(--muted); }
+.lock-why { font-size: 0.85rem; color: var(--warn); }
+.world-card.locked:hover, .level-card.locked:hover { transform: none; box-shadow: none; }
 
 .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
 .ach-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
@@ -749,10 +754,12 @@ kbd {
   box-shadow: 0 0 18px color-mix(in srgb, var(--accent, #00ffc8) 25%, transparent);
 }
 .level-card.locked {
-  opacity: 0.45;
-  filter: grayscale(0.35);
   cursor: not-allowed;
+  border-style: dashed;
+  border-top-style: solid;
+  border-top-color: var(--border, #2a3a55);
 }
+.level-card.locked .level-state { color: var(--warn, #ffcc44); }
 .level-card.cleared {
   border-color: var(--ok, #00ff88);
   background: rgba(0, 255, 136, 0.06);
@@ -785,6 +792,39 @@ kbd {
 .end-mistakes li { display: flex; flex-direction: column; gap: 0.15rem; }
 .end-mistakes .mistake-q { color: var(--muted); }
 .end-mistakes .mistake-a { color: var(--ok); font-family: var(--mono); font-size: 0.9rem; word-break: break-word; }
+.end-mistakes .mistake-yours { color: #ff9aae; font-family: var(--mono); font-size: 0.9rem; word-break: break-word; }
+.end-mistakes .mistake-explain { color: var(--text); font-size: 0.88rem; }
+
+/* Menú: Reanudar / Continuar aventura (con su destino en una segunda línea) */
+.continue-row:empty { display: none; }
+.btn-wide { flex: 1 1 16rem; display: inline-flex; flex-direction: column; align-items: center; gap: 0.1rem; }
+.btn small, .btn-wide small { display: block; font-size: 0.78rem; font-weight: 400; opacity: 0.85; }
+.modes .btn small { display: inline; margin-left: 0.25rem; }
+.stars { color: var(--warn); letter-spacing: 0.05em; }
+.world-progress .stars, .world-progress { color: var(--warn); }
+
+/* Resultado: tu respuesta, cada pareja o paso, repaso, lo que revela un ticket y «Pruébalo tú» */
+.feedback-yours { color: #ff9aae; margin: 0.25rem 0 0; overflow-wrap: anywhere; }
+.feedback-review { color: var(--accent2); margin: 0.35rem 0 0; font-size: 0.92rem; }
+.feedback-rows { list-style: none; text-align: left; max-width: 36rem; margin: 0.5rem auto; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--mono); font-size: 0.9rem; }
+.feedback-rows li { padding: 0.35rem 0.6rem; border-radius: 6px; background: var(--bg2); overflow-wrap: anywhere; }
+.feedback-rows .row-ok { border-left: 3px solid var(--ok); }
+.feedback-rows .row-bad { border-left: 3px solid var(--danger); }
+.feedback-rows .row-ok .row-mark { color: var(--ok); }
+.feedback-rows .row-bad .row-mark { color: var(--danger); }
+.row-mark { margin-right: 0.4rem; font-weight: 700; }
+.row-fix { color: var(--muted); }
+.reveal-box, .try-box { text-align: left; max-width: 36rem; margin: 0.5rem auto; padding: 0.7rem 1rem; border-radius: 8px; overflow-wrap: anywhere; }
+.reveal-box { background: rgba(255, 119, 85, 0.08); border: 1px solid #ff7755; }
+.try-box { background: rgba(0, 170, 255, 0.08); border: 1px dashed var(--accent2); }
+.try-box code, .ticket-box code { font-family: var(--mono); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.05rem 0.3rem; }
+
+/* Ticket en juego: el reporte y lo que ya sabes del caso */
+.ticket-box { text-align: left; margin: 0 0 1rem; padding: 0.8rem 1rem; border-radius: 8px; background: rgba(255, 119, 85, 0.07); border-left: 3px solid #ff7755; }
+.ticket-head { margin: 0 0 0.25rem; font-family: var(--mono); font-size: 0.85rem; color: #ffb199; }
+.ticket-text { margin: 0; overflow-wrap: anywhere; }
+.ticket-notes { margin: 0.5rem 0 0; padding-left: 0; list-style: none; font-size: 0.9rem; color: var(--muted); display: flex; flex-direction: column; gap: 0.2rem; }
+.stats-note { color: var(--muted); font-size: 0.88rem; }
 
 /* Palabras largas (rutas, a/b/c) no deben desbordar los botones ni empujar ▲/▼ fuera de la pantalla */
 .opt-text, .order-text, .match-item, #question-text, .hint-box, .explain-box, #feedback-detail { min-width: 0; overflow-wrap: anywhere; }

@@ -33,7 +33,18 @@
     timerId: null,
     pendingAchievements: [],
     runAchievements: [],
-    missed: []
+    missed: [],
+    // Pistas disponibles en esta partida (no en Práctica, Repaso, Reto del día ni Tickets)
+    hintsOn: true,
+    // Modo de prueba (?pregunta=…): no guarda nada; tickets y prueba no van a «Repasar errores»
+    noSave: false,
+    noMistakes: false,
+    testIds: null,
+    marathonScope: null,
+    ticket: null,
+    ticketNotes: [],
+    dailyDay: null,
+    nextLevel: null
   };
 
   let worldPickMode = "campaign";
@@ -56,6 +67,20 @@
     UI.updateMuteButton();
     // index.html avisa en pantalla si esto no llega a ejecutarse (navegador viejo o error en js/)
     window.techQuestReady = true;
+    // index.html?pregunta=lx01,lx02 abre esas preguntas en el modo de prueba (para revisar preguntas nuevas)
+    const ids = testIdsFromUrl();
+    if (ids) beginTest(ids);
+    registerServiceWorker();
+  }
+
+  /** Instalable y sin conexión solo cuando se sirve por http(s) (p. ej. GitHub Pages), no con doble clic. */
+  function registerServiceWorker() {
+    try {
+      if (!("serviceWorker" in navigator) || !/^https?:$/.test(location.protocol)) return;
+      const go = () => navigator.serviceWorker.register("sw.js").catch(() => {});
+      if (document.readyState === "complete") go();
+      else window.addEventListener("load", go);
+    } catch (_) { /* sin service worker el juego funciona igual */ }
   }
 
   function bindEvents() {
@@ -80,6 +105,15 @@
     window.addEventListener("storage", (e) => {
       if (e.key === null || String(e.key).startsWith("techQuest")) refreshMenu();
     });
+    // «Cargar respaldo» (Stats) abre este selector de archivo
+    const backupInput = document.getElementById("backup-file");
+    if (backupInput) {
+      backupInput.addEventListener("change", () => {
+        const f = backupInput.files && backupInput.files[0];
+        backupInput.value = "";
+        loadBackupFile(f);
+      });
+    }
 
     // Los navegadores solo permiten iniciar audio tras un gesto del usuario (clic, toque o tecla)
     document.addEventListener("pointerdown", () => { navMode = "pointer"; TechAudio.unlock(); }, { passive: true });
@@ -162,7 +196,7 @@
         if (btn && !btn.disabled) btn.click();
       }
 
-      if (key === "h" && playOn && !state.practice) {
+      if (key === "h" && playOn && state.hintsOn) {
         // La pista en «completar» lleva el foco al campo durante esta tecla: sin esto la "h" se escribiría ahí
         e.preventDefault();
         document.querySelector("#btn-hint:not([disabled])")?.click();
@@ -202,7 +236,54 @@
         break;
       case "marathon":
         TechAudio.playClick();
-        beginMarathon();
+        UI.setText("#marathon-mine-count", Math.min(GAME_CONFIG.marathonCount, myLevelPool().length) + " de " + myLevelPool().length + " preguntas");
+        UI.setText("#marathon-all-count", GAME_CONFIG.marathonCount + " de " + allLevelQuestions().length + " preguntas");
+        UI.showScreen("screen-marathon");
+        break;
+      case "marathon-mine":
+      case "marathon-all":
+        TechAudio.playClick();
+        beginMarathon(action === "marathon-mine" ? "mine" : "all");
+        break;
+      case "continue": {
+        TechAudio.playClick();
+        const next = nextAdventureLevel();
+        if (next) beginCampaign(next.worldId, next.level);
+        break;
+      }
+      case "next-level":
+        TechAudio.playClick();
+        if (state.nextLevel) beginCampaign(state.nextLevel.worldId, state.nextLevel.level);
+        break;
+      case "resume":
+        TechAudio.playClick();
+        resumeRun();
+        break;
+      case "daily":
+        TechAudio.playClick();
+        beginDaily();
+        break;
+      case "tickets":
+        TechAudio.playClick();
+        renderTickets();
+        UI.showScreen("screen-tickets");
+        break;
+      case "pick-ticket":
+        TechAudio.playClick();
+        beginTicket(el.getAttribute("data-ticket"));
+        break;
+      case "locked":
+        // Tarjeta bloqueada: dice cómo se abre (sigue siendo enfocable para teclado y lector de pantalla)
+        TechAudio.playClick();
+        UI.toast("🔒 " + (el.getAttribute("data-why") || "Bloqueado"));
+        break;
+      case "backup-download":
+        TechAudio.playClick();
+        downloadBackup();
+        break;
+      case "backup-upload":
+        TechAudio.playClick();
+        UI.$("#backup-file")?.click();
         break;
       case "review":
         TechAudio.playClick();
@@ -210,7 +291,7 @@
         break;
       case "reset-progress":
         TechAudio.playClick();
-        if (confirm("¿Borrar todo tu progreso, logros, estadísticas y récord? Esto no se puede deshacer.")) {
+        if (confirm("¿Borrar todo tu progreso, logros, estadísticas y récord? Esto no se puede deshacer, salvo que antes descargues un respaldo (botón «Descargar respaldo»).")) {
           Progress.resetAll();
           renderStats();
           refreshMenu();
@@ -245,6 +326,7 @@
         break;
       case "menu":
         TechAudio.playClick();
+        if (inRun) clearRunSnapshot();
         inRun = false;
         clearTimer();
         refreshMenu();
@@ -274,6 +356,11 @@
       case "pick-again": {
         // "Elegir mundo" en la pantalla final vuelve al selector del modo que se acaba de jugar
         TechAudio.playClick();
+        if (state.mode === "ticket") {
+          renderTickets();
+          UI.showScreen("screen-tickets");
+          break;
+        }
         const again = { practice: "practice", timer: "timer", boss: "boss" };
         worldPickMode = again[state.mode] || "campaign";
         renderWorlds();
@@ -315,6 +402,7 @@
   }
 
   function quitToMenu() {
+    clearRunSnapshot();
     inRun = false;
     clearTimer();
     refreshMenu();
@@ -331,8 +419,11 @@
   }
 
   function retry() {
-    if (state.mode === "marathon") beginMarathon();
+    if (state.mode === "marathon") beginMarathon(state.marathonScope || "all");
     else if (state.mode === "review") beginReview();
+    else if (state.mode === "daily") beginDaily();
+    else if (state.mode === "test") beginTest(state.testIds || []);
+    else if (state.mode === "ticket" && state.ticket) beginTicket(state.ticket.id);
     else if (state.mode === "boss") beginBoss(state.worldId);
     else if (state.mode === "timer") beginTimer(state.worldId, state.level);
     else if (state.practice) beginPractice(state.worldId, state.level);
@@ -351,10 +442,43 @@
     UI.setText("#menu-highscore", String(UI.getHighScore()));
     UI.setText("#menu-total-q", String(countQuestions()));
     UI.setText("#menu-worlds", String(WORLDS.length));
-    const pendingReview = pendingMistakeQuestions().length;
-    UI.setText("#menu-review-count", String(pendingReview));
+    UI.setText("#howto-worlds", String(WORLDS.length));
+    // Repaso espaciado: el número es lo que toca hoy; lo demás espera a otro día (se puede adelantar)
+    const review = reviewPool();
+    UI.setText("#menu-review-count", String(review.due.length));
+    UI.setText("#menu-review-wait", review.later.length ? " · " + review.later.length + " en espera" : "");
     const reviewBtn = UI.$("#btn-review");
-    if (reviewBtn) reviewBtn.disabled = pendingReview === 0;
+    if (reviewBtn) reviewBtn.disabled = review.due.length + review.later.length === 0;
+
+    // Reanudar (tras recargar en plena partida) y Continuar aventura (primer nivel que falta)
+    const snap = loadRunSnapshot();
+    const resumeBtn = UI.$("#btn-resume");
+    if (resumeBtn) {
+      resumeBtn.hidden = !snap;
+      if (snap) UI.setText("#resume-label", snap.label + " · pregunta " + (Math.min(snap.next, snap.ids.length - 1) + 1) + " de " + snap.ids.length);
+    }
+    const next = nextAdventureLevel();
+    const contBtn = UI.$("#btn-continue");
+    if (contBtn) {
+      contBtn.hidden = !next;
+      // Con una partida por reanudar, esa es la acción principal
+      contBtn.classList.toggle("btn-primary", !snap);
+      if (next) {
+        const w = getWorldById(next.worldId);
+        UI.setText("#continue-label", w.icon + " " + w.name + " · Nivel " + next.level);
+      }
+    }
+
+    // Reto del día y racha de días
+    const daily = Progress.getDaily();
+    UI.setText("#daily-label", daily && daily.done ? "✔ hecho" : "");
+    const streak = Progress.getDayStreak();
+    const streakPill = UI.$("#menu-streak-pill");
+    if (streakPill) streakPill.hidden = streak.count === 0;
+    UI.setText("#menu-streak", String(streak.count));
+    UI.setText("#menu-streak-unit", streak.count === 1 ? "día seguido" : "días seguidos");
+    const ticketsBtn = UI.$("#btn-tickets");
+    if (ticketsBtn) ticketsBtn.hidden = TICKETS.length === 0;
     const unlocked = Progress.getAchievements();
     UI.setText("#menu-ach-count", Object.keys(unlocked).length + " / " + ACHIEVEMENTS.length);
     const wrap = UI.$("#menu-badges");
@@ -378,23 +502,25 @@
     };
     if (title) title.textContent = map[worldPickMode] || "Mundos";
 
+    const maxL = Progress.levelsPerWorld();
     UI.$("#world-grid").innerHTML = WORLDS.map((w, i) => {
       if (worldPickMode === "boss" && !(w.boss && w.boss.length)) return "";
       // Práctica y Cronómetro abren todo; Aventura y Boss requieren el mundo desbloqueado
       const needsUnlock = worldPickMode === "campaign" || worldPickMode === "boss";
       const open = !needsUnlock || Progress.isUnlocked(w.id) || i === 0;
       const pct = Progress.worldProgressPct(w.id);
-      const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
-      const stars = Array.from({ length: maxL }, (_, i) => Progress.isLevelCleared(w.id, i + 1) ? "⭐" : "☆").join("");
       const boss = Progress.getBossWins()[w.id];
+      // Bloqueado: la tarjeta sigue enfocable y dice qué falta para abrirla
+      const why = open ? "" : "Se abre al completar el Nivel " + maxL + " de " + (WORLDS[i - 1] ? WORLDS[i - 1].name : "el mundo anterior") + " en Aventura";
       return `<button type="button" class="world-card ${open ? "" : "locked"}"
         style="--accent:${w.color}"
-        ${open ? `data-action="pick-world" data-world="${w.id}"` : "disabled"}>
+        ${open ? `data-action="pick-world" data-world="${w.id}"` : `data-action="locked" aria-disabled="true" data-why="${UI.escapeHtml(why)}"`}>
         <span class="world-num">Mundo ${i + 1}${boss ? " 👑" : ""}</span>
         <span class="world-icon">${w.icon}</span>
-        <span class="world-name">${UI.escapeHtml(w.name)}${open ? "" : " 🔒"}</span>
+        <span class="world-name">${UI.escapeHtml(w.name)}</span>
         <span class="world-desc">${UI.escapeHtml(w.description)}</span>
-        <span class="world-progress">${stars} · ${pct}%</span>
+        ${open ? "" : `<span class="lock-why">🔒 ${UI.escapeHtml(why)}</span>`}
+        <span class="world-progress"><span aria-hidden="true">★</span> ${Progress.countStars(w.id)}/${maxL * 3}<span class="sr-only"> estrellas</span> · ${pct}%</span>
         <span class="world-count">${w.questions.length} retos · ${maxL} niveles${w.boss && w.boss.length ? " · boss" : ""}</span>
       </button>`;
     }).join("");
@@ -419,13 +545,14 @@
         const cleared = Progress.isLevelCleared(worldId, L);
         // Cronómetro juega como mucho timerMaxQuestions del nivel
         const n = worldPickMode === "timer" ? Math.min(GAME_CONFIG.timerMaxQuestions, counts[L] || 0) : counts[L] || 0;
+        const why = open ? "" : "Se abre al completar el Nivel " + (L - 1);
         return `<button type="button" class="level-card ${open ? "" : "locked"} ${cleared ? "cleared" : ""}"
           style="--accent:${w.color}"
-          ${open ? `data-action="pick-level" data-world="${worldId}" data-level="${L}"` : "disabled"}>
+          ${open ? `data-action="pick-level" data-world="${worldId}" data-level="${L}"` : `data-action="locked" aria-disabled="true" data-why="${UI.escapeHtml(why)}"`}>
           <span class="level-icon">${(labels[L] && labels[L].icon) || ("🔢")}</span>
-          <span class="level-name">Nivel ${L}: ${(labels[L] && labels[L].name) || ("Nv." + L)}${cleared ? " ⭐" : ""}${open ? "" : " 🔒"}</span>
+          <span class="level-name">Nivel ${L}: ${(labels[L] && labels[L].name) || ("Nv." + L)}</span>
           <span class="level-count">${n} desafíos</span>
-          <span class="level-state">${cleared ? "Completado" : open ? "Disponible" : "Bloqueado"}</span>
+          <span class="level-state">${cleared ? "Completado " + UI.stars(Progress.getLevelStars(worldId, L)) : open ? "Disponible" : "🔒 " + why}</span>
         </button>`;
       })
       .join("");
@@ -436,10 +563,19 @@
     inRun = true;
     pushRunEntry();
     state.mode = opts.mode;
+    // practice = sin vidas (Práctica, Repaso, Reto del día, Tickets y prueba)
     state.practice = !!opts.practice;
     state.timed = !!opts.timed;
     state.worldId = opts.worldId || null;
     state.level = opts.level != null ? opts.level : null;
+    state.noSave = !!opts.noSave;
+    state.noMistakes = !!opts.noMistakes || !!opts.noSave;
+    state.testIds = opts.testIds || null;
+    state.marathonScope = opts.marathonScope || null;
+    state.ticket = opts.ticket || null;
+    state.ticketNotes = [];
+    state.dailyDay = opts.dailyDay || null;
+    state.nextLevel = null;
     // Un hueco en una lista de preguntas (",," en los datos) no debe colgar la partida
     const questions = opts.questions.filter((q) => q && typeof q === "object");
     state.questions = questions.map(prepareQuestion);
@@ -448,7 +584,8 @@
     state.score = 0;
     state.streak = 0;
     state.bestStreakRun = 0;
-    state.hintsLeft = opts.practice ? 0 : opts.mode === "boss" ? 1 : GAME_CONFIG.hintsPerWorld;
+    state.hintsLeft = opts.hints != null ? opts.hints : opts.practice ? 0 : opts.mode === "boss" ? 1 : GAME_CONFIG.hintsPerWorld;
+    state.hintsOn = state.hintsLeft > 0;
     state.hintsUsedRun = 0;
     state.totalQ = questions.length;
     state.answered = false;
@@ -459,9 +596,12 @@
     state.missed = [];
     // Si el progreso se reinicia en otra pestaña durante la partida, esta deja de guardar
     state.saveId = Progress.saveId();
-    // Práctica y Repaso no tienen vidas (no se pueden perder): no cuentan como partidas en Stats
-    if (state.practice) Progress.recordPracticeRun();
-    else Progress.recordGameStart();
+    // Las partidas sin vidas (no se pueden perder) no cuentan como partidas en Stats; la prueba no guarda nada
+    if (!state.noSave) {
+      if (state.practice) Progress.recordPracticeRun();
+      else Progress.recordGameStart();
+    }
+    saveRunSnapshot();
     UI.showScreen("screen-play");
     showQuestion();
   }
@@ -529,37 +669,315 @@
     startRun({ mode: "timer", timed: true, worldId, level, questions: qs });
   }
 
-  function beginMarathon() {
+  /** Todas las preguntas de nivel (sin las del Boss). */
+  function allLevelQuestions() {
     const pool = [];
     WORLDS.forEach((w) => w.questions.forEach((q) => pool.push(q)));
-    const qs = UI.shuffle(pool).slice(0, GAME_CONFIG.marathonCount);
-    startRun({ mode: "marathon", worldId: null, questions: qs });
+    return pool;
   }
 
-  /** Preguntas (incluidas las de boss) cuyo id sigue en la lista de errores por repasar. */
-  function pendingMistakeQuestions() {
-    const pending = Progress.getMistakes();
-    const out = [];
-    WORLDS.forEach((w) => {
-      w.questions.concat(w.boss || []).forEach((q) => {
-        if (q.id && Object.prototype.hasOwnProperty.call(pending, q.id)) out.push(q);
-      });
+  /** Preguntas de los mundos y niveles que el jugador ya abrió en Aventura («Mi nivel»). */
+  function myLevelPool() {
+    const pool = [];
+    WORLDS.forEach((w, i) => {
+      if (!(Progress.isUnlocked(w.id) || i === 0)) return;
+      w.questions.forEach((q) => { if (Progress.isLevelUnlocked(w.id, q.level)) pool.push(q); });
     });
+    return pool;
+  }
+
+  function beginMarathon(scope) {
+    const pool = scope === "mine" ? myLevelPool() : allLevelQuestions();
+    const qs = UI.shuffle(pool).slice(0, GAME_CONFIG.marathonCount);
+    if (!qs.length) {
+      UI.toast("Aún no hay preguntas para esta maratón.");
+      return;
+    }
+    startRun({ mode: "marathon", worldId: null, marathonScope: scope, questions: qs });
+  }
+
+  /** Primer nivel de Aventura que falta (en orden de mundos), o null si ya están todos. */
+  function nextAdventureLevel() {
+    const maxL = Progress.levelsPerWorld();
+    for (let i = 0; i < WORLDS.length; i++) {
+      const w = WORLDS[i];
+      if (!(Progress.isUnlocked(w.id) || i === 0)) continue;
+      for (let L = 1; L <= maxL; L++) {
+        if (!Progress.isLevelCleared(w.id, L) && Progress.isLevelUnlocked(w.id, L) && getQuestionsForLevel(w.id, L).length) {
+          return { worldId: w.id, level: L };
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Todas las preguntas del juego (niveles y Boss) por id. */
+  function questionIndex() {
+    const out = Object.create(null);
+    WORLDS.forEach((w) => w.questions.concat(w.boss || []).forEach((q) => { if (q.id && !out[q.id]) out[q.id] = q; }));
     return out;
   }
 
+  /** Errores por repasar (incluidas las de Boss): due = los que tocan hoy, later = los que esperan a otro día. */
+  function reviewPool() {
+    const pending = Progress.getMistakes();
+    const day = Progress.today();
+    const due = [];
+    const later = [];
+    WORLDS.forEach((w) => {
+      w.questions.concat(w.boss || []).forEach((q) => {
+        if (!q.id || !Object.prototype.hasOwnProperty.call(pending, q.id)) return;
+        (Progress.isMistakeDue(pending[q.id], day) ? due : later).push(q);
+      });
+    });
+    return { due, later };
+  }
+
+  function pendingMistakeQuestions() {
+    const r = reviewPool();
+    return r.due.concat(r.later);
+  }
+
   function beginReview() {
-    const qs = pendingMistakeQuestions();
-    if (!qs.length) {
+    const r = reviewPool();
+    if (!r.due.length && !r.later.length) {
       UI.toast("No tienes errores pendientes. ¡Bien hecho!");
       refreshMenu();
       return;
     }
-    startRun({
-      mode: "review",
-      practice: true,
-      questions: UI.shuffle(qs).slice(0, GAME_CONFIG.reviewMaxQuestions || GAME_CONFIG.marathonCount)
+    // Primero las que tocan hoy; si sobra sitio, se adelantan las que esperan (un acierto hoy solo cuenta una vez)
+    const qs = UI.shuffle(r.due).concat(UI.shuffle(r.later)).slice(0, GAME_CONFIG.reviewMaxQuestions || GAME_CONFIG.marathonCount);
+    startRun({ mode: "review", practice: true, questions: qs });
+  }
+
+  /** Generador pseudoaleatorio con semilla (el mismo día da el mismo reto). */
+  function seededRandom(seed) {
+    let h = 1779033703 ^ seed.length;
+    for (let i = 0; i < seed.length; i++) {
+      h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function () {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    };
+  }
+  function seededShuffle(arr, rand) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /** Las preguntas del reto de hoy: las mismas todo el día (se guardan al generarlas la primera vez). */
+  function dailyQuestions() {
+    const byId = questionIndex();
+    const saved = Progress.getDaily();
+    if (saved) {
+      const qs = saved.ids.map((id) => byId[id]).filter(Boolean);
+      if (qs.length) return { day: saved.day, qs };
+    }
+    const day = Progress.today();
+    const rand = seededRandom("tq-" + day);
+    const n = GAME_CONFIG.dailyCount || 10;
+    const fromMistakes = seededShuffle(pendingMistakeQuestions(), rand).slice(0, Math.min(GAME_CONFIG.dailyMistakes || 0, n));
+    const taken = new Set(fromMistakes.map((q) => q.id));
+    const rest = seededShuffle(myLevelPool().filter((q) => !taken.has(q.id)), rand).slice(0, n - fromMistakes.length);
+    const qs = seededShuffle(fromMistakes.concat(rest), rand);
+    Progress.saveDaily({ day, ids: qs.map((q) => q.id), done: false, correct: 0, total: qs.length });
+    return { day, qs };
+  }
+
+  function beginDaily() {
+    const d = dailyQuestions();
+    if (!d.qs.length) {
+      UI.toast("Aún no hay preguntas para el reto de hoy.");
+      return;
+    }
+    startRun({ mode: "daily", practice: true, dailyDay: d.day, questions: d.qs });
+  }
+
+  // ——— Simulador de tickets ———
+  const TICKET_LEVELS = { 1: "Fácil", 2: "Medio", 3: "Difícil" };
+
+  function renderTickets() {
+    const grid = UI.$("#ticket-grid");
+    if (!grid) return;
+    grid.innerHTML = TICKETS.map((t) => {
+      const w = getWorldById(t.world);
+      const best = Progress.getTicketBest(t.id);
+      const n = t.steps.length;
+      const stateTxt = best >= n ? "✔ Resuelto sin fallos" : best > 0 ? "Mejor: " + best + "/" + n + " pasos bien" : "Sin intentar";
+      return `<button type="button" class="level-card ticket-card ${best >= n ? "cleared" : ""}" style="--accent:${w ? w.color : "#ff7755"}"
+        data-action="pick-ticket" data-ticket="${UI.escapeHtml(t.id)}">
+        <span class="level-icon">${UI.escapeHtml(t.icon || "🎫")}</span>
+        <span class="level-name">${UI.escapeHtml(t.title)}</span>
+        <span class="level-count">${TICKET_LEVELS[t.level] || "Medio"} · ${n} pasos${w ? " · " + UI.escapeHtml(w.name) : ""}</span>
+        <span class="level-state">${stateTxt}</span>
+      </button>`;
+    }).join("");
+  }
+
+  function beginTicket(id) {
+    const t = TICKETS.find((x) => x.id === id);
+    if (!t) return;
+    // Los pasos van en orden (cada uno se apoya en lo que reveló el anterior); solo se barajan sus opciones
+    startRun({ mode: "ticket", practice: true, noMistakes: true, ticket: t, worldId: null, questions: t.steps.slice() });
+  }
+
+  // ——— Modo de prueba: index.html?pregunta=lx01,lx02 (o lxL5* para todas las que empiezan así) ———
+  function testIdsFromUrl() {
+    let raw = null;
+    try {
+      const params = new URLSearchParams(location.search);
+      raw = params.get("pregunta") || params.get("preguntas");
+    } catch (_) { return null; }
+    if (!raw) return null;
+    const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    return ids.length ? ids : null;
+  }
+
+  function beginTest(ids) {
+    const all = [];
+    WORLDS.forEach((w) => w.questions.concat(w.boss || []).forEach((q) => all.push(q)));
+    TICKETS.forEach((t) => t.steps.forEach((q) => all.push(q)));
+    const found = [];
+    const missing = [];
+    ids.forEach((id) => {
+      const matches = id.endsWith("*") ? all.filter((q) => String(q.id).startsWith(id.slice(0, -1))) : all.filter((q) => q.id === id);
+      if (matches.length) matches.forEach((q) => { if (!found.includes(q)) found.push(q); });
+      else missing.push(id);
     });
+    if (found.length) {
+      // Sin vidas ni reloj, con una pista por pregunta para probarla también; no guarda nada
+      startRun({ mode: "test", practice: true, noSave: true, hints: found.length, testIds: ids, questions: found });
+    }
+    if (missing.length) UI.toast("Modo de prueba: no encontré " + missing.join(", "));
+    else if (!found.length) UI.toast("Modo de prueba: no encontré ninguna pregunta");
+  }
+
+  // ——— Reanudar la partida tras recargar la página (copia en sessionStorage: solo esta pestaña) ———
+  const RUN_KEY = "techQuestRun";
+
+  function saveRunSnapshot() {
+    if (!inRun || state.mode === "test") return;
+    const snap = {
+      v: 1,
+      mode: state.mode, practice: state.practice, timed: state.timed, worldId: state.worldId, level: state.level,
+      ids: state.questions.map((q) => q.id),
+      // La siguiente pregunta por responder
+      next: state.answered ? state.qIndex + 1 : state.qIndex,
+      lives: state.lives, score: state.score, streak: state.streak, bestStreakRun: state.bestStreakRun,
+      hintsLeft: state.hintsLeft, hintsOn: state.hintsOn, hintsUsedRun: state.hintsUsedRun,
+      correctCount: state.correctCount, wrongCount: state.wrongCount,
+      runAchievements: state.runAchievements, missed: state.missed, saveId: state.saveId,
+      noMistakes: state.noMistakes, marathonScope: state.marathonScope, dailyDay: state.dailyDay,
+      ticketId: state.ticket ? state.ticket.id : null, ticketNotes: state.ticketNotes,
+      label: UI.modeLabel(hud())
+    };
+    try { sessionStorage.setItem(RUN_KEY, JSON.stringify(snap)); } catch (_) { /* sin reanudar */ }
+  }
+
+  function clearRunSnapshot() {
+    try { sessionStorage.removeItem(RUN_KEY); } catch (_) {}
+  }
+
+  /** La partida guardada en esta pestaña con sus preguntas, o null si no hay (o ya no cuadra con los datos). */
+  function loadRunSnapshot() {
+    let snap;
+    try { snap = JSON.parse(sessionStorage.getItem(RUN_KEY)); } catch (_) { return null; }
+    if (!snap || snap.v !== 1 || !Array.isArray(snap.ids) || !snap.ids.length || typeof snap.next !== "number") return null;
+    let pool;
+    if (snap.mode === "ticket") {
+      const t = TICKETS.find((x) => x.id === snap.ticketId);
+      if (!t) return null;
+      pool = Object.create(null);
+      t.steps.forEach((q) => { pool[q.id] = q; });
+      snap.ticket = t;
+    } else pool = questionIndex();
+    const qs = snap.ids.map((id) => pool[id]);
+    if (qs.some((q) => !q)) return null;
+    snap.questions = qs;
+    return snap;
+  }
+
+  function resumeRun() {
+    const snap = loadRunSnapshot();
+    if (!snap) {
+      refreshMenu();
+      return;
+    }
+    clearTimer();
+    inRun = true;
+    pushRunEntry();
+    Object.assign(state, {
+      mode: snap.mode, practice: !!snap.practice, timed: !!snap.timed, worldId: snap.worldId || null,
+      level: snap.level != null ? snap.level : null,
+      questions: snap.questions.map(prepareQuestion), qIndex: snap.next, totalQ: snap.questions.length,
+      lives: snap.lives, score: snap.score, streak: snap.streak, bestStreakRun: snap.bestStreakRun,
+      hintsLeft: snap.hintsLeft, hintsOn: !!snap.hintsOn, hintsUsedRun: snap.hintsUsedRun,
+      correctCount: snap.correctCount, wrongCount: snap.wrongCount,
+      runAchievements: Array.isArray(snap.runAchievements) ? snap.runAchievements : [],
+      missed: Array.isArray(snap.missed) ? snap.missed : [], pendingAchievements: [],
+      saveId: snap.saveId, noSave: false, noMistakes: !!snap.noMistakes, testIds: null,
+      marathonScope: snap.marathonScope || null, dailyDay: snap.dailyDay || null,
+      ticket: snap.ticket || null, ticketNotes: Array.isArray(snap.ticketNotes) ? snap.ticketNotes : [],
+      nextLevel: null, answered: false
+    });
+    // Recargó en el resultado de la última pregunta (o sin vidas): la partida termina como habría terminado
+    if (!state.practice && state.lives <= 0) {
+      state.answered = true;
+      endGame(false);
+    } else if (state.qIndex >= state.totalQ) {
+      state.answered = true;
+      endGame(true);
+    } else {
+      UI.showScreen("screen-play");
+      showQuestion();
+    }
+  }
+
+  // ——— Respaldo del progreso (.json) ———
+  function downloadBackup() {
+    try {
+      const data = Progress.exportBackup();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "tech-quest-respaldo-" + Progress.today() + ".json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      UI.toast("Respaldo descargado: " + a.download);
+    } catch (_) {
+      UI.toast("No se pudo descargar el respaldo en este navegador.");
+    }
+  }
+
+  function loadBackupFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let obj = null;
+      try { obj = JSON.parse(String(reader.result)); } catch (_) {}
+      const datos = Progress.checkBackup(obj);
+      if (!datos) {
+        UI.toast("Ese archivo no es un respaldo de Tech Quest.");
+        return;
+      }
+      const when = obj.fecha && !isNaN(Date.parse(obj.fecha)) ? new Date(obj.fecha).toLocaleString("es-MX") : "fecha desconocida";
+      if (!confirm("¿Cargar el respaldo del " + when + "? Reemplaza todo el progreso de este navegador.")) return;
+      const n = Progress.importBackup(obj);
+      renderStats();
+      refreshMenu();
+      UI.toast(n > 0 ? "Respaldo cargado." : "El respaldo estaba vacío: progreso en cero.");
+    };
+    reader.onerror = () => UI.toast("No se pudo leer el archivo.");
+    reader.readAsText(file);
   }
 
   function beginBoss(worldId) {
@@ -585,6 +1003,9 @@
     return {
       mode: state.mode,
       practice: state.practice,
+      hintsOn: state.hintsOn,
+      marathonScope: state.marathonScope,
+      ticketTitle: state.ticket ? state.ticket.title : "",
       timed: state.timed,
       worldId: state.worldId,
       level: state.level,
@@ -619,7 +1040,7 @@
       UI.updateHUD(hud());
       if (state.timeLeft <= 0) {
         clearTimer();
-        if (!state.answered) finishRound(false, correctLabel(currentQ()), true);
+        if (!state.answered) finishRound(false, timeoutResult(currentQ()), true);
       }
     }, 1000);
   }
@@ -641,8 +1062,22 @@
       hintBox.textContent = "";
     }
 
-    UI.setText("#question-type", typeLabel(q.type));
+    // En la prueba se ve el id (para encontrarla en js/mundos/); en un ticket, en qué paso vas
+    UI.setText("#question-type",
+      (state.ticket ? "Paso " + (state.qIndex + 1) + " de " + state.totalQ + " · " : "") +
+      typeLabel(q.type) + (state.mode === "test" ? " · " + q.id : ""));
     UI.setText("#question-text", q.q);
+    const ticketBox = UI.$("#ticket-box");
+    if (ticketBox) {
+      ticketBox.hidden = !state.ticket;
+      if (state.ticket) {
+        UI.setText("#ticket-head", "🎫 Ticket: " + state.ticket.title);
+        UI.setText("#ticket-text", state.ticket.ticket || "");
+        const notes = UI.$("#ticket-notes");
+        notes.hidden = !state.ticketNotes.length;
+        notes.innerHTML = state.ticketNotes.map((n) => `<li>📝 ${UI.escapeHtml(n)}</li>`).join("");
+      }
+    }
 
     const area = UI.$("#challenge-area");
     area.innerHTML = "";
@@ -651,7 +1086,7 @@
     const submitBtn = UI.$("#btn-submit");
     const hintBtn = UI.$("#btn-hint");
     if (hintBtn) {
-      hintBtn.hidden = state.practice;
+      hintBtn.hidden = !state.hintsOn;
       // En Verdadero/Falso (o con solo 2 opciones) no hay pista útil que no regale la respuesta
       const noHint = hintGivesAway(q);
       hintBtn.disabled = state.hintsLeft <= 0 || noHint;
@@ -875,7 +1310,7 @@
 
   function useHint() {
     const q = currentQ();
-    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || state.practice || hintGivesAway(q)) return;
+    if (state.answered || state.hintsLeft <= 0 || state.hintUsedThisQ || !state.hintsOn || hintGivesAway(q)) return;
     TechAudio.playClick();
     state.hintsLeft--;
     state.hintsUsedRun++;
@@ -885,6 +1320,7 @@
     state.hintCost = GAME_CONFIG.pointsHintPenalty;
     if (runSaves()) Progress.recordHint();
     UI.updateHUD(hud());
+    saveRunSnapshot();
     // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan. Se marca con
     // aria-disabled en vez de disabled para que, si tenía el foco, no caiga a <body> (y un segundo
     // Enter no envíe la respuesta a medias)
@@ -953,6 +1389,34 @@
     else if (q.type === "order") gradeOrder();
   }
 
+  /** Lo que dejó el jugador cuando se acabó el tiempo: en emparejar y ordenar, cómo quedó cada pareja o paso. */
+  function timeoutResult(q) {
+    if (q.type === "match") return { correct: correctLabel(q), rows: matchRows(q) };
+    if (q.type === "order") return { correct: correctLabel(q), rows: orderRows(q) };
+    return { correct: correctLabel(q), yours: null };
+  }
+
+  /** Cada concepto con la pareja que eligió el jugador (✔/✘) y, si falló, la correcta. */
+  function matchRows(q) {
+    return q.pairs.map((p, i) => {
+      const r = state.matchSelections[i];
+      const ok = r === i;
+      return {
+        ok,
+        text: p.left + " → " + (r != null ? q.pairs[r].right : "sin emparejar"),
+        fix: ok ? "" : "correcta: " + p.right
+      };
+    });
+  }
+
+  /** Cada paso en la posición en que lo dejó el jugador (✔/✘) y, si está mal, en qué paso va. */
+  function orderRows(q) {
+    return state.orderItems.map((x, i) => {
+      const ok = x.orig === q.answer[i];
+      return { ok, text: i + 1 + ". " + x.text, fix: ok ? "" : "va en el paso " + (q.answer.indexOf(x.orig) + 1) };
+    });
+  }
+
   function correctLabel(q) {
     if (CHOICE_TYPES.includes(q.type)) return q.options[q.answer];
     if (q.type === "tf") return q.answer ? "Verdadero" : "Falso";
@@ -971,7 +1435,7 @@
       if (i === q.answer) btn.classList.add("correct");
       if (i === index && !ok) btn.classList.add("wrong");
     });
-    finishRound(ok, q.options[q.answer]);
+    finishRound(ok, { correct: q.options[q.answer], yours: q.options[index] });
   }
 
   function gradeTF(val) {
@@ -983,7 +1447,7 @@
       if (v === q.answer) btn.classList.add("correct");
       if (v === val && !ok) btn.classList.add("wrong");
     });
-    finishRound(ok, q.answer ? "Verdadero" : "Falso");
+    finishRound(ok, { correct: q.answer ? "Verdadero" : "Falso", yours: val ? "Verdadero" : "Falso" });
   }
 
   // NFC: una «ó» pegada como «o» + acento combinado (de un PDF o un nombre de archivo de macOS) es la misma letra
@@ -994,7 +1458,7 @@
     let accept = q.accept || [q.answer];
     if (typeof accept === "string") accept = accept.split("|");
     accept = accept.map(norm);
-    finishRound(accept.includes(norm(raw)), q.answer);
+    finishRound(accept.includes(norm(raw)), { correct: q.answer, yours: raw });
   }
 
   function gradeMatch() {
@@ -1006,18 +1470,21 @@
     }
     let ok = true;
     for (let i = 0; i < n; i++) if (state.matchSelections[i] !== i) ok = false;
-    finishRound(ok, correctLabel(q));
+    finishRound(ok, { correct: correctLabel(q), rows: matchRows(q) });
   }
 
   function gradeOrder() {
     const q = currentQ();
     const player = state.orderItems.map((x) => x.orig);
     const ok = player.length === q.answer.length && player.every((v, i) => v === q.answer[i]);
-    finishRound(ok, correctLabel(q));
+    finishRound(ok, { correct: correctLabel(q), rows: orderRows(q) });
   }
 
-  /** false si el progreso se reinició (en otra pestaña) después de empezar la partida: ya no se guarda nada. */
-  function runSaves() { return Progress.saveId() === state.saveId; }
+  /**
+   * false en el modo de prueba, o si el progreso se reinició (o se cargó un respaldo) en otra pestaña después
+   * de empezar la partida: ya no se guarda nada.
+   */
+  function runSaves() { return !state.noSave && Progress.saveId() === state.saveId; }
 
   // El sonido del logro lo pone quien llama, una vez por tanda (varios a la vez sonarían superpuestos y más fuerte)
   function grant(id) {
@@ -1028,7 +1495,11 @@
     if (a) UI.toast("Logro: " + a.icon + " " + a.name);
   }
 
-  function finishRound(ok, correctText, timedOut) {
+  /**
+   * res: { correct: texto de la respuesta correcta, yours: lo que respondió el jugador (null si no respondió),
+   *        rows: en emparejar y ordenar, cada pareja o paso con ✔/✘ }
+   */
+  function finishRound(ok, res, timedOut) {
     clearTimer();
     state.answered = true;
     const sub = UI.$("#btn-submit");
@@ -1039,13 +1510,22 @@
     const saves = runSaves();
     if (saves) Progress.recordAnswer(ok);
     const q = currentQ();
-    // Lo fallado se guarda para el modo Repasar errores; acertarlo después lo quita de la lista
-    if (ok) {
-      if (saves) Progress.removeMistake(q.id);
-    } else {
-      if (saves) Progress.addMistake(q.id);
-      state.missed.push({ q: q.q, correct: correctText });
+    // Lo fallado se guarda para el modo Repasar errores; sale de la lista al acertarlo en dos días distintos
+    let reviewNote = "";
+    if (saves && !state.noMistakes) {
+      if (ok) {
+        const r = Progress.recordReviewHit(q.id);
+        if (r === "done") reviewNote = "🔁 Repaso: la acertaste en dos días distintos, sale de tus errores.";
+        else if (r === "later") reviewNote = "🔁 Repaso: bien. Vuelve a salir otro día; si la aciertas otra vez, sale de tus errores.";
+        else if (r === "same-day") reviewNote = "🔁 Repaso: hoy ya la acertaste; para salir de tus errores, acierta otro día.";
+      } else Progress.addMistake(q.id);
     }
+    if (!ok) {
+      const yours = res.rows ? res.rows.filter((r) => !r.ok).map((r) => r.text).join("; ") : res.yours;
+      state.missed.push({ q: q.q, correct: res.correct, yours: yours == null ? "" : String(yours), explain: q.explain || "" });
+    }
+    // En un ticket, lo que se descubre en cada paso queda en las notas del caso para los siguientes
+    if (state.ticket && q.reveal) state.ticketNotes.push(String(q.reveal));
     let gained = 0;
     let hintPaid = 0;
 
@@ -1077,39 +1557,85 @@
     }
 
     UI.updateHUD(hud());
-    showFeedback(ok, gained, correctText, q.explain, timedOut, hintPaid);
+    saveRunSnapshot();
+    showFeedback(ok, gained, res, q, timedOut, hintPaid, reviewNote);
   }
 
-  function showFeedback(ok, gained, correctText, explain, timedOut, hintPaid) {
+  function showFeedback(ok, gained, res, q, timedOut, hintPaid, reviewNote) {
     state.feedbackAt = performance.now();
     state.feedbackTimedOut = !!timedOut;
     UI.showScreen("screen-feedback");
     UI.flashFeedback(ok);
     UI.$("#feedback-icon").textContent = ok ? "✅" : timedOut ? "⏰" : "❌";
     const title = UI.$("#feedback-title");
+    const yoursEl = UI.$("#feedback-yours");
+    const rowsEl = UI.$("#feedback-rows");
+    let yoursText = "";
     if (ok) {
       title.textContent = "¡Correcto!";
       title.className = "ok";
       UI.setText(
         "#feedback-detail",
-        "+" + gained + " pts" + (hintPaid ? " (pista −" + hintPaid + ")" : "") +
-          (state.streak > 1 ? " · Racha x" + state.streak : "")
+        (state.noSave ? "" : "+" + gained + " pts" + (hintPaid ? " (pista −" + hintPaid + ")" : "") +
+          (state.streak > 1 ? " · Racha x" + state.streak : ""))
       );
     } else {
       title.textContent = timedOut ? "¡Tiempo agotado!" : "Incorrecto";
       title.className = "bad";
+      // En emparejar, la lista de abajo ya dice la pareja correcta de cada concepto
+      const showCorrect = !(res.rows && currentQ().type === "match");
       UI.setText(
         "#feedback-detail",
-        "Respuesta: " + correctText + (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives)) +
-          (hintPaid ? " · Pista −" + hintPaid + " pts" : "")
+        [showCorrect ? "Respuesta correcta: " + res.correct : "",
+          state.practice ? "" : "Vidas: " + Math.max(0, state.lives),
+          hintPaid ? "Pista −" + hintPaid + " pts" : ""].filter(Boolean).join(" · ")
       );
+      // Lo que respondió el jugador, al lado de la correcta (los colores de las opciones no llegan a verse)
+      if (!res.rows) yoursText = res.yours == null ? "Tu respuesta: no respondiste a tiempo" : "Tu respuesta: " + res.yours;
     }
-    UI.setText("#feedback-explain", explain || "");
+    if (yoursEl) {
+      yoursEl.hidden = !yoursText;
+      yoursEl.textContent = yoursText;
+    }
+    if (rowsEl) {
+      const rows = !ok && res.rows ? res.rows : [];
+      rowsEl.hidden = !rows.length;
+      rowsEl.setAttribute("aria-label", currentQ().type === "match" ? "Tus parejas" : "Tu orden");
+      rowsEl.innerHTML = rows.map((r) =>
+        `<li class="${r.ok ? "row-ok" : "row-bad"}"><span class="row-mark" aria-hidden="true">${r.ok ? "✔" : "✘"}</span>` +
+        `<span class="sr-only">${r.ok ? "Bien: " : "Mal: "}</span>${UI.escapeHtml(r.text)}` +
+        (r.fix ? ` <span class="row-fix">(${UI.escapeHtml(r.fix)})</span>` : "") + "</li>"
+      ).join("");
+    }
+    const reviewEl = UI.$("#feedback-review");
+    if (reviewEl) {
+      reviewEl.hidden = !reviewNote;
+      reviewEl.textContent = reviewNote || "";
+    }
+    const explain = q.explain || "";
+    UI.setText("#feedback-explain", explain);
+    // Ticket: lo que descubres en este paso; comandos: «Pruébalo tú» en tu propia computadora
+    const revealEl = UI.$("#feedback-reveal");
+    const reveal = state.ticket && q.reveal ? "📝 " + q.reveal : "";
+    if (revealEl) {
+      revealEl.hidden = !reveal;
+      revealEl.textContent = reveal;
+    }
+    const tryEl = UI.$("#feedback-try");
+    const tryText = typeof q.try === "string" && q.try.trim() ? q.try.trim() : "";
+    if (tryEl) {
+      tryEl.hidden = !tryText;
+      tryEl.innerHTML = tryText ? '<strong>🧪 Pruébalo tú:</strong> ' + UI.codeText(tryText) : "";
+    }
     showPendingAchievements("#feedback-ach");
-    // Un solo aviso con el resultado, los logros de esta pregunta (sustituye al del toast del logro) y,
-    // al final, la explicación: es lo que enseña y el foco va a Continuar, que está debajo
+    // Un solo aviso con el resultado, tu respuesta, los logros de esta pregunta (sustituye al del toast del logro)
+    // y, al final, la explicación: es lo que enseña y el foco va a Continuar, que está debajo
     const ach = UI.$("#feedback-ach");
-    const parts = [title.textContent, UI.$("#feedback-detail").textContent, ach && !ach.hidden ? ach.textContent : "", explain || ""];
+    const rowsSummary = rowsEl && !rowsEl.hidden
+      ? (rowsEl.getAttribute("aria-label") + ": " + Array.from(rowsEl.children).map((li) => li.textContent.replace(/^[✔✘]/, "")).join(". "))
+      : "";
+    const parts = [title.textContent, UI.$("#feedback-detail").textContent, yoursText, rowsSummary, reviewNote,
+      ach && !ach.hidden ? ach.textContent : "", explain, reveal.replace(/^📝 /, ""), tryText ? "Pruébalo tú: " + tryText.replace(/`/g, "") : ""];
     UI.announce(parts.filter(Boolean).reduce((acc, s) => (acc ? acc + (/[.!?…]$/.test(acc) ? " " : ". ") + s : s), ""), true);
     // preventScroll: en pantallas pequeñas el título y la respuesta deben seguir visibles arriba
     UI.$("#btn-next-feedback")?.focus({ preventScroll: true });
@@ -1161,14 +1687,26 @@
     review: "Repaso de errores",
     marathon: "Maratón",
     timer: "Cronómetro",
-    boss: "Boss"
+    boss: "Boss",
+    daily: "Reto del día",
+    ticket: "Simulador de tickets",
+    test: "Prueba de preguntas"
   };
 
   function endGame(victory) {
     clearTimer();
+    clearRunSnapshot();
     inRun = false;
     // Progreso reiniciado en otra pestaña durante la partida: este resultado no se guarda en el progreso nuevo
     const saves = runSaves();
+    const totalAns = state.correctCount + state.wrongCount;
+    const acc = totalAns ? Math.round((state.correctCount / totalAns) * 100) : 0;
+    // Estrellas de Aventura: ★ superado, ★★ con 85% o más, ★★★ sin fallos
+    let starsEarned = 0;
+    let starsBest = 0;
+    let dailyNote = "";
+    let ticketNote = "";
+    state.nextLevel = null;
     const isNew = saves && UI.saveHighScore(state.score);
     const world = state.worldId ? getWorldById(state.worldId) : null;
     const levelCleared = !!(victory && state.mode === "campaign" && state.worldId && state.level);
@@ -1184,6 +1722,8 @@
           ? Progress.isLevelUnlocked(state.worldId, state.level + 1)
           : wi >= 0 && wi < WORLDS.length - 1 && Progress.isUnlocked(WORLDS[wi + 1].id);
         Progress.markLevelCleared(state.worldId, state.level);
+        starsEarned = acc === 100 ? 3 : acc >= 85 ? 2 : 1;
+        starsBest = Progress.saveLevelStars(state.worldId, state.level, starsEarned);
         grant("first_win");
         if (state.hintsUsedRun === 0) grant("no_hints");
         if (state.worldId === "support" && state.level >= maxL) grant("support_hero");
@@ -1191,10 +1731,37 @@
         if (state.worldId === "hardware" && state.level >= maxL) grant("hardware_hero");
         if (state.worldId === "cloud" && state.level >= maxL) grant("cloud_hero");
         if (state.worldId === "database" && state.level >= maxL) grant("database_hero");
+        if (state.worldId === "identity" && state.level >= maxL) grant("identity_hero");
         if (Progress.allLevelsCleared(state.worldId)) grant("world_maestro");
         if (Progress.countClearedLevels() >= 25) grant("level_master");
         if (WORLDS.every((w) => Progress.isLevelCleared(w.id, 1))) grant("all_worlds");
         if (WORLDS.every((w) => Progress.allLevelsCleared(w.id))) grant("all_levels");
+        let perfect = 0;
+        WORLDS.forEach((w) => { for (let L = 1; L <= maxL; L++) if (Progress.getLevelStars(w.id, L) === 3) perfect++; });
+        if (perfect >= 10) grant("stars3");
+        // «Siguiente nivel»: el que se acaba de abrir (o el primero del mundo siguiente)
+        if (state.level < maxL) state.nextLevel = { worldId: state.worldId, level: state.level + 1 };
+        else if (wi >= 0 && wi < WORLDS.length - 1 && Progress.isUnlocked(WORLDS[wi + 1].id)) state.nextLevel = { worldId: WORLDS[wi + 1].id, level: 1 };
+      }
+      if (state.mode === "daily") {
+        const d = Progress.getDaily();
+        if (d && d.day === state.dailyDay && !d.done) {
+          Progress.saveDaily(Object.assign(d, { done: true, correct: state.correctCount, total: totalAns }));
+          const streak = Progress.recordDailyDone();
+          if (streak >= 7) grant("daily7");
+          dailyNote = "Reto de hoy completado · 🔥 " + streak + (streak === 1 ? " día seguido" : " días seguidos") + ". Vuelve mañana por otro.";
+        } else if (d && d.day === state.dailyDay) {
+          dailyNote = "Ya habías completado el reto de hoy: esta vez fue práctica. Vuelve mañana por otro.";
+        } else dailyNote = "Este reto era de otro día: no suma a la racha.";
+      }
+      if (state.mode === "ticket" && state.ticket) {
+        const n = state.ticket.steps.length;
+        const before = Progress.getTicketBest(state.ticket.id);
+        Progress.saveTicketResult(state.ticket.id, state.correctCount);
+        ticketNote = "Pasos bien: " + state.correctCount + " de " + n +
+          (state.correctCount >= n ? " · ¡caso resuelto sin fallos!" : before > state.correctCount ? " · tu mejor: " + before + " de " + n : "");
+        const solved = TICKETS.filter((t) => Progress.getTicketBest(t.id) >= t.steps.length).length;
+        if (solved >= 5) grant("tickets5");
       }
       if (state.mode === "marathon") grant("marathon");
       if (state.mode === "timer") grant("timer_ace");
@@ -1206,25 +1773,44 @@
     }
 
     UI.showScreen("screen-end");
-    UI.$("#end-icon").textContent = victory ? (state.mode === "boss" ? "👹" : "🏆") : "💀";
+    UI.$("#end-icon").textContent = victory ? (state.mode === "boss" ? "👹" : state.mode === "ticket" ? "🎫" : state.mode === "test" ? "🧪" : "🏆") : "💀";
     let titleTxt = victory ? "¡Completado!" : "Game Over";
     if (victory && state.mode === "boss") titleTxt = "¡Boss derrotado!";
     if (victory && state.mode === "marathon") titleTxt = "¡Maratón terminada!";
+    if (victory && state.mode === "daily") titleTxt = "¡Reto del día terminado!";
+    if (victory && state.mode === "ticket") titleTxt = "Ticket cerrado";
+    if (victory && state.mode === "test") titleTxt = "Prueba terminada";
     const title = UI.$("#end-title");
     title.textContent = titleTxt;
     title.className = victory ? "ok" : "bad";
 
-    const totalAns = state.correctCount + state.wrongCount;
-    const acc = totalAns ? Math.round((state.correctCount / totalAns) * 100) : 0;
+    const head = world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "")
+      : state.mode === "marathon" ? "Maratón mixta" + (state.marathonScope === "mine" ? " · Mi nivel" : "")
+      : state.mode === "ticket" && state.ticket ? (state.ticket.icon || "🎫") + " " + state.ticket.title : "";
     UI.setText(
       "#end-summary",
-      (world ? world.icon + " " + world.name + (state.level ? " · Nivel " + state.level : "") + "\n" : state.mode === "marathon" ? "Maratón mixta\n" : "") +
+      (head ? head + "\n" : "") +
         "Modo: " + (MODE_LABELS[state.mode] || state.mode) +
-        "\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "") +
+        (starsEarned ? "\nEstrellas: " + "★".repeat(starsEarned) + "☆".repeat(3 - starsEarned) + (starsBest > starsEarned ? " · tu mejor: " + "★".repeat(starsBest) + "☆".repeat(3 - starsBest) : "") : "") +
+        (state.noSave ? "" : "\nPuntuación: " + state.score + (isNew ? " · ¡Nuevo récord!" : "")) +
         "\nAciertos: " + state.correctCount + "/" + totalAns + " (" + acc + "%)" +
         "\nMejor racha: " + state.bestStreakRun +
         (state.practice ? "" : " · Vidas: " + Math.max(0, state.lives))
     );
+    const nextBtn = UI.$("#btn-next-level");
+    const pickBtn = UI.$("#btn-pick-again");
+    if (nextBtn) {
+      const nl = state.nextLevel;
+      nextBtn.hidden = !nl;
+      if (nl) {
+        const nw = getWorldById(nl.worldId);
+        nextBtn.textContent = nl.worldId === state.worldId ? "Siguiente nivel ▶ (Nivel " + nl.level + ")" : "Siguiente mundo ▶ " + nw.icon + " " + nw.name;
+      }
+    }
+    if (pickBtn) {
+      pickBtn.classList.toggle("btn-primary", !state.nextLevel);
+      pickBtn.textContent = state.mode === "ticket" ? "Elegir ticket" : "Elegir mundo";
+    }
     UI.setText("#end-highscore", String(UI.getHighScore()));
     // La pantalla final lista todos los logros de la partida (también las rachas ya vistas en un resultado)
     const newAch = state.pendingAchievements.length > 0;
@@ -1234,9 +1820,15 @@
 
     const unlockEl = UI.$("#end-unlock");
     if (unlockEl) {
-      if (!saves) {
+      if (state.noSave) {
         unlockEl.hidden = false;
-        unlockEl.textContent = "El progreso se reinició durante esta partida: este resultado no se guardó.";
+        unlockEl.textContent = "Modo de prueba: no se guardó nada. Para jugar normal, abre index.html sin «?pregunta=…» en la dirección.";
+      } else if (!saves) {
+        unlockEl.hidden = false;
+        unlockEl.textContent = "El progreso se reinició (o se cargó un respaldo) durante esta partida: este resultado no se guardó.";
+      } else if (dailyNote || ticketNote) {
+        unlockEl.hidden = false;
+        unlockEl.textContent = dailyNote || ticketNote;
       } else if (victory && state.mode === "campaign" && world && state.level) {
         const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
         if (state.level < maxL) {
@@ -1272,13 +1864,19 @@
     box.innerHTML =
       `<summary>Repasa lo que fallaste (${state.missed.length})</summary><ol>` +
       state.missed
-        .map((m) => `<li><span class="mistake-q">${UI.escapeHtml(m.q)}</span><span class="mistake-a">✔ ${UI.escapeHtml(m.correct)}</span></li>`)
+        .map((m) =>
+          `<li><span class="mistake-q">${UI.escapeHtml(m.q)}</span>` +
+          (m.yours ? `<span class="mistake-yours">✘ Tu respuesta: ${UI.escapeHtml(m.yours)}</span>` : "") +
+          `<span class="mistake-a">✔ ${UI.escapeHtml(m.correct)}</span>` +
+          (m.explain ? `<span class="mistake-explain">${UI.escapeHtml(m.explain)}</span>` : "") + "</li>")
         .join("") +
       "</ol>";
   }
 
   function renderStats() {
     const s = Progress.getStats();
+    const review = reviewPool();
+    const streak = Progress.getDayStreak();
     const total = s.correct + s.wrong;
     const pct = total ? Math.round((s.correct / total) * 100) : 0;
     UI.setHTML(
@@ -1293,7 +1891,10 @@
         <li><strong>Cronómetro ganados:</strong> ${s.timerWins}</li>
         <li><strong>Boss (partidas ganadas):</strong> ${s.bossWins}</li>
         <li><strong>Niveles completados:</strong> ${Progress.countClearedLevels()} / ${WORLDS.length * Progress.levelsPerWorld()}</li>
-        <li><strong>Errores por repasar:</strong> ${pendingMistakeQuestions().length}</li>
+        <li><strong>Estrellas:</strong> ${WORLDS.reduce((n, w) => n + Progress.countStars(w.id), 0)} / ${WORLDS.length * Progress.levelsPerWorld() * 3}</li>
+        <li><strong>Errores por repasar:</strong> ${review.due.length + review.later.length} (${review.due.length} para hoy)</li>
+        <li><strong>Reto del día:</strong> racha de ${streak.count} ${streak.count === 1 ? "día" : "días"} (mejor: ${streak.best})</li>
+        ${TICKETS.length ? `<li><strong>Tickets resueltos sin fallos:</strong> ${TICKETS.filter((t) => Progress.getTicketBest(t.id) >= t.steps.length).length} / ${TICKETS.length}</li>` : ""}
         <li><strong>Récord puntos:</strong> ${UI.getHighScore()}</li>
       </ul>`
     );
