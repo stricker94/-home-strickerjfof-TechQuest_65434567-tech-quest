@@ -48,7 +48,7 @@ addWorld({
         "Cerrar con resumen y next steps"
       ],
       answer: [0, 1, 2, 3],
-      explain: "La empatía y la confirmación evitan malentendidos y rework."
+      explain: "Saludar e identificarte abre la llamada con confianza; escuchar y confirmar con tus palabras evita resolver el problema equivocado; luego diagnosticas o escalas, y cierras con resumen y siguientes pasos."
     },
     {
       id: "su04", level: 1, type: "scenario",
@@ -66,7 +66,7 @@ addWorld({
       id: "su05", level: 1, type: "tf",
       q: "Antes de cambiar algo en producción, conviene tener rollback o respaldo cuando sea posible.",
       answer: true,
-      explain: "Cambios sin plan de vuelta atrás alargan las crisis."
+      explain: "Verdadero: si el cambio sale mal, un respaldo o plan de rollback te deja volver al estado anterior de forma rápida y controlada. Sin él, una falla pequeña puede convertirse en una caída larga."
     },
     {
       id: "su06", level: 1, type: "mc",
@@ -90,13 +90,13 @@ addWorld({
         "Pedirle su contraseña para entrar a su sesión"
       ],
       answer: 0,
-      explain: "Rapport + clarificación ahorran tiempo."
+      explain: "Saludar, decir tu nombre y confirmar el problema genera confianza y asegura que atiendes lo que de verdad pasa. Nunca pidas la contraseña del usuario: soporte no la necesita y es inseguro."
     },
     {
       id: "suL1b", level: 1, type: "tf",
       q: "Anotar la hora del error ayuda a buscar en logs.",
       answer: true,
-      explain: "Correlación temporal es clave."
+      explain: "Verdadero: los logs se ordenan por fecha y hora, así que con la hora exacta del error vas directo al momento correcto en el Visor de eventos o en los logs del servidor, sin revisar miles de líneas."
     },
     {
       id: "suL1c", level: 1, type: "mc",
@@ -128,7 +128,7 @@ addWorld({
         { left: "Request", right: "Petición de servicio (no incidente)" },
         { left: "Known error", right: "Causa conocida con workaround" }
       ],
-      explain: "Clasificar bien acelera la cola correcta."
+      explain: "P1: servicio crítico caído para muchos. P3: impacto menor, con workaround. Un request es una petición, no una falla, y un known error es un problema con causa identificada y workaround documentado."
     },
     {
       id: "su08", level: 2, type: "identify",
@@ -159,7 +159,8 @@ addWorld({
         "¿Reinstalamos Windows ya? ¿Tienes copia de tus archivos?"
       ],
       answer: 0,
-      explain: "Aísla: local vs red vs ISP. Luego capa por capa."
+      explain: "Primero acota el alcance: si solo falla su PC, el problema es local (cable, Wi-Fi, IP); si fallan varios equipos, es de la red o del proveedor. Pedir la contraseña o reinstalar Windows no diagnostica nada.",
+      try: "En cmd escribe `ipconfig` y busca la línea IPv4 de tu adaptador; si empieza con 169.254, el equipo no obtuvo IP del DHCP."
     },
     {
       id: "su11", level: 2, type: "scenario",
@@ -171,7 +172,8 @@ addWorld({
         "Reinstalar Windows en el PC del usuario que reportó"
       ],
       answer: 0,
-      explain: "Red OK → capa de impresión. No amplíes el cambio innecesariamente."
+      explain: "Red OK → capa de impresión. No amplíes el cambio innecesariamente.",
+      try: "En PowerShell escribe `Get-Service Spooler` y fíjate en la columna Status: Running indica que el servicio de cola de impresión está activo."
     },
     {
       id: "suL2a", level: 2, type: "scenario",
@@ -183,7 +185,7 @@ addWorld({
         "¿Formateamos el disco y empezamos desde cero?"
       ],
       answer: 0,
-      explain: "Acota alcance antes de actuar."
+      explain: "Preguntar desde cuándo, qué app o URL falla y si les pasa a otros acota el alcance y dice si es local o general. Nunca pidas contraseña ni códigos MFA, y no reinstales nada antes de diagnosticar."
     },
     {
       id: "suL2b", level: 2, type: "order",
@@ -207,7 +209,7 @@ addWorld({
         "Escalado funcional del ticket a un equipo especialista"
       ],
       answer: 0,
-      explain: "Documenta el workaround en el ticket/KB."
+      explain: "Un workaround es un remedio temporal que deja trabajar al usuario mientras se corrige la causa raíz, como usar otra impresora; la corrección permanente es el fix definitivo. Documenta el workaround en el ticket o la KB."
     },
     {
       id: "suL2d", level: 2, type: "tf",
@@ -225,7 +227,7 @@ addWorld({
         "Sustituir los tickets para no tener que registrar incidentes"
       ],
       answer: 0,
-      explain: "Documenta pasos verificados y causas conocidas."
+      explain: "Una KB guarda soluciones ya probadas paso a paso, así cualquier técnico resuelve un caso repetido rápido y de la misma forma. No sustituye a los tickets: los incidentes se siguen registrando."
     },
 
     // ——— Nivel 3: Avanzado (10 preguntas) ———
@@ -281,7 +283,7 @@ addWorld({
         "Iniciar sesión tú como admin y dejarle la sesión abierta"
       ],
       answer: 0,
-      explain: "Nunca compartas root/admin. Ofrece alternativas auditables."
+      explain: "Compartir la contraseña de admin rompe el mínimo privilegio y deja acciones sin rastro de quién las hizo. Usa vías auditables: LAPS, una herramienta PAM o que un técnico autorizado haga la elevación."
     },
     {
       id: "suL3a", level: 3, type: "mc",
@@ -293,7 +295,7 @@ addWorld({
         "Atender tickets por orden de llegada"
       ],
       answer: 0,
-      explain: "Restaurar servicio + comunicar status."
+      explain: "En un major incident, N1 no arregla por su cuenta: comunica el estado, se une al bridge (llamada o canal de coordinación), sigue el runbook y escala. Atender por orden de llegada ignora la prioridad."
     },
     {
       id: "suL3b", level: 3, type: "scenario",
@@ -305,7 +307,7 @@ addWorld({
         "Esperar a que los usuarios reporten y luego decidir"
       ],
       answer: 0,
-      explain: "Todo change serio trae rollback."
+      explain: "Si un change falla en producción, ejecutas el rollback que el plan ya definía y avisas a los afectados. Meter más cambios en caliente puede empeorar la caída y borrar la pista de qué salió mal."
     },
     {
       id: "suL3c", level: 3, type: "match",
@@ -316,7 +318,7 @@ addWorld({
         { left: "Request", right: "Petición de servicio estándar" },
         { left: "CAB", right: "Comité de cambios / aprobaciones" }
       ],
-      explain: "Vocabulario ITIL básico en help desk."
+      explain: "Un incidente es la interrupción que hay que restaurar ya; un problema es la causa raíz detrás de uno o varios incidentes; un request es una petición estándar, como un acceso; el CAB evalúa y aprueba cambios."
     },
     {
       id: "suL3d", level: 3, type: "fill",
@@ -343,13 +345,13 @@ addWorld({
         "Calendario de guardias del equipo de soporte"
       ],
       answer: 0,
-      explain: "Reduce improvisación bajo presión."
+      explain: "Un runbook es una receta paso a paso para un incidente o tarea conocida: qué revisar, qué comandos usar y cuándo escalar. No es la bitácora del incidente ni el informe del post-mortem."
     },
     {
       id: "suL4b", level: 4, type: "tf",
       q: "La matriz de escalamiento define cuándo y a quién subir un ticket.",
       answer: true,
-      explain: "Incluye severidades y contactos."
+      explain: "Verdadero: la matriz de escalamiento indica a qué nivel o equipo pasa el ticket según la severidad y el tiempo transcurrido, con nombres y contactos, para no improvisar a quién llamar."
     },
     {
       id: "suL4c", level: 4, type: "scenario",
@@ -361,14 +363,14 @@ addWorld({
         "Rechazas el cambio sin explicación y cierras el ticket"
       ],
       answer: 0,
-      explain: "Protege al negocio y a ti."
+      explain: "Explicas el riesgo con respeto y ofreces la vía rápida formal, como un cambio urgente o de emergencia, y lo dejas documentado. Hacerlo sin registro te deja sin respaldo si algo falla."
     },
     {
       id: "suL4d", level: 4, type: "fill",
       q: "Sigla del acuerdo de nivel operacional entre equipos internos:",
       answer: "OLA",
       accept: ["OLA", "ola"],
-      explain: "Operational Level Agreement."
+      explain: "OLA es Operational Level Agreement: un acuerdo entre equipos internos de TI (por ejemplo, N1 y redes) sobre tiempos de respuesta. Los OLA respaldan el SLA que se le promete al cliente."
     },
     {
       id: "suL4e", level: 4, type: "mc",
@@ -380,7 +382,7 @@ addWorld({
         "Cumplimiento de los SLA pactados por servicio"
       ],
       answer: 0,
-      explain: "Encuestas cortas tras resolver."
+      explain: "CSAT (Customer Satisfaction) mide qué tan satisfecho quedó el usuario, casi siempre con una encuesta corta al cerrar el ticket. El tiempo medio de resolución es el MTTR y la resolución al primer contacto, el FCR."
     },
     {
       id: "suL4f", level: 4, type: "match",
@@ -391,7 +393,7 @@ addWorld({
         { left: "RCA", right: "Análisis de causa raíz" },
         { left: "CAB", right: "Comité de cambios" }
       ],
-      explain: "Vocabulario de servicio."
+      explain: "P1 es la prioridad máxima, con el negocio detenido; P3 es un impacto medio o bajo; RCA (Root Cause Analysis) busca la causa raíz; el CAB es el comité que revisa y aprueba los cambios."
     },
     {
       id: "suL4g", level: 4, type: "order",
@@ -403,7 +405,7 @@ addWorld({
         "Documentar y cerrar con confirmación"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Cierre prematuro genera reopens."
+      explain: "Primero clasificas impacto y urgencia para fijar la prioridad, luego diagnosticas con preguntas, aplicas el fix o workaround y cierras tras documentar y confirmar con el usuario; cerrar antes genera reaperturas."
     },
     {
       id: "suL4h", level: 4, type: "tf",
@@ -423,7 +425,7 @@ addWorld({
         "Recortar el horario del service desk"
       ],
       answer: 0,
-      explain: "Mejor experiencia y menor costo."
+      explain: "Shift-left es mover la resolución hacia el inicio de la cadena: que N1, el autoservicio o la KB resuelvan lo que antes llegaba a N2 o N3. Así el usuario espera menos y atenderlo cuesta menos."
     },
     {
       id: "suL5b", level: 5, type: "scenario",
@@ -442,7 +444,7 @@ addWorld({
       q: "Sigla de tiempo medio de reparación/resolución:",
       answer: "MTTR",
       accept: ["MTTR", "mttr"],
-      explain: "Mean Time To Repair/Restore/Resolve según contexto."
+      explain: "MTTR significa Mean Time To Repair, Restore o Resolve, según el contexto: el tiempo promedio para restaurar un servicio o resolver un incidente. Mientras más bajo, mejor."
     },
     {
       id: "suL5d", level: 5, type: "mc",
@@ -454,7 +456,7 @@ addWorld({
         "Ocultar el incidente a la dirección"
       ],
       answer: 0,
-      explain: "Mejora sistemas y procesos."
+      explain: "Un post-mortem blameless analiza qué falló en sistemas y procesos sin castigar a nadie. Si la gente teme sanciones, oculta errores y se pierden las lecciones que evitan que el incidente se repita."
     },
     {
       id: "suL5e", level: 5, type: "identify",
@@ -466,7 +468,7 @@ addWorld({
         "Respuestas individuales en cada ticket duplicado"
       ],
       answer: 0,
-      explain: "Un mensaje consistente."
+      explain: "Una status page, un correo oficial o un banner acordado dan un solo mensaje consistente a todos al mismo tiempo. Responder ticket por ticket o por mensajes privados genera versiones distintas y no escala."
     },
     {
       id: "suL5f", level: 5, type: "order",
@@ -478,7 +480,7 @@ addWorld({
         "Reentrenar y repetir"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Sin datos, solo opiniones."
+      explain: "Primero mides (CSAT, tiempos, FCR) para tener datos; con ellos ubicas los cuellos de botella, actualizas la KB o automatizas, reentrenas al equipo y vuelves a medir para ver si mejoró."
     },
     {
       id: "suL5g", level: 5, type: "tf",
@@ -496,7 +498,7 @@ addWorld({
         "Prometer una ETA fija aunque el proveedor no la dé"
       ],
       answer: 0,
-      explain: "Transparencia reduce tickets duplicados."
+      explain: "Aunque la falla sea del proveedor, informa el estado, da ETA solo si existe, ofrece workarounds y actualiza seguido. Así bajan los tickets duplicados; prometer una ETA fija que no controlas resta confianza."
     }
   ],
 
@@ -542,7 +544,7 @@ addWorld({
       id: "suB4", level: 5, type: "tf",
       q: "BOSS: Documentar workarounds en KB reduce tickets repetidos.",
       answer: true,
-      explain: "Deflecta carga N1 y estandariza respuestas."
+      explain: "Verdadero: si el workaround está en la KB, N1 o el propio usuario lo aplican sin escalar ni abrir otro ticket, y todos responden igual. Eso baja la carga repetida del service desk."
     },
     {
       id: "suB5", level: 5, type: "match",
@@ -553,7 +555,7 @@ addWorld({
         { left: "Escalar con logs", right: "Handoff efectivo" },
         { left: "SLA", right: "Tiempos acordados" }
       ],
-      explain: "Soporte excelente = técnica + proceso + ética."
+      explain: "No compartir la cuenta admin protege la seguridad (mínimo privilegio); confirmar antes de cerrar asegura calidad; escalar con logs da un handoff efectivo; y el SLA fija los tiempos acordados con el cliente."
     }
   ]
 });

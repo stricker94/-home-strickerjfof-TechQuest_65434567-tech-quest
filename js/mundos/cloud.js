@@ -24,13 +24,13 @@ addWorld({
         "Discos externos USB que se sincronizan entre equipos"
       ],
       answer: 0,
-      explain: "Pay-as-you-go y elasticidad."
+      explain: "La nube son servicios de cómputo, almacenamiento o apps que rentas por Internet bajo demanda y pagas por uso. Tener servidores propios en tu oficina es on-premise, no nube."
     },
     {
       id: "cl02", level: 1, type: "tf",
       q: "SaaS es software que usas vía web sin instalar el servidor tú mismo.",
       answer: true,
-      explain: "Ej: correo, CRM, oficina online."
+      explain: "Verdadero: en SaaS el proveedor opera la app y sus servidores, y tú solo la usas desde el navegador o una app, como Gmail, Microsoft 365 o un CRM web."
     },
     {
       id: "cl03", level: 1, type: "mc",
@@ -61,7 +61,7 @@ addWorld({
         "Servidores físicos dedicados que rentas por mes"
       ],
       answer: 0,
-      explain: "Platform as a Service."
+      explain: "PaaS te da una plataforma donde subes tu código y el proveedor gestiona servidores, SO, parches y runtime. Las VMs donde tú administras el sistema operativo son IaaS, no PaaS."
     },
     {
       id: "cl06", level: 1, type: "scenario",
@@ -73,7 +73,7 @@ addWorld({
         "Una carpeta de red mapeada (SMB)"
       ],
       answer: 0,
-      explain: "Colaboración cloud."
+      explain: "Herramientas SaaS como Google Docs o Microsoft 365 permiten que varias personas editen el mismo archivo a la vez. Con correo, FTP o una carpeta SMB terminas con copias sueltas o archivos bloqueados."
     },
     {
       id: "cl07", level: 1, type: "mc",
@@ -111,7 +111,7 @@ addWorld({
       id: "cl10", level: 2, type: "tf",
       q: "Object storage (p.ej. S3-like) guarda objetos/archivos accesibles por API.",
       answer: true,
-      explain: "Distinto de un disco de bloque de una VM."
+      explain: "Verdadero: el object storage guarda archivos como objetos con metadatos dentro de buckets y se accede por API HTTP. No es un disco de bloque que montas en una VM con su sistema de archivos."
     },
     {
       id: "cl11", level: 2, type: "scenario",
@@ -123,14 +123,14 @@ addWorld({
         "Confiar en la contraseña de Windows para proteger el disco"
       ],
       answer: 0,
-      explain: "Identidad + device control."
+      explain: "El riesgo es la sesión sincronizada en la laptop: MFA, revisar y cerrar sesiones, borrado remoto y cifrado de disco (BitLocker) protegen los datos. La contraseña de Windows sola no cifra el disco."
     },
     {
       id: "cl12", level: 2, type: "fill",
       q: "Sigla de infraestructura como servicio:",
       answer: "IaaS",
       accept: ["IaaS", "iaas"],
-      explain: "Infrastructure as a Service."
+      explain: "IaaS es Infrastructure as a Service: rentas VMs, redes y discos, y tú administras el sistema operativo y lo que corre encima, como en AWS EC2 o Azure VMs."
     },
     {
       id: "cl13", level: 2, type: "mc",
@@ -142,7 +142,7 @@ addWorld({
         "Cifrar el tráfico entre la VM y el usuario"
       ],
       answer: 0,
-      explain: "No reemplaza estrategia de backup 3-2-1."
+      explain: "Un snapshot o AMI captura el estado del disco o de la VM en un momento, para restaurarlo o clonar servidores. Ayuda, pero no sustituye una estrategia de backup 3-2-1 con copia fuera del sitio."
     },
     {
       id: "cl14", level: 2, type: "match",
@@ -153,7 +153,7 @@ addWorld({
         { left: "DBaaS", right: "Base de datos gestionada" },
         { left: "FaaS/serverless", right: "Ejecutar funciones a demanda" }
       ],
-      explain: "Modelos cloud."
+      explain: "SaaS te da la app lista, PaaS la plataforma donde despliegas tu código, DBaaS una base de datos que opera el proveedor y FaaS ejecuta funciones solo cuando ocurre un evento, sin gestionar servidores."
     },
     {
       id: "cl15", level: 2, type: "order",
@@ -165,13 +165,13 @@ addWorld({
         "Verificar acceso y cifrado"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Buckets públicos son un clásico incidente."
+      explain: "Primero te autenticas, luego eliges o creas el bucket, subes el objeto con permisos mínimos y al final verificas que no sea público y esté cifrado. Los buckets públicos por error son un incidente clásico."
     },
     {
       id: "cl16", level: 2, type: "tf",
       q: "Regiones y zonas de disponibilidad mejoran resiliencia geográfica.",
       answer: true,
-      explain: "Diseña multi-AZ para alta disponibilidad."
+      explain: "Verdadero: las zonas de disponibilidad son datacenters separados dentro de una región, y cada región está en una ubicación geográfica distinta. Diseñar multi-AZ o multi-región evita depender de un solo sitio."
     },
 
     // ——— Nivel 3: Avanzado (8 preguntas) ———
@@ -185,7 +185,7 @@ addWorld({
         "Frecuencia con que se prueban los planes de recuperación"
       ],
       answer: 0,
-      explain: "Recovery Point Objective."
+      explain: "RPO (Recovery Point Objective) es cuántos datos puedes perder, medido en tiempo desde el último respaldo. El tiempo que tarda el servicio en volver a operar es el RTO."
     },
     {
       id: "cl18", level: 3, type: "scenario",
@@ -197,14 +197,14 @@ addWorld({
         "Que los backups no se puedan cifrar en esa región"
       ],
       answer: 0,
-      explain: "Copia offsite/otra región."
+      explain: "Si el backup vive en la misma región que producción, un desastre o caída regional se lleva ambos y te quedas sin copia. Por eso se replica a otra región o a un sitio externo."
     },
     {
       id: "cl19", level: 3, type: "fill",
       q: "Sigla del objetivo de tiempo de recuperación:",
       answer: "RTO",
       accept: ["RTO", "rto"],
-      explain: "Recovery Time Objective."
+      explain: "RTO (Recovery Time Objective) es el tiempo máximo aceptable para que el servicio vuelva a operar tras una falla. No lo confundas con el RPO, que mide cuántos datos puedes perder."
     },
     {
       id: "cl20", level: 3, type: "mc",
@@ -216,7 +216,7 @@ addWorld({
         "Resolver nombres de dominio internos de la empresa"
       ],
       answer: 0,
-      explain: "Mejora latencia y offload de origen."
+      explain: "Una CDN guarda copias del contenido estático en servidores perimetrales cerca de los usuarios: baja la latencia y le quita carga al servidor de origen. No reemplaza la base de datos ni asigna IPs."
     },
     {
       id: "cl21", level: 3, type: "match",
@@ -239,7 +239,7 @@ addWorld({
         "Documentar cuánto tardó la restauración"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Backup no probado = esperanza."
+      explain: "Eliges el backup, lo restauras en un entorno aislado para no tocar producción, validas que datos y app funcionen y documentas cuánto tardó para compararlo con tu RTO. Backup no probado no es backup."
     },
     {
       id: "cl23", level: 3, type: "tf",
@@ -257,7 +257,7 @@ addWorld({
         "Aumentar la cuota de vCPU de la suscripción"
       ],
       answer: 0,
-      explain: "FinOps básico."
+      explain: "Las tags dicen de quién es cada recurso, los budgets y alertas avisan cuando el gasto se dispara, el apagado automático frena VMs ociosas y el inventario encuentra las olvidadas. Es FinOps básico."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -271,7 +271,7 @@ addWorld({
         "Un túnel cifrado para usuarios remotos"
       ],
       answer: 0,
-      explain: "Subnets, route tables, security groups."
+      explain: "Una VPC (AWS) o VNet (Azure) es tu red privada aislada en la nube: ahí defines subredes, tablas de ruteo y reglas como los security groups. No es un balanceador ni una VPN."
     },
     {
       id: "cl26", level: 4, type: "tf",
@@ -289,14 +289,14 @@ addWorld({
         "Abrir también el puerto 22 para administrarla más fácil"
       ],
       answer: 0,
-      explain: "Ataques automatizados escanean todo."
+      explain: "Hay bots que escanean todo Internet buscando puertos de BD abiertos. Limita el acceso a las subredes de la app o a un bastion y rota credenciales por si ya entraron; cambiar el puerto no protege nada."
     },
     {
       id: "cl28", level: 4, type: "fill",
       q: "Sigla de red privada virtual (túnel):",
       answer: "VPN",
       accept: ["VPN", "vpn"],
-      explain: "Site-to-site o client VPN hacia cloud."
+      explain: "VPN (Virtual Private Network) crea un túnel cifrado sobre Internet. En cloud se usa site-to-site para unir la oficina con la VPC, o client VPN para usuarios remotos."
     },
     {
       id: "cl29", level: 4, type: "mc",
@@ -308,7 +308,7 @@ addWorld({
         "Cortes de red al subir backups grandes"
       ],
       answer: 0,
-      explain: "Inmutabilidad."
+      explain: "Object lock o WORM (write once, read many) vuelve inmutables los backups: durante la retención no se pueden borrar ni sobrescribir, así que un ransomware no puede destruir esas copias."
     },
     {
       id: "cl30", level: 4, type: "match",
@@ -319,7 +319,7 @@ addWorld({
         { left: "Peering", right: "Conectar redes virtuales" },
         { left: "Private endpoint", right: "Acceso privado a PaaS" }
       ],
-      explain: "Red cloud."
+      explain: "Egress es lo que sale de la red cloud (y suele cobrarse), ingress lo que entra, peering une dos redes virtuales y un private endpoint te deja usar un servicio PaaS por IP privada sin salir a Internet."
     },
     {
       id: "cl31", level: 4, type: "order",
@@ -337,7 +337,7 @@ addWorld({
       id: "cl32", level: 4, type: "tf",
       q: "Cross-region replication puede mejorar DR de object storage.",
       answer: true,
-      explain: "Ojo con costos y cumplimiento de datos."
+      explain: "Verdadero: copiar objetos automáticamente a un bucket en otra región deja tus datos disponibles si la región principal cae. Ojo con el costo de transferencia y con dónde puedes guardar datos por ley."
     },
 
     // ——— Nivel 5: Maestro (8 preguntas) ———
@@ -351,7 +351,7 @@ addWorld({
         "Buscar vulnerabilidades con ataques simulados"
       ],
       answer: 0,
-      explain: "Mejora confianza en el diseño."
+      explain: "Chaos engineering apaga instancias o mete latencia a propósito, de forma controlada, para comprobar que el sistema aguanta. No es una prueba de carga ni un pentest, que buscan rendimiento o vulnerabilidades."
     },
     {
       id: "cl34", level: 5, type: "scenario",
@@ -363,14 +363,15 @@ addWorld({
         "Esperar a que el proveedor detecte abuso y avise"
       ],
       answer: 0,
-      explain: "Assume compromise."
+      explain: "Asume que la key ya está comprometida: hay bots que escanean GitHub en minutos. Revócala y rota, límpiala del historial y revisa su uso. Hacer privado el repo o borrar el commit no la invalida.",
+      try: "En una terminal, dentro de un repo git tuyo, escribe `git log -p -S \"password\"`: verás los commits que añadieron o quitaron esa palabra, aunque ya no esté en el código."
     },
     {
       id: "cl35", level: 5, type: "fill",
       q: "Sigla de plataforma como servicio:",
       answer: "PaaS",
       accept: ["PaaS", "paas"],
-      explain: "Platform as a Service."
+      explain: "PaaS es Platform as a Service: tú subes el código y el proveedor gestiona servidores, SO y runtime, como en Azure App Service, Heroku o Google App Engine."
     },
     {
       id: "cl36", level: 5, type: "mc",
@@ -382,7 +383,7 @@ addWorld({
         "Compilar y empaquetar microservicios en el pipeline de CI"
       ],
       answer: 0,
-      explain: "Sidecars/proxies."
+      explain: "Un service mesh como Istio o Linkerd usa proxies junto a cada microservicio para dar mTLS, reintentos y métricas entre ellos. Orquestar contenedores es tarea de Kubernetes, no del mesh."
     },
     {
       id: "cl37", level: 5, type: "identify",
@@ -394,7 +395,7 @@ addWorld({
         "Texto plano en un bucket compartido"
       ],
       answer: 0,
-      explain: "Nunca hardcodees."
+      explain: "Los secretos van en un gestor como AWS Secrets Manager, Azure Key Vault o HashiCorp Vault, con acceso por permisos y rotación. Un .env en el repo o un ENV en el Dockerfile quedan expuestos."
     },
     {
       id: "cl38", level: 5, type: "order",
@@ -406,13 +407,13 @@ addWorld({
         "Postmortem FinOps"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Minutos importan en crypto miners."
+      explain: "La alerta de presupuesto te avisa; luego ubicas el recurso que gasta, lo contienes apagándolo o restringiéndolo y al final haces el postmortem. Con un minero de cripto cada minuto cuesta dinero."
     },
     {
       id: "cl39", level: 5, type: "tf",
       q: "Datos personales pueden tener restricciones de residencia (qué región usar).",
       answer: true,
-      explain: "Compliance GDPR y locales."
+      explain: "Verdadero: leyes como el GDPR europeo o normas locales pueden limitar a qué países se transfieren los datos personales, así que elegir la región cloud es parte del cumplimiento."
     },
     {
       id: "cl40", level: 5, type: "scenario",
@@ -424,7 +425,7 @@ addWorld({
         "Backups innecesarios por usar discos administrados"
       ],
       answer: 0,
-      explain: "A veces es paso intermedio válido si se planifica."
+      explain: "Meter el monolito en una sola VM enorme no aprovecha autoescalado ni servicios gestionados, crea un punto único de falla y sale caro. Puede servir como paso intermedio si planeas modernizar después."
     }
   ],
 
@@ -452,7 +453,7 @@ addWorld({
         "El proveedor la migra sola a otra región según el SLA"
       ],
       answer: 0,
-      explain: "AZ ≠ región."
+      explain: "Multi-AZ te protege si falla un datacenter, pero todas las zonas están en la misma región: si cae la región, cae tu app. Para eso necesitas réplicas o un plan de DR en otra región."
     },
     {
       id: "clB3", level: 5, type: "order",
@@ -477,7 +478,7 @@ addWorld({
       q: "BOSS: Objetivo de pérdida de datos tolerable (sigla):",
       answer: "RPO",
       accept: ["RPO", "rpo"],
-      explain: "Recovery Point Objective."
+      explain: "RPO (Recovery Point Objective) es la pérdida de datos tolerable, medida en tiempo: si respaldas cada hora, podrías perder hasta una hora de datos. El tiempo para volver a operar es el RTO."
     }
   ]
 });

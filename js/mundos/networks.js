@@ -19,7 +19,8 @@ addWorld({
       q: "¿Qué protocolo resuelve nombres de dominio a direcciones IP?",
       options: ["DNS", "FTP", "SMTP", "ARP"],
       answer: 0,
-      explain: "DNS traduce ejemplo.com → IP. Sin DNS navegas solo por IP numérica."
+      explain: "DNS traduce ejemplo.com → IP. Sin DNS navegas solo por IP numérica.",
+      try: "En cmd escribe `nslookup google.com` y fíjate qué servidor DNS te respondió y qué direcciones IP te devolvió."
     },
     {
       id: "net02", level: 1, type: "mc",
@@ -31,7 +32,8 @@ addWorld({
         "Traduce IPs privadas a la IP pública"
       ],
       answer: 0,
-      explain: "DHCP entrega configuración IP por lease. El servidor evita conflictos de IP."
+      explain: "DHCP entrega configuración IP por lease. El servidor evita conflictos de IP.",
+      try: "En cmd escribe `ipconfig /all` y busca en tu adaptador Servidor DHCP y Concesión obtenida: ahí ves quién te dio la IP y cuándo."
     },
     {
       id: "net03", level: 1, type: "mc",
@@ -57,7 +59,7 @@ addWorld({
       q: "En IPv4, ¿cuántos bits tiene una dirección?",
       options: ["32", "64", "128", "8"],
       answer: 0,
-      explain: "IPv4 = 32 bits (ej. 192.168.1.10). IPv6 = 128 bits."
+      explain: "IPv4 usa 32 bits, escritos como 4 octetos de 8 bits (ej. 192.168.1.10), lo que da unos 4,300 millones de direcciones. IPv6 usa 128 bits; 64 es solo el tamaño típico de su parte de host."
     },
     {
       id: "net06", level: 1, type: "match",
@@ -68,7 +70,7 @@ addWorld({
         { left: "Firewall", right: "Filtra tráfico según reglas" },
         { left: "VPN", right: "Túnel cifrado hacia otra red" }
       ],
-      explain: "Juntos forman la base de acceso seguro y segmentación."
+      explain: "El gateway es la puerta para salir a otras redes y la máscara dice qué parte de la IP es red y cuál es host. El firewall decide qué tráfico pasa según reglas y la VPN crea un túnel cifrado hacia otra red."
     },
     {
       id: "net07", level: 1, type: "mc",
@@ -94,7 +96,8 @@ addWorld({
       q: "Una máscara /24 equivale a…",
       options: ["255.255.255.0", "255.255.0.0", "255.0.0.0", "255.255.255.255"],
       answer: 0,
-      explain: "/24 = 24 bits de red → ~254 hosts útiles. Muy usada en LAN domésticas/oficina."
+      explain: "/24 = 24 bits de red → ~254 hosts útiles. Muy usada en LAN domésticas/oficina.",
+      try: "En cmd escribe `ipconfig` y fíjate en la Máscara de subred de tu adaptador; si dice 255.255.255.0, tu red es /24."
     },
     {
       id: "net10", level: 1, type: "identify",
@@ -106,7 +109,8 @@ addWorld({
         "Tarjeta de red del PC"
       ],
       answer: 0,
-      explain: "El router casero traduce IPs privadas a la IP pública del ISP (NAT/PAT)."
+      explain: "El router casero traduce IPs privadas a la IP pública del ISP (NAT/PAT).",
+      try: "En cmd escribe `ipconfig` y luego `curl -4 ifconfig.me`: la primera muestra tu IP privada y la segunda la IP pública con la que sales gracias al NAT."
     },
     {
       id: "net11", level: 1, type: "mc",
@@ -125,14 +129,15 @@ addWorld({
       q: "Protocolo de la capa de transporte orientado a conexión (sigla):",
       answer: "TCP",
       accept: ["TCP", "tcp", "Transmission Control Protocol"],
-      explain: "TCP garantiza orden y retransmisión. UDP es más ligero, sin conexión."
+      explain: "TCP garantiza orden y retransmisión. UDP es más ligero, sin conexión.",
+      try: "En cmd escribe `netstat -an` y mira la columna Estado: las líneas TCP muestran el estado de cada conexión y las UDP no tienen, porque UDP no abre conexión."
     },
     {
       id: "netL1a", level: 1, type: "mc",
       q: "¿Qué dispositivo suele conectar PCs en la misma LAN a nivel de tramas?",
       options: ["Switch", "Monitor", "Impresora solo USB", "Teclado"],
       answer: 0,
-      explain: "El switch reenvía frames en la LAN (capa 2)."
+      explain: "El switch trabaja en capa 2: aprende qué MAC está en cada puerto y reenvía las tramas solo al puerto donde está el destino dentro de la LAN. Monitor, teclado o impresora USB no conectan PCs entre sí."
     },
     {
       id: "netL1b", level: 1, type: "tf",
@@ -160,21 +165,24 @@ addWorld({
         "Test-Connection -TargetName 1.1.1.1",
         "Test-NetConnection 1.1.1.1"
       ],
-      explain: "ping verifica conectividad básica (si ICMP no está filtrado)."
+      explain: "ping verifica conectividad básica (si ICMP no está filtrado).",
+      try: "En cmd escribe `ping -n 4 1.1.1.1` y fíjate en el tiempo de cada respuesta y en el porcentaje de paquetes perdidos."
     },
     {
       id: "netL1d", level: 1, type: "mc",
       q: "¿Qué puerto TCP usa SSH por defecto?",
       options: ["22", "23", "80", "3389"],
       answer: 0,
-      explain: "SSH usa 22/tcp. El 23 es Telnet (sin cifrar), el 80 HTTP y el 3389 RDP."
+      explain: "SSH usa 22/tcp. El 23 es Telnet (sin cifrar), el 80 HTTP y el 3389 RDP.",
+      try: "En una terminal de Linux o WSL escribe `grep -w ssh /etc/services` y verás que SSH está registrado en el puerto 22/tcp."
     },
     {
       id: "netL1e", level: 1, type: "identify",
       q: "¿Qué identifica a la tarjeta de red dentro de la LAN (capa 2)?",
       options: ["Dirección MAC", "Dirección IP", "Máscara de subred", "Puerto TCP"],
       answer: 0,
-      explain: "La MAC (48 bits, p. ej. 00:1A:2B:…) identifica la interfaz en la LAN; la IP es lógica (capa 3) y puede cambiar."
+      explain: "La MAC (48 bits, p. ej. 00:1A:2B:…) identifica la interfaz en la LAN; la IP es lógica (capa 3) y puede cambiar.",
+      try: "En cmd escribe `getmac /v` y fíjate en la Dirección física de cada adaptador: esa es su MAC."
     },
 
     // ——— Nivel 2: Intermedio (16 preguntas) ———
@@ -195,14 +203,14 @@ addWorld({
       q: "¿Cuántos hosts útiles aprox. en una red /24 (sin contar red y broadcast)?",
       options: ["254", "24", "512", "2"],
       answer: 0,
-      explain: "2^(32-24)-2 = 254. Ejemplo: 192.168.1.0/24 → .1–.254."
+      explain: "Un /24 deja 8 bits para hosts: 2^8 = 256 direcciones, menos la de red y la de broadcast, quedan 254. Ejemplo: en 192.168.1.0/24 los hosts van de .1 a .254."
     },
     {
       id: "net15", level: 2, type: "mc",
       q: "Una máscara /16 equivale a…",
       options: ["255.255.0.0", "255.255.255.0", "255.255.255.252", "255.0.0.0"],
       answer: 0,
-      explain: "/16 = 16 bits de red. Clase B típica en notación antigua."
+      explain: "/16 son 16 bits de red en 1: los dos primeros octetos en 255 y el resto en 0, o sea 255.255.0.0. Era la máscara por defecto de la antigua clase B; 255.255.255.0 sería /24."
     },
     {
       id: "net16", level: 2, type: "order",
@@ -221,7 +229,8 @@ addWorld({
         "Conectar por TCP/UDP al destino"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Si la caché tiene la respuesta, no sale a la red. Luego el resolver puede iterar/recursar."
+      explain: "Si la caché tiene la respuesta, no sale a la red. Luego el resolver puede iterar/recursar.",
+      try: "En cmd escribe `ipconfig /displaydns` y verás los nombres que tu PC ya resolvió y guarda en su caché DNS local."
     },
     {
       id: "net18", level: 2, type: "mc",
@@ -268,7 +277,8 @@ addWorld({
         "Máscara de subred del adaptador"
       ],
       answer: 0,
-      explain: "Hay ruta IP pero no resolución de nombres. Prueba DNS alternos y /flushdns."
+      explain: "Hay ruta IP pero no resolución de nombres. Prueba DNS alternos y /flushdns.",
+      try: "En cmd escribe `nslookup google.com 1.1.1.1` para preguntarle a otro DNS; si así resuelve y con el tuyo no, el problema está en tu DNS configurado."
     },
     {
       id: "net22", level: 2, type: "mc",
@@ -293,7 +303,7 @@ addWorld({
       q: "¿Cuántos hosts útiles aprox. en /26?",
       options: ["62", "254", "6", "1022"],
       answer: 0,
-      explain: "2^(32-26)-2 = 62."
+      explain: "Un /26 deja 6 bits para hosts: 2^6 = 64 direcciones, menos red y broadcast, quedan 62. Su máscara es 255.255.255.192 y divide un /24 en cuatro subredes."
     },
     {
       id: "netL2b", level: 2, type: "scenario",
@@ -319,7 +329,7 @@ addWorld({
       q: "Máscara decimal de /24:",
       answer: "255.255.255.0",
       accept: ["255.255.255.0"],
-      explain: "/24 = 24 bits de red."
+      explain: "/24 son 24 bits de red en 1, es decir, tres octetos completos en 255 y el último en 0: 255.255.255.0. Es la máscara típica de las redes de casa y de oficina."
     },
     {
       id: "netL2e", level: 2, type: "tf",
@@ -346,7 +356,8 @@ addWorld({
       q: "Comando clásico para ver la ruta que siguen los paquetes (Windows):",
       answer: "tracert",
       accept: ["tracert", "tracert.exe", "pathping", "pathping.exe"],
-      explain: "tracert (Windows) / traceroute (Linux). Muestra saltos; timeouts no siempre = caída total."
+      explain: "tracert (Windows) / traceroute (Linux). Muestra saltos; timeouts no siempre = caída total.",
+      try: "En cmd escribe `tracert -d 8.8.8.8` y cuenta los saltos; un asterisco solo significa que ese router no contestó a tiempo."
     },
     {
       id: "net26", level: 3, type: "mc",
@@ -358,7 +369,8 @@ addWorld({
         "Suministra energía PoE a teléfonos y cámaras IP de la red"
       ],
       answer: 0,
-      explain: "Empresas usan proxy para control/URL filtering. El cliente debe apuntar al proxy o usar WPAD."
+      explain: "Empresas usan proxy para control/URL filtering. El cliente debe apuntar al proxy o usar WPAD.",
+      try: "En cmd escribe `netsh winhttp show proxy` y mira si WinHTTP, el proxy de los servicios de Windows, usa un servidor o acceso directo; el del navegador puede ser distinto."
     },
     {
       id: "net27", level: 3, type: "mc",
@@ -382,7 +394,8 @@ addWorld({
         "Conflicto de IP duplicada entre dos de los PCs"
       ],
       answer: 0,
-      explain: "LAN OK, WAN/gateway mal. Verifica cable WAN, NAT, ISP y dirección de puerta de enlace."
+      explain: "LAN OK, WAN/gateway mal. Verifica cable WAN, NAT, ISP y dirección de puerta de enlace.",
+      try: "En cmd escribe `ipconfig`, anota la Puerta de enlace predeterminada y hazle `ping` a esa IP para comprobar que tu router responde."
     },
     {
       id: "net29", level: 3, type: "mc",
@@ -431,7 +444,8 @@ addWorld({
       q: "¿Qué herramienta interpreta saltos hasta un destino y latencias por hop?",
       options: ["mtr / pathping", "ipconfig / ifconfig", "nslookup / dig", "arp -a / ip neigh"],
       answer: 0,
-      explain: "mtr (Linux) y pathping (Windows) muestran cada salto con su latencia y pérdida. Si el último hop falla pero el servicio web responde, puede ser ICMP filtrado — no asumas caída."
+      explain: "mtr (Linux) y pathping (Windows) muestran cada salto con su latencia y pérdida. Si el último hop falla pero el servicio web responde, puede ser ICMP filtrado — no asumas caída.",
+      try: "En cmd escribe `pathping -n 8.8.8.8` y espera unos minutos: al final verás la latencia y el porcentaje de pérdida de cada salto."
     },
     {
       id: "net34", level: 3, type: "scenario",
@@ -455,7 +469,7 @@ addWorld({
         "Consultas DNS recursivas"
       ],
       answer: 0,
-      explain: "Exponer RDP a Internet es alto riesgo sin VPN/hardening."
+      explain: "El 3389/tcp es el puerto de RDP (Escritorio remoto). Exponerlo a Internet atrae fuerza bruta y exploits; mejor accede solo por VPN o un RD Gateway. SSH usa el 22 y HTTPS el 443."
     },
     {
       id: "netL3b", level: 3, type: "scenario",
@@ -467,7 +481,7 @@ addWorld({
         "Dar a invitados IPs fijas en la subred de finanzas"
       ],
       answer: 0,
-      explain: "Seguridad por segmentación y mínimo privilegio de red."
+      explain: "Pon a los invitados en su propia VLAN y filtra con ACL o firewall entre VLANs para que no lleguen a finanzas: segmentación y mínimo privilegio. Una red plana o un SSID oculto no separan nada."
     },
     {
       id: "netL3c", level: 3, type: "match",
@@ -478,7 +492,8 @@ addWorld({
         { left: "MTU", right: "Tamaño máximo de paquete del enlace" },
         { left: "QoS", right: "Prioriza tráfico sensible como la voz" }
       ],
-      explain: "La DMZ aísla lo que se expone; el port forwarding publica un servicio concreto; un MTU mal ajustado fragmenta o rompe túneles; QoS prioriza voz/video frente a best-effort."
+      explain: "La DMZ aísla lo que se expone; el port forwarding publica un servicio concreto; un MTU mal ajustado fragmenta o rompe túneles; QoS prioriza voz/video frente a best-effort.",
+      try: "En una terminal de Linux o WSL escribe `ip link` y fíjate en el valor mtu de cada interfaz (en Ethernet casi siempre es 1500)."
     },
     {
       id: "netL3d", level: 3, type: "fill",
@@ -497,7 +512,7 @@ addWorld({
         "Abrir ticket ISP con evidencias"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Separa CPE vs proveedor con datos."
+      explain: "Vas de lo físico a lo lógico: luces y enlace del ONT, luego si el router obtuvo IP WAN o sesión PPPoE, y un ping desde el router a un DNS público. Con esa evidencia abres el ticket al ISP."
     },
 
     // ——— Nivel 4: Experto (10 preguntas) ———
@@ -511,13 +526,13 @@ addWorld({
         "Nombre NetBIOS del host"
       ],
       answer: 0,
-      explain: "Controla tráfico L3/L4."
+      explain: "Una ACL extendida filtra por IP de origen y destino, protocolo y puertos (capas 3 y 4). La estándar solo mira la IP de origen, y ninguna de las dos filtra por nombre NetBIOS."
     },
     {
       id: "netL4b", level: 4, type: "tf",
       q: "QinQ (802.1ad) encapsula VLAN dentro de VLAN para proveedores.",
       answer: true,
-      explain: "Útil en redes de carrier/metro."
+      explain: "Verdadero: QinQ (802.1ad) agrega una segunda etiqueta VLAN del proveedor encima de la del cliente, así un carrier transporta las VLAN de muchos clientes sin que choquen sus IDs."
     },
     {
       id: "netL4c", level: 4, type: "scenario",
@@ -529,7 +544,7 @@ addWorld({
         "Dar a las impresoras una IP de la VLAN 20 sin cambiar su VLAN"
       ],
       answer: 0,
-      explain: "L3 + políticas."
+      explain: "Cada VLAN es una red distinta, así que hace falta enrutamiento inter-VLAN (router o switch L3) y una ACL que permita los puertos de impresión (9100, 631, 515). Poner trunk en los PCs no enruta."
     },
     {
       id: "netL4d", level: 4, type: "fill",
@@ -553,7 +568,7 @@ addWorld({
         "802.1w",
         "802.1s"
       ],
-      explain: "Spanning Tree Protocol (y variantes)."
+      explain: "STP (Spanning Tree Protocol, 802.1D) bloquea puertos redundantes para evitar bucles de capa 2 y tormentas de broadcast. RSTP (802.1w) converge más rápido y MSTP (802.1s) agrupa VLANs."
     },
     {
       id: "netL4e", level: 4, type: "mc",
@@ -565,7 +580,7 @@ addWorld({
         "Evitar bucles bloqueando puertos"
       ],
       answer: 0,
-      explain: "Equal-Cost Multi-Path."
+      explain: "ECMP (Equal-Cost Multi-Path) usa a la vez varias rutas con el mismo costo hacia un destino y reparte el tráfico entre ellas, normalmente por flujo. No etiqueta VLANs ni evita bucles."
     },
     {
       id: "netL4f", level: 4, type: "match",
@@ -576,7 +591,7 @@ addWorld({
         { left: "HSRP/VRRP", right: "Gateway redundante" },
         { left: "NAT", right: "Traducción de direcciones" }
       ],
-      explain: "Routing core."
+      explain: "OSPF enruta dentro de una organización (IGP de estado de enlace) y BGP entre sistemas autónomos, como entre ISPs. HSRP/VRRP comparten una IP de gateway virtual entre routers y NAT traduce direcciones."
     },
     {
       id: "netL4g", level: 4, type: "order",
@@ -606,7 +621,7 @@ addWorld({
         "Autenticación de puertos 802.1X"
       ],
       answer: 0,
-      explain: "Prioriza voz/video vs best-effort."
+      explain: "DSCP (en el encabezado IP, capa 3) y CoS (en la etiqueta 802.1Q, capa 2) marcan los paquetes para que QoS priorice voz y video sobre el tráfico best-effort. No cifran ni autentican."
     },
     {
       id: "netL4j", level: 4, type: "scenario",
@@ -618,7 +633,7 @@ addWorld({
         "Borrar la caché del navegador en cada equipo"
       ],
       answer: 0,
-      explain: "Mide RTT/pérdida antes de culpar la app."
+      explain: "Si solo es lento hacia un sitio remoto, mide la red: mtr para latencia y pérdida, iperf para throughput, y revisa QoS y saturación de la WAN. RAM, discos o caché del navegador no explican eso."
     },
 
     // ——— Nivel 5: Maestro (10 preguntas) ———
@@ -644,7 +659,7 @@ addWorld({
         "Renovar los leases DHCP de toda la red de usuarios"
       ],
       answer: 0,
-      explain: "MTU mismatch es clásico con tunnels."
+      explain: "Revisa logs, timers (hold time), filtros de prefijos y MTU/MSS: con túneles como IPsec, un MTU mal ajustado hace que se pierdan los UPDATE grandes y la sesión cae por hold time. Nada de eso está en los PCs."
     },
     {
       id: "netL5c", level: 5, type: "fill",
@@ -663,7 +678,7 @@ addWorld({
         "Varios nombres de dominio apuntan a la IP de un solo servidor"
       ],
       answer: 0,
-      explain: "Mejora resiliencia y latencia."
+      explain: "Con anycast, servidores en distintos sitios anuncian la misma IP y el ruteo lleva cada consulta al más cercano; si uno cae, el tráfico va a otro. No es broadcast ni multicast: responde un solo servidor."
     },
     {
       id: "netL5e", level: 5, type: "identify",
@@ -675,7 +690,7 @@ addWorld({
         "Token Ring con una MAU central por rack"
       ],
       answer: 0,
-      explain: "Policies por identidad/workload."
+      explain: "La microsegmentación aplica reglas por carga de trabajo o identidad, no por VLAN, así cada microservicio solo habla con lo que necesita (Zero Trust). Una VLAN plana deja que todo hable con todo."
     },
     {
       id: "netL5f", level: 5, type: "order",
@@ -705,7 +720,7 @@ addWorld({
         "Que el certificado TLS del print server caducó"
       ],
       answer: 0,
-      explain: "Retransmissions = red o endpoint saturado."
+      explain: "Muchas retransmisiones TCP indican segmentos perdidos o que llegan tarde: congestión en la WAN, buffers llenos, QoS mal puesta o un extremo saturado. Un driver o el DNS no explican eso."
     },
     {
       id: "netL5i", level: 5, type: "mc",
@@ -717,7 +732,7 @@ addWorld({
         "Evitar bucles L2 bloqueando puertos"
       ],
       answer: 0,
-      explain: "Extiende segmentos sobre underlay IP."
+      explain: "VXLAN encapsula tramas de capa 2 en UDP (puerto 4789) para extender segmentos L2 sobre una red IP (underlay) en data centers, con unos 16 millones de IDs (VNI) en vez de 4094 VLANs."
     },
     {
       id: "netL5j", level: 5, type: "match",
@@ -728,7 +743,7 @@ addWorld({
         { left: "mtr", right: "Ruta + pérdida continua" },
         { left: "iperf3", right: "Medir throughput" }
       ],
-      explain: "Toolkit de red."
+      explain: "Cada una responde algo distinto: Wireshark qué paquetes pasan, Nmap qué hosts y puertos responden, mtr por dónde va la ruta y en qué salto se pierde, e iperf3 cuánto ancho de banda real hay."
     }
   ],
 
@@ -756,7 +771,7 @@ addWorld({
         "El cable de red local no soporta tráfico cifrado por VPN"
       ],
       answer: 0,
-      explain: "Sin split tunnel, el ancho de banda del hub limita la web."
+      explain: "En full tunnel (split desactivado) la navegación a Internet también viaja por la VPN y sale por el datacenter, así que su enlace y su firewall limitan la velocidad. No hay doble cifrado."
     },
     {
       id: "netB3", level: 5, type: "order",
@@ -793,7 +808,8 @@ addWorld({
       id: "netB6", level: 5, type: "tf",
       q: "BOSS: Un ping fallido no siempre significa que el host esté apagado (ICMP puede estar filtrado).",
       answer: true,
-      explain: "Complementa con prueba de puerto de aplicación (443, 22, 9100…)."
+      explain: "Complementa con prueba de puerto de aplicación (443, 22, 9100…).",
+      try: "En PowerShell escribe `Test-NetConnection google.com` y luego `Test-NetConnection google.com -Port 443`; compara PingSucceeded con TcpTestSucceeded."
     }
   ]
 });

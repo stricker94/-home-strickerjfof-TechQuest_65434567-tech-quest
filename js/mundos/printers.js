@@ -24,7 +24,8 @@ addWorld({
         "Task Scheduler (Schedule)"
       ],
       answer: 0,
-      explain: "Print Spooler (spoolsv.exe) encola trabajos. Si falla, reinícialo en services.msc."
+      explain: "Print Spooler (spoolsv.exe) encola trabajos. Si falla, reinícialo en services.msc.",
+      try: "En PowerShell escribe `Get-Service Spooler` y fíjate si Status dice Running: ese es el servicio que maneja la cola de impresión."
     },
     {
       id: "pr02", level: 1, type: "mc",
@@ -195,7 +196,8 @@ addWorld({
       q: "Desde Win+R, para abrir Dispositivos e impresoras escribe: control ______",
       answer: "printers",
       accept: ["printers", "control printers"],
-      explain: "control printers abre Dispositivos e impresoras (en versiones recientes puede llevar a Configuración → Impresoras y escáneres)."
+      explain: "control printers abre Dispositivos e impresoras (en versiones recientes puede llevar a Configuración → Impresoras y escáneres).",
+      try: "En Windows presiona Win+R, escribe `control printers` y Enter: se abre Dispositivos e impresoras o Impresoras y escáneres, según tu versión."
     },
 
     // ——— Nivel 2: Intermedio (14 preguntas) ———
@@ -221,7 +223,7 @@ addWorld({
         "Instalar/seleccionar driver y página de prueba"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Validar red antes de drivers evita horas de frustración."
+      explain: "Primero necesitas la IP y confirmar con ping que el PC la alcanza: sin red, ningún puerto ni driver va a funcionar. Luego creas el puerto TCP/IP o IPP, eliges el driver y validas con una página de prueba."
     },
     {
       id: "pr13", level: 2, type: "mc",
@@ -347,7 +349,7 @@ addWorld({
         "Autenticar a los usuarios antes de liberar sus trabajos"
       ],
       answer: 0,
-      explain: "Muchas consolas de flota leen OID SNMP del dispositivo."
+      explain: "SNMP consulta el estado del equipo (tóner, bandejas, errores, contadores) leyendo sus OID; así trabajan las consolas de gestión de flota. No asigna la IP (eso es DHCP o IP fija) ni cifra los trabajos."
     },
     {
       id: "prL2e", level: 2, type: "tf",
@@ -359,22 +361,24 @@ addWorld({
     // ——— Nivel 3: Avanzado (14 preguntas) ———
     {
       id: "pr20", level: 3, type: "identify",
-      q: "¿Qué comando/utilidad en Windows lista impresoras y colas (línea de comandos clásica)?",
+      q: "¿Qué comando de Windows lista las impresoras instaladas?",
       options: [
-        "wmic printer / PowerShell Get-Printer",
-        "tasklist / PowerShell Get-Process",
-        "wmic diskdrive / PowerShell Get-Disk",
-        "netstat / PowerShell Get-NetTCPConnection"
+        "PowerShell Get-Printer (antes wmic printer)",
+        "PowerShell Get-Process (antes tasklist)",
+        "PowerShell Get-Disk (antes wmic diskdrive)",
+        "PowerShell Get-NetTCPConnection (antes netstat)"
       ],
       answer: 0,
-      explain: "Get-Printer (PowerShell) o la UI de Impresoras y escáneres. lpstat en Linux/CUPS."
+      explain: "Get-Printer lista cada impresora con su puerto y su driver. wmic printer hacía lo mismo, pero wmic está obsoleto y en Windows 11 24H2 viene desactivado. En Linux con CUPS se usa lpstat -p.",
+      try: "En PowerShell escribe `Get-Printer | Format-Table Name,PortName,DriverName` y mira qué puerto y qué driver usa cada impresora instalada."
     },
     {
       id: "pr21", level: 3, type: "fill",
       q: "Puerto típico de IPP (número):",
       answer: "631",
       accept: ["631"],
-      explain: "IPP (Internet Printing Protocol) usa 631/tcp de forma habitual."
+      explain: "IPP (Internet Printing Protocol) usa 631/tcp de forma habitual.",
+      try: "En una terminal de Linux o WSL escribe `grep -w 631 /etc/services` y verás que ese puerto está registrado como ipp."
     },
     {
       id: "pr22", level: 3, type: "mc",
@@ -421,7 +425,7 @@ addWorld({
         { left: "Caracteres basura", right: "Driver/lenguaje incorrecto" },
         { left: "Offline en red", right: "IP/puerto/firewall/Spooler" }
       ],
-      explain: "Separa hardware (papel/tóner) de lógica (driver/red/cola)."
+      explain: "Página en blanco y atascos son fallas físicas: tóner vacío o sello sin quitar, rodillos gastados o papel húmedo. Basura y offline son lógicas: driver o lenguaje equivocado, o falla de IP, puerto, firewall o Spooler."
     },
     {
       id: "pr26", level: 3, type: "tf",
@@ -458,7 +462,7 @@ addWorld({
       q: "AirPrint típicamente se apoya en…",
       options: ["mDNS/Bonjour + IPP", "WS-Discovery + SMB", "NetBIOS + LPR/LPD", "SNMP + raw 9100"],
       answer: 0,
-      explain: "Dispositivos Apple descubren la impresora y hablan IPP."
+      explain: "AirPrint usa mDNS/Bonjour para que iPhone y Mac descubran la impresora sin instalar driver, e IPP (puerto 631) para enviar el trabajo. WS-Discovery y SMB son del mundo Windows."
     },
     {
       id: "prL3b", level: 3, type: "scenario",
@@ -481,14 +485,15 @@ addWorld({
         { left: "PDF direct", right: "Algunas MFP imprimen PDF nativo" },
         { left: "Raw 9100", right: "Bytes al puerto sin cola compleja" }
       ],
-      explain: "Mismatch de PDL = basura en página."
+      explain: "PCL (HP) domina en oficina, PostScript (Adobe) en artes gráficas y algunas MFP leen PDF directo. Raw 9100 no es un lenguaje: solo manda los bytes al puerto. Si el lenguaje no coincide, sale basura."
     },
     {
       id: "prL3d", level: 3, type: "fill",
       q: "Puerto LPR/LPD clásico (número):",
       answer: "515",
       accept: ["515"],
-      explain: "LPR/LPD (Line Printer Daemon) usa el puerto 515/tcp."
+      explain: "LPR/LPD (Line Printer Daemon) es el protocolo clásico de impresión de Unix y escucha en 515/tcp. No lo confundas con 9100 (raw/JetDirect) ni con 631 (IPP).",
+      try: "En una terminal de Linux o WSL escribe `grep -w 515 /etc/services` y verás que ese puerto está registrado como printer (el spooler LPD)."
     },
     {
       id: "prL3e", level: 3, type: "order",
@@ -514,7 +519,7 @@ addWorld({
         "Sustituye el firmware de cada impresora de la red"
       ],
       answer: 0,
-      explain: "Reduce caos de drivers en cada PC."
+      explain: "El print server concentra las colas compartidas y los drivers: los clientes se conectan a la cola y descargan el driver de ahí, en vez de instalarlo a mano en cada PC. No asigna IPs; eso es trabajo de DHCP."
     },
     {
       id: "prL4b", level: 4, type: "tf",
@@ -532,7 +537,7 @@ addWorld({
         "Ocultar el SSID de la red de invitados"
       ],
       answer: 0,
-      explain: "Segmentación + least privilege."
+      explain: "Con ACL o firewall entre la VLAN de invitados y la de impresoras, y sin publicar colas en la red de invitados, aplicas segmentación y mínimo privilegio. Ocultar el SSID no detiene a nadie."
     },
     {
       id: "prL4d", level: 4, type: "fill",
@@ -551,7 +556,7 @@ addWorld({
         "Elimina la necesidad de drivers en los clientes de la sucursal"
       ],
       answer: 0,
-      explain: "Útil en WAN lentas con Windows print features."
+      explain: "Con Branch Office Direct Printing (Windows Server 2012 y posteriores), el cliente de la sucursal manda el trabajo directo a la impresora local en vez de cruzar la WAN hasta el print server central."
     },
     {
       id: "prL4f", level: 4, type: "match",
@@ -562,7 +567,7 @@ addWorld({
         { left: "Driver Type 4", right: "Modelo de controlador moderno de Windows (desde Windows 8)" },
         { left: "Spooler", right: "Servicio que gestiona la cola" }
       ],
-      explain: "Stack de impresión."
+      explain: "Son piezas de la pila de impresión: PCL (HP) y PostScript (Adobe) describen la página, el driver Type 4 es el modelo de controlador de Windows 8 en adelante y el Spooler encola y entrega los trabajos."
     },
     {
       id: "prL4g", level: 4, type: "order",
@@ -574,7 +579,7 @@ addWorld({
         "Probar desde cliente y documentar"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Prueba con cuenta no-admin."
+      explain: "Sin driver no puedes crear la cola, y la cola con su puerto debe existir antes de compartirla y darle permisos. Al final prueba desde un cliente con una cuenta sin privilegios de admin y documenta."
     },
     {
       id: "prL4h", level: 4, type: "tf",
@@ -592,7 +597,7 @@ addWorld({
         "Protocolo que traduce PCL a PostScript en la red"
       ],
       answer: 0,
-      explain: "Aún así valida modelos críticos."
+      explain: "Un driver universal (por ejemplo, el HP Universal Print Driver) cubre muchas series con un solo paquete y simplifica el print server. Se instala en el PC, no es firmware; aun así valida los modelos críticos."
     },
     {
       id: "prL4j", level: 4, type: "scenario",
@@ -604,7 +609,7 @@ addWorld({
         "Resolución DPI, perfil de color y orientación del papel"
       ],
       answer: 0,
-      explain: "Divide cliente vs server vs dispositivo."
+      explain: "Si el trabajo sale del cliente pero no llega a la impresora, falla el tramo server a dispositivo: revisa IP y puerto de la cola, red, cola pausada, driver y firewall en 9100 o IPP. Tóner y papel no lo explican."
     },
 
     // ——— Nivel 5: Maestro (10 preguntas) ———
@@ -618,7 +623,7 @@ addWorld({
         "Contraseñas por defecto del panel web de las impresoras"
       ],
       answer: 0,
-      explain: "Parchea, restringe Point and Print, least privilege."
+      explain: "PrintNightmare (2021) abusaba del Print Spooler y de Point and Print para ejecutar código como SYSTEM, incluso en remoto. Se mitiga con parches y limitando Point and Print; EternalBlue fue otro fallo, de SMBv1."
     },
     {
       id: "prL5b", level: 5, type: "scenario",
@@ -630,14 +635,14 @@ addWorld({
         "Permite imprimir sin red usando USB en cada puesto"
       ],
       answer: 0,
-      explain: "Mejora confidencialidad física."
+      explain: "Con pull printing el trabajo queda retenido y solo sale cuando el usuario se autentica en la impresora (tarjeta o PIN), así nadie ve ni se lleva hojas olvidadas en la bandeja. Mejora la confidencialidad."
     },
     {
       id: "prL5c", level: 5, type: "fill",
       q: "Puerto típico IPP/IPPS (número):",
       answer: "631",
       accept: ["631"],
-      explain: "IPP clásico usa 631; IPPS va sobre TLS."
+      explain: "IPP usa el puerto 631/tcp, e IPPS (IPP sobre TLS) normalmente también usa el 631. No lo confundas con 9100 (raw/JetDirect) ni con 515 (LPR/LPD)."
     },
     {
       id: "prL5d", level: 5, type: "mc",
@@ -649,7 +654,7 @@ addWorld({
         "Desactivar el Spooler en clientes que no imprimen"
       ],
       answer: 0,
-      explain: "Combínalo con políticas de seguridad actualizadas."
+      explain: "Package Point and Print instala en el cliente el paquete de driver completo y firmado desde el print server, no archivos sueltos. Con la GPO de servidores aprobados controlas de dónde se aceptan drivers."
     },
     {
       id: "prL5e", level: 5, type: "identify",
@@ -661,7 +666,8 @@ addWorld({
         "Disk Cleanup → Archivos temporales"
       ],
       answer: 0,
-      explain: "Habilita log operacional de PrintService."
+      explain: "En el Visor de eventos, Registros de aplicaciones y servicios > Microsoft > Windows > PrintService guarda errores de cola y driver. El log Operational viene deshabilitado: actívalo para registrar cada trabajo.",
+      try: "En PowerShell escribe `Get-WinEvent -ListLog *PrintService* | Format-Table LogName,IsEnabled` y mira si el log Operational está activado."
     },
     {
       id: "prL5f", level: 5, type: "order",
@@ -673,7 +679,7 @@ addWorld({
         "Cortar DNS/alias y validar clientes"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Mantén rollback (alias TTL bajo)."
+      explain: "Sin inventario no sabes qué migrar; los drivers deben estar en el destino antes de recrear las colas, y el corte de DNS o alias va al final. Baja antes el TTL del alias para poder hacer rollback rápido."
     },
     {
       id: "prL5g", level: 5, type: "tf",
@@ -691,7 +697,7 @@ addWorld({
         "Tambor agotado / bandeja vacía / contador de páginas lleno"
       ],
       answer: 0,
-      explain: "Usa SMBv2+ y cuenta de servicio con mínimo privilegio."
+      explain: "Al endurecer SMB fallan las multifuncionales que solo hablan SMBv1, no soportan firma SMB o usan credenciales que ya no se aceptan. Actualiza su firmware para usar SMBv2 o superior y una cuenta de servicio con mínimo privilegio."
     },
     {
       id: "prL5i", level: 5, type: "mc",
@@ -703,7 +709,7 @@ addWorld({
         "Aumenta el ancho de banda contratado del enlace WAN"
       ],
       answer: 0,
-      explain: "No sustituye buen diseño de Branch printing."
+      explain: "QoS clasifica y marca el tráfico para priorizar o limitar ciertos flujos cuando el enlace se satura. No comprime, no cifra ni aumenta el ancho de banda; solo reparte mejor el que ya tienes."
     },
     {
       id: "prL5j", level: 5, type: "match",
@@ -714,7 +720,7 @@ addWorld({
         { left: "Color corrido", right: "Calibración/belt/drum" },
         { left: "No imprime desde una app", right: "Formato de spool / aislamiento de driver" }
       ],
-      explain: "Diagnóstico por síntoma."
+      explain: "Basura en la hoja apunta al driver o lenguaje (PCL vs PS); atascos, a papel húmedo o rodillos; color corrido, a calibración, banda o tambor; y si falla solo una app, prueba otro formato de spool o aislar el driver."
     }
   ],
 
@@ -754,7 +760,7 @@ addWorld({
         "Impresión correcta, pero solo en escala de grises"
       ],
       answer: 0,
-      explain: "Mismatch de PDL es un clásico en flotas mixtas."
+      explain: "Una impresora solo PostScript no entiende PCL: imprime el código como texto basura o descarta el trabajo. No lo convierte sola; usa el driver PS del modelo o un driver universal en modo PostScript."
     },
     {
       id: "prB4", level: 5, type: "match",
@@ -765,13 +771,14 @@ addWorld({
         { left: "JetDirect raw", right: "9100/tcp" },
         { left: "SMB share", right: "445/tcp (y relacionados)" }
       ],
-      explain: "Conocer puertos acelera firewall y tcpchecks."
+      explain: "IPP usa 631/tcp, LPR 515/tcp y raw/JetDirect 9100/tcp, mientras que los recursos compartidos por SMB usan 445/tcp. Saberlos te dice qué abrir en el firewall y qué puerto probar.",
+      try: "En una terminal de Linux o WSL escribe `grep -wE '515|631|445' /etc/services` y fíjate en el nombre de servicio de cada puerto."
     },
     {
       id: "prB5", level: 5, type: "tf",
       q: "BOSS: Una reserva DHCP para la MAC de la impresora evita que cambie de IP y rompa puertos TCP/IP de clientes.",
       answer: true,
-      explain: "Estabilidad de dirección = menos tickets 'offline'."
+      explain: "Verdadero: la reserva DHCP hace que el servidor siempre entregue la misma IP a la MAC de la impresora, así los puertos TCP/IP de los clientes no se rompen y evitas tickets de impresora sin conexión."
     },
     {
       id: "prB6", level: 5, type: "scenario",

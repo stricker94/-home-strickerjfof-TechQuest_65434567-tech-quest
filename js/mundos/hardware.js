@@ -24,7 +24,7 @@ addWorld({
         "La placa donde se conectan todos los componentes"
       ],
       answer: 0,
-      explain: "Central Processing Unit: ejecuta instrucciones."
+      explain: "La CPU (Central Processing Unit) es el procesador: ejecuta las instrucciones de los programas. No es la RAM, que guarda datos temporalmente, ni la tarjeta de video ni la placa base."
     },
     {
       id: "hw02", level: 1, type: "tf",
@@ -42,7 +42,8 @@ addWorld({
         "Ambos iguales; solo cambia la capacidad máxima"
       ],
       answer: 0,
-      explain: "SSD usa memoria flash; HDD platos magnéticos."
+      explain: "El SSD guarda datos en memoria flash, sin piezas móviles, por eso accede mucho más rápido. El HDD usa platos magnéticos que giran (por ejemplo a 7200 rpm) y un cabezal que se mueve.",
+      try: "En PowerShell escribe `Get-PhysicalDisk` y revisa la columna MediaType: dice si cada disco es SSD o HDD (si sale Unspecified, Windows no pudo identificarlo)."
     },
     {
       id: "hw04", level: 1, type: "identify",
@@ -54,14 +55,14 @@ addWorld({
         "S-Video (mini-DIN)"
       ],
       answer: 0,
-      explain: "HDMI y DP dominan; VGA es analógico legacy."
+      explain: "HDMI y DisplayPort transmiten video digital (y también audio) y son el estándar en monitores actuales. VGA, componente y S-Video son conexiones analógicas antiguas."
     },
     {
       id: "hw05", level: 1, type: "fill",
       q: "Sigla de la memoria de acceso aleatorio:",
       answer: "RAM",
       accept: ["RAM", "ram"],
-      explain: "Random Access Memory."
+      explain: "RAM significa Random Access Memory: la memoria de trabajo donde se cargan los programas abiertos. Es muy rápida pero volátil, se borra al apagar el equipo."
     },
     {
       id: "hw06", level: 1, type: "mc",
@@ -73,13 +74,13 @@ addWorld({
         "Refrigeración directa al procesador con su ventilador"
       ],
       answer: 0,
-      explain: "Elige wattage y certificaciones adecuadas."
+      explain: "La PSU convierte la corriente alterna del contacto en corriente directa de 12 V, 5 V y 3.3 V para los componentes. Dar energía de respaldo con batería en un corte es trabajo de un UPS."
     },
     {
       id: "hw07", level: 1, type: "tf",
       q: "Antes de tocar componentes, conviene descargar electricidad estática (ESD).",
       answer: true,
-      explain: "Pulsera/antistática y tocar chasis metálico ayudan."
+      explain: "Verdadero: una descarga electrostática que ni sientes puede dañar chips. Usa pulsera antiestática o toca una parte metálica sin pintar del chasis antes de manipular componentes."
     },
     {
       id: "hw08", level: 1, type: "scenario",
@@ -91,7 +92,7 @@ addWorld({
         "Desfragmentar el disco y liberar espacio"
       ],
       answer: 0,
-      explain: "Descarta display y memoria/GPU primero."
+      explain: "Si hay energía pero no imagen, revisa lo simple primero: cable y entrada del monitor, luego reasienta la RAM y la tarjeta de video. Reinstalar Windows no sirve: el fallo ocurre antes de cargarlo."
     },
     {
       id: "hw09", level: 1, type: "mc",
@@ -103,7 +104,7 @@ addWorld({
         "Solo video DisplayPort; requiere adaptador para datos"
       ],
       answer: 0,
-      explain: "No todos los USB-C son iguales (Alt Mode/PD)."
+      explain: "USB-C es la forma del conector: según el dispositivo y el cable puede llevar datos, video (DisplayPort Alt Mode) y carga (USB Power Delivery). No todos los puertos USB-C soportan todo."
     },
     {
       id: "hw10", level: 1, type: "order",
@@ -129,7 +130,8 @@ addWorld({
         "Chip de seguridad que guarda las claves de cifrado (TPM)"
       ],
       answer: 0,
-      explain: "Ofrece GUI, Secure Boot, GPT, etc."
+      explain: "UEFI es el firmware que reemplazó al BIOS: inicializa el hardware y arranca el sistema. No es un esquema de particiones (ese es GPT, que UEFI usa) ni un sistema de archivos; ofrece Secure Boot.",
+      try: "En cmd escribe `msinfo32` y en Resumen del sistema busca la línea Modo de BIOS: dirá UEFI o Heredado (legacy)."
     },
     {
       id: "hw12", level: 2, type: "scenario",
@@ -141,14 +143,14 @@ addWorld({
         "Falta de conexión a Internet para validar la licencia"
       ],
       answer: 0,
-      explain: "Consulta la tabla de beep codes de la motherboard."
+      explain: "Los pitidos del POST son códigos de error de hardware que cambian según el fabricante del firmware; con frecuencia apuntan a RAM o video. Suenan antes de cargar el sistema, así que no es Windows."
     },
     {
       id: "hw13", level: 2, type: "mc",
       q: "NVMe se conecta típicamente por…",
       options: ["Slot M.2 PCIe", "Puerto SATA III", "Conector IDE/PATA", "eSATA externo"],
       answer: 0,
-      explain: "NVMe es mucho más rápido que SATA SSD en muchos casos."
+      explain: "NVMe es un protocolo que usa el bus PCIe, por eso estos SSD suelen ir en un slot M.2 con PCIe y son mucho más rápidos que los SSD SATA, limitados a unos 600 MB/s."
     },
     {
       id: "hw14", level: 2, type: "tf",
@@ -161,7 +163,7 @@ addWorld({
       q: "Sigla del firmware de arranque clásico anterior a UEFI:",
       answer: "BIOS",
       accept: ["BIOS", "bios"],
-      explain: "Basic Input/Output System."
+      explain: "BIOS (Basic Input/Output System) es el firmware clásico que revisa el hardware con el POST y arranca el sistema. UEFI lo reemplazó, aunque mucha gente sigue llamando BIOS al menú de configuración."
     },
     {
       id: "hw16", level: 2, type: "match",
@@ -172,7 +174,7 @@ addWorld({
         { left: "PCIe", right: "Slots de expansión (GPU, etc.)" },
         { left: "Socket CPU", right: "Encaje del procesador" }
       ],
-      explain: "Identificar conectores evita daños."
+      explain: "RJ-45 es el conector del cable de red, SATA conecta discos y unidades ópticas, PCIe es la ranura para tarjetas como la de video y el socket es donde se asienta el procesador."
     },
     {
       id: "hw17", level: 2, type: "scenario",
@@ -184,7 +186,7 @@ addWorld({
         "Rociar la fuente con aire comprimido y reintentar"
       ],
       answer: 0,
-      explain: "Una PSU fallida puede dañar otros componentes."
+      explain: "El olor a quemado indica una falla eléctrica: no lo vuelvas a encender, porque una fuente dañada puede arruinar otras piezas. Cambia la PSU y revisa la placa y los cables por daños."
     },
     {
       id: "hw18", level: 2, type: "mc",
@@ -196,7 +198,7 @@ addWorld({
         "Fuente (PSU) y el chasis"
       ],
       answer: 0,
-      explain: "Mejora transferencia térmica; cantidad correcta importa."
+      explain: "La pasta térmica rellena las microimperfecciones entre la tapa del CPU (IHS) y la base del disipador para que el calor pase mejor. Basta una cantidad pequeña; poner de más no mejora nada."
     },
     {
       id: "hw19", level: 2, type: "order",
@@ -208,13 +210,14 @@ addWorld({
         "Encender y verificar en el SO"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Consulta el manual: algunas RAM van soldadas."
+      explain: "Primero quitas toda energía para no dañar nada, luego abres la tapa, insertas el SODIMM según el diseño del slot y al final verificas que el sistema reconozca la RAM. En algunas laptops va soldada."
     },
     {
       id: "hw20", level: 2, type: "tf",
       q: "Secure Boot ayuda a impedir bootloaders no firmados.",
       answer: true,
-      explain: "Parte de la cadena de confianza UEFI."
+      explain: "Verdadero: con Secure Boot, el firmware UEFI solo carga bootloaders firmados con claves de confianza, lo que ayuda a bloquear bootkits que intentan arrancar antes que el sistema operativo.",
+      try: "En cmd escribe `msinfo32` y en Resumen del sistema busca Estado de arranque seguro: verás si Secure Boot está activado en tu equipo."
     },
 
     // ——— Nivel 3: Avanzado (10 preguntas) ———
@@ -270,7 +273,7 @@ addWorld({
         { left: "BSOD memoria", right: "RAM defectuosa/XMP inestable" },
         { left: "No detecta el SSD nuevo", right: "Modo M.2/BIOS o slot deshabilitado" }
       ],
-      explain: "Divide por etapa: POST vs OS vs carga."
+      explain: "Piensa por etapa: sin POST, sospecha de piezas mal asentadas; si se apaga bajo carga, de la fuente; si hay pantallazos azules de memoria, de RAM defectuosa o XMP inestable; y si no ve el SSD, del modo M.2 en BIOS."
     },
     {
       id: "hw26", level: 3, type: "order",
@@ -282,7 +285,7 @@ addWorld({
         "Probar con PSU conocida buena o configuración mínima (CPU/RAM)"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Descarta alimentación antes de condenar el board."
+      explain: "Va de lo simple a lo complejo: cable, contacto y switch de la PSU; luego un contacto y cable que sepas que sirven; después puentear el botón o usar un probador de PSU; y al final, PSU buena o solo CPU y RAM."
     },
     {
       id: "hw27", level: 3, type: "tf",
@@ -312,7 +315,7 @@ addWorld({
         "AHCI une varios discos en uno; RAID es para un solo disco"
       ],
       answer: 0,
-      explain: "Cambiar modo tras instalar el SO puede impedir el boot."
+      explain: "AHCI es el modo normal para discos SATA individuales, sean HDD o SSD; RAID se usa al combinar varios discos en un arreglo. Cambiar el modo después de instalar Windows puede impedir que arranque."
     },
     {
       id: "hw30", level: 3, type: "identify",
@@ -324,7 +327,7 @@ addWorld({
         "Monitor de rendimiento / perfmon"
       ],
       answer: 0,
-      explain: "También MemTest86 en entornos más exhaustivos."
+      explain: "El Diagnóstico de memoria de Windows (mdsched.exe) reinicia el equipo y prueba la RAM antes de cargar el sistema. resmon y perfmon miden uso y chkdsk revisa discos. MemTest86 es más exhaustivo."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -338,7 +341,7 @@ addWorld({
         "Cifrar los discos del servidor con claves del TPM"
       ],
       answer: 0,
-      explain: "Red de management separada."
+      explain: "IPMI, iLO (HPE) e iDRAC (Dell) dan gestión out-of-band: aun con el sistema caído puedes ver la consola, revisar sensores y encender el servidor. Suelen ir en una red de administración separada."
     },
     {
       id: "hwL4b", level: 4, type: "tf",
@@ -356,14 +359,14 @@ addWorld({
         "Retirar discos para bajar el consumo de energía"
       ],
       answer: 0,
-      explain: "Redundancia N+1 existe para usarse."
+      explain: "Sin redundancia, el servidor sigue con una sola fuente y ya no tolera otra falla. Revisa si falló la PSU, su cable o su circuito, reemplázala pronto y confirma que la carga no exceda una sola fuente."
     },
     {
       id: "hwL4d", level: 4, type: "fill",
       q: "Bus de expansión dominante para GPUs (sigla):",
       answer: "PCIe",
       accept: ["PCIe", "PCI-E", "pci-e", "PCI Express", "PCI-Express"],
-      explain: "Peripheral Component Interconnect Express."
+      explain: "PCIe (PCI Express) es el bus de expansión en serie donde van tarjetas de video, de red y SSD NVMe. Usa carriles (x1, x4, x16) y las GPU suelen ir en el slot x16."
     },
     {
       id: "hwL4e", level: 4, type: "mc",
@@ -375,7 +378,7 @@ addWorld({
         "Fallos de temperatura del procesador"
       ],
       answer: 0,
-      explain: "Estándar en servers."
+      explain: "ECC agrega bits de verificación para detectar y corregir errores de memoria, normalmente corrige los de un bit y detecta los de dos. Por eso es estándar en servidores; no tiene que ver con discos ni red."
     },
     {
       id: "hwL4f", level: 4, type: "match",
@@ -386,7 +389,7 @@ addWorld({
         { left: "M.2", right: "Factor de forma (NVMe/SATA)" },
         { left: "RDIMM", right: "DIMM registrado para servers" }
       ],
-      explain: "Almacenamiento/memoria."
+      explain: "SAS es la interfaz enterprise con doble puerto para redundancia, SATA la común en PCs y servidores básicos, M.2 un factor de forma que puede ser NVMe o SATA, y RDIMM memoria registrada para servidores."
     },
     {
       id: "hwL4g", level: 4, type: "order",
@@ -398,13 +401,13 @@ addWorld({
         "Monitorear rebuild"
       ],
       answer: [0, 1, 2, 3],
-      explain: "No saques el disco equivocado."
+      explain: "Primero ubicas el disco fallido con su LED (beacon), confirmas backup y estado del arreglo para no sacar uno sano, cambias el disco por uno compatible y vigilas el rebuild hasta que termine."
     },
     {
       id: "hwL4h", level: 4, type: "tf",
       q: "Undervolting cuidadoso puede bajar temperatura; overclock inestable causa crashes.",
       answer: true,
-      explain: "En enterprise suele preferirse stock + buen cooling."
+      explain: "Verdadero: bajar el voltaje con cuidado reduce calor y consumo, y un overclock inestable provoca cuelgues y pantallazos. En servidores se prefieren valores de fábrica y buena refrigeración."
     },
 
     // ——— Nivel 5: Maestro (8 preguntas) ———
@@ -418,7 +421,7 @@ addWorld({
         "Gestionar el servidor por consola remota fuera de banda"
       ],
       answer: 0,
-      explain: "Alternativa a muchos M.2 internos."
+      explain: "U.2 y U.3 son conectores para SSD NVMe de 2.5 pulgadas que van en las bahías frontales del servidor y, si la plataforma lo soporta, se cambian en caliente (hot-swap) sin abrir el equipo."
     },
     {
       id: "hwL5b", level: 5, type: "scenario",
@@ -430,14 +433,14 @@ addWorld({
         "Cambiar la pasta térmica de la CPU y su disipador"
       ],
       answer: 0,
-      explain: "Muchas boards desactivan salida onboard."
+      explain: "Con una GPU dedicada, muchas placas desactivan el video integrado, así que conecta el monitor a la tarjeta. Revisa también los cables de energía PCIe, la entrada del monitor y que la tarjeta esté bien asentada."
     },
     {
       id: "hwL5c", level: 5, type: "fill",
       q: "Interfaz de gestión remota de los servidores Dell (sigla de 5 letras):",
       answer: "iDRAC",
       accept: ["iDRAC", "idrac"],
-      explain: "Integrated Dell Remote Access Controller."
+      explain: "iDRAC (Integrated Dell Remote Access Controller) es la gestión out-of-band de los servidores Dell: consola remota, sensores y encendido aunque el sistema no arranque. En HPE el equivalente es iLO."
     },
     {
       id: "hwL5d", level: 5, type: "mc",
@@ -449,7 +452,7 @@ addWorld({
         "Estandarizar conectores de alimentación de las GPU"
       ],
       answer: 0,
-      explain: "Tendencia en data centers modernos."
+      explain: "CXL (Compute Express Link) funciona sobre la capa física de PCIe y permite expandir y compartir memoria con coherencia entre CPU, aceleradores y módulos de memoria. Se usa sobre todo en data centers."
     },
     {
       id: "hwL5e", level: 5, type: "identify",
@@ -461,7 +464,7 @@ addWorld({
         "SATA de 15 pines"
       ],
       answer: 0,
-      explain: "No confundir con PCIe 8-pin de GPU."
+      explain: "El EPS de 8 pines (ATX12V) alimenta al CPU y va cerca del socket. El PCIe de 8 pines (6+2) es para la GPU y tiene otra distribución: forzarlo en el lugar equivocado puede dañar el equipo."
     },
     {
       id: "hwL5f", level: 5, type: "order",
@@ -473,13 +476,13 @@ addWorld({
         "Reemplazar DIMM"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Aísla slot vs módulo."
+      explain: "Primero confirmas en los logs del BMC o del sistema qué DIMM falla, luego reasientas y limpias el slot, después mueves el módulo para ver si el error lo sigue a él o se queda en el slot, y al final lo reemplazas."
     },
     {
       id: "hwL5g", level: 5, type: "tf",
       q: "Mezclar firmware de backplane incorrecto puede hacer desaparecer discos.",
       answer: true,
-      explain: "Sigue matriz de compatibilidad del vendor."
+      explain: "Verdadero: si el firmware del backplane o de la controladora no es el que pide el fabricante, los discos pueden no detectarse o desconectarse. Sigue la matriz de compatibilidad del vendor."
     },
     {
       id: "hwL5h", level: 5, type: "scenario",
@@ -491,7 +494,7 @@ addWorld({
         "Un solo switch sin redundancia"
       ],
       answer: 0,
-      explain: "Evita split-brain."
+      explain: "Un testigo (witness) desempata el quórum y el fencing aísla al nodo que falla para evitar el split-brain. Con dos nodos sin testigo, la caída de uno deja al otro sin mayoría y el clúster se detiene."
     }
   ],
 
@@ -507,7 +510,7 @@ addWorld({
         "Enfriarlas en el congelador y volver a cargarlas"
       ],
       answer: 0,
-      explain: "Riesgo de incendio: protocolo de baterías dañadas."
+      explain: "Una batería hinchada puede incendiarse: deja de cargarla y usarla, retírala del servicio y entrégala para reemplazo y desecho según el protocolo de baterías dañadas. Nunca la perfores ni la congeles."
     },
     {
       id: "hwB2", level: 5, type: "mc",
@@ -519,7 +522,7 @@ addWorld({
         "Cambiar la VLAN del puerto de gestión del servidor"
       ],
       answer: 0,
-      explain: "Click = protección PSU o cortocircuito."
+      explain: "Un clic repetitivo suele ser la protección de la PSU cortando por un corto o una falla. Prueba con una fuente que sepas que funciona y busca cortos; reinstalar o actualizar no sirve sin energía estable."
     },
     {
       id: "hwB3", level: 5, type: "order",
@@ -544,7 +547,7 @@ addWorld({
       q: "BOSS: Firmware de placa base moderno (sigla de 4 letras):",
       answer: "UEFI",
       accept: ["UEFI", "uefi"],
-      explain: "Unified Extensible Firmware Interface."
+      explain: "UEFI (Unified Extensible Firmware Interface) es el firmware moderno que reemplazó al BIOS: arranca desde discos GPT, ofrece Secure Boot y suele tener una interfaz gráfica con mouse."
     }
   ]
 });

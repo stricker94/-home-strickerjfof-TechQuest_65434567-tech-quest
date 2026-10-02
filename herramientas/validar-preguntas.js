@@ -16,7 +16,7 @@ const vm = require("vm");
 const RAIZ = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, "..");
 const TIPOS = ["mc", "identify", "scenario", "tf", "fill", "match", "order"];
 // Campos que el juego lee en cada tipo; cualquier otro lo ignora sin aviso (p. ej. "acepta" en vez de "accept")
-const CAMPOS_BASE = ["id", "level", "type", "q", "explain"];
+const CAMPOS_BASE = ["id", "level", "type", "q", "explain", "try"];
 const CAMPOS = {
   mc: ["options", "answer"], identify: ["options", "answer"], scenario: ["options", "answer"],
   tf: ["answer"], fill: ["answer", "accept"], match: ["pairs"], order: ["items", "answer"],
@@ -275,6 +275,11 @@ for (const w of WORLDS) {
       if (!q.q || !String(q.q).trim()) err("falta el enunciado (q)");
       if (!q.explain) aviso("sin explicación (explain)");
       else if (/^\s*(\.{3}|…)\s*$/.test(q.explain)) aviso('explicación de relleno ("..."): escribe una o dos frases');
+      else if (String(q.explain).trim().length < 50) aviso(`explicación muy corta (${String(q.explain).trim().length} caracteres): di en una o dos frases por qué esa es la respuesta`);
+      if (q.try != null) {
+        if (!esTexto(q.try)) err(`try («Pruébalo tú») debe ser un texto entre comillas; vale ${txt(q.try)}`);
+        else if ((String(q.try).match(/`/g) || []).length % 2) aviso("try («Pruébalo tú») tiene un acento grave ` sin cerrar: el comando va entre dos `");
+      }
       if (q.level == null) {
         err(`falta level (el nivel, un número de 1 a ${maxNivel}); sin él la pregunta no sale en ningún nivel`);
       } else if (!(Number.isInteger(q.level) && q.level >= 1 && q.level <= maxNivel)) {

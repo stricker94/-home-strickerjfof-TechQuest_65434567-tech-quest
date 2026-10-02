@@ -85,7 +85,8 @@ addWorld({
         "Una lista ordenada de valores"
       ],
       answer: 0,
-      explain: "En JS: 'hola' o \"hola\"."
+      explain: "Un string es texto: una secuencia de caracteres entre comillas, como 'hola' o '123'. Ojo: '123' entre comillas es texto, no un número; true y false son booleanos.",
+      try: "En la consola del navegador (F12, pestaña Consola o Console) escribe `typeof 'hola'` y luego `typeof 123`: verás string y number."
     },
     {
       id: "pgL1b", level: 1, type: "tf",
@@ -95,7 +96,7 @@ addWorld({
     },
     {
       id: "pgL1c", level: 1, type: "fill",
-      q: "Etiqueta HTML de enlace (apertura):",
+      q: "Etiqueta HTML de hipervínculo (apertura):",
       answer: "<a>",
       accept: [
         "<a>",
@@ -110,7 +111,7 @@ addWorld({
         "<a href='...'>",
         "a href"
       ],
-      explain: "<a href='...'>texto</a>."
+      explain: "La etiqueta <a> (anchor) crea un enlace y el destino va en su atributo href: <a href='https://ejemplo.com'>texto</a>. No la confundas con <link>, que enlaza recursos como hojas CSS."
     },
     {
       id: "pgL1d", level: 1, type: "mc",
@@ -122,7 +123,7 @@ addWorld({
         "Solo una vez, al cargar el programa"
       ],
       answer: 0,
-      explain: "Evita condiciones que nunca se vuelven false."
+      explain: "El while revisa la condición antes de cada vuelta y repite mientras sea verdadera; si al revisarla es falsa, sale. Repetir hasta que sea verdadera es la lógica de un until, no de un while."
     },
 
     // ——— Nivel 2: Intermedio (10 preguntas) ———
@@ -136,7 +137,8 @@ addWorld({
         "git push (si hay remoto)"
       ],
       answer: [0, 1, 2, 3],
-      explain: "add prepara el stage; commit guarda snapshot local; push envía al remoto."
+      explain: "add prepara el stage; commit guarda snapshot local; push envía al remoto.",
+      try: "En la carpeta de un repositorio Git, abre una terminal y escribe `git status`: fíjate qué archivos aparecen como modificados, sin seguimiento o listos para commit."
     },
     {
       id: "pg08", level: 2, type: "identify",
@@ -160,14 +162,15 @@ addWorld({
         "Muestra el historial de commits"
       ],
       answer: 0,
-      explain: "Las ramas aíslan features. git checkout / git switch cambia de rama."
+      explain: "Las ramas aíslan features. git checkout / git switch cambia de rama.",
+      try: "En la carpeta de un repositorio Git, abre una terminal y escribe `git branch`: el asterisco marca la rama en la que estás."
     },
     {
       id: "pg10", level: 2, type: "fill",
       q: "Etiqueta HTML básica para un párrafo:",
       answer: "<p>",
       accept: ["<p>", "<p></p>", "p"],
-      explain: "Los párrafos van en <p>…</p>. Encabezados: <h1>…<h6>."
+      explain: "La etiqueta <p> marca un párrafo de texto y se cierra con </p>. Para títulos se usan <h1> a <h6>, y para un simple salto de línea dentro del texto, <br>."
     },
     {
       id: "pg11", level: 2, type: "mc",
@@ -198,7 +201,7 @@ addWorld({
         "Declara el tipo de dato que acepta la función"
       ],
       answer: 0,
-      explain: "Sin return, muchas funciones devuelven undefined (JS)."
+      explain: "return termina la función en ese punto y entrega un valor a quien la llamó. No imprime nada: para eso está console.log. En JS, una función sin return devuelve undefined."
     },
     {
       id: "pgL2b", level: 2, type: "scenario",
@@ -210,14 +213,15 @@ addWorld({
         "Subir un cambio al azar y ver si deja de fallar"
       ],
       answer: 0,
-      explain: "Los bugs intermitentes necesitan evidencia y tests."
+      explain: "Un bug intermitente se ataca con método: reproducirlo, aislar la causa y escribir una prueba que falle antes del fix. Un try/catch vacío solo esconde el error y lo hace más difícil de rastrear."
     },
     {
       id: "pgL2c", level: 2, type: "fill",
       q: "En JS, igualdad estricta:",
       answer: "===",
       accept: ["==="],
-      explain: "=== compara valor y tipo."
+      explain: "=== compara valor y tipo sin convertir nada: 5 === '5' da false. El doble igual == sí convierte tipos antes de comparar, por eso 5 == '5' da true y puede causar sorpresas.",
+      try: "En la consola del navegador (F12, pestaña Consola o Console) escribe `5 == '5'` y luego `5 === '5'`: verás true y false."
     },
     {
       id: "pgL2d", level: 2, type: "order",
@@ -249,7 +253,8 @@ addWorld({
       id: "pg14", level: 3, type: "tf",
       q: "const en JavaScript hace que un objeto sea completamente inmutable.",
       answer: false,
-      explain: "Falso: const solo impide reasignar la variable; las propiedades del objeto se pueden cambiar. Object.freeze lo congela (y solo de forma superficial)."
+      explain: "Falso: const solo impide reasignar la variable; las propiedades del objeto se pueden cambiar. Object.freeze lo congela (y solo de forma superficial).",
+      try: "En la consola del navegador (F12, pestaña Consola o Console) escribe `const o = {a: 1}; o.a = 2; o` y verás que a cambió a 2: const no congela el objeto."
     },
     {
       id: "pg15", level: 3, type: "scenario",
@@ -304,13 +309,13 @@ addWorld({
         "Un bucle nunca cumple su condición de salida"
       ],
       answer: 0,
-      explain: "Locks, colas y diseño cuidadoso mitigan carreras."
+      explain: "Hay race condition cuando varios hilos o procesos tocan un dato compartido y el resultado cambia según quién llegue primero. Se mitiga con locks, operaciones atómicas o colas."
     },
     {
       id: "pgL3b", level: 3, type: "tf",
       q: "Las pruebas automatizadas reducen regresiones al cambiar código.",
       answer: true,
-      explain: "CI ejecuta tests en cada cambio."
+      explain: "Verdadero: una regresión es algo que ya funcionaba y se rompe con un cambio nuevo. Las pruebas automatizadas, sobre todo si CI las corre en cada commit, ayudan a detectarla antes de llegar a producción."
     },
     {
       id: "pgL3c", level: 3, type: "scenario",
@@ -322,7 +327,7 @@ addWorld({
         "La configuración DNS del equipo del desarrollador"
       ],
       answer: 0,
-      explain: "Correlaciona request-id entre gateway y app."
+      explain: "Un 500 es un error del lado del servidor, así que la evidencia está en sus logs, métricas y trazas, no en el navegador. Usa el request-id para seguir la misma petición entre gateway y aplicación."
     },
     {
       id: "pgL3d", level: 3, type: "match",
@@ -333,7 +338,7 @@ addWorld({
         { left: "REST", right: "Estilo de API sobre HTTP" },
         { left: "SQL injection", right: "Ataque por entradas no sanitizadas" }
       ],
-      explain: "Fundamentos de backend y seguridad de apps."
+      explain: "try/catch atrapa excepciones sin tumbar el programa; JSON es el formato de datos típico de las APIs; REST usa métodos HTTP sobre recursos; la SQL injection cuela código SQL por entradas no validadas."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -348,7 +353,7 @@ addWorld({
       id: "pgL4b", level: 4, type: "tf",
       q: "Una race condition ocurre cuando el resultado depende del orden de hilos impredecible.",
       answer: true,
-      explain: "Usa locks/atómicos/colas."
+      explain: "Verdadero: si el resultado depende de qué hilo llegue primero a un dato compartido, es una race condition. Se evita sincronizando el acceso con locks, operaciones atómicas o colas."
     },
     {
       id: "pgL4c", level: 4, type: "scenario",
@@ -360,14 +365,15 @@ addWorld({
         "Borrar la caché del navegador de los usuarios"
       ],
       answer: 0,
-      explain: "Observabilidad antes de adivinar."
+      explain: "Primero observa: logs y métricas muestran cuándo y por qué falla. Si la operación es idempotente, reintentar con backoff exponencial mitiga fallos transitorios sin saturar al servidor ni duplicar efectos."
     },
     {
       id: "pgL4d", level: 4, type: "fill",
       q: "Sistema de control de versiones más usado (nombre):",
       answer: "git",
       accept: ["git", "Git"],
-      explain: "git init / clone / commit / push."
+      explain: "Git es el control de versiones más usado: guarda el historial con commits y permite trabajar en ramas. Básicos: git init, git clone, git commit, git push. GitHub es un servicio que aloja repos Git; no es Git.",
+      try: "En una terminal (Linux, WSL o PowerShell) escribe `git --version` y fíjate si Git está instalado y qué versión tienes."
     },
     {
       id: "pgL4e", level: 4, type: "mc",
@@ -379,7 +385,7 @@ addWorld({
         "Compilación Incremental y Depuración Continua"
       ],
       answer: 0,
-      explain: "Automatiza test y deploy."
+      explain: "CI (integración continua) compila y prueba automáticamente cada cambio. CD es entrega continua (código siempre listo para publicar) o despliegue continuo (se publica automáticamente si pasa las pruebas)."
     },
     {
       id: "pgL4f", level: 4, type: "match",
@@ -390,14 +396,14 @@ addWorld({
         { left: "Mock", right: "Doble de prueba" },
         { left: "Lint", right: "Análisis estático de estilo/bugs" }
       ],
-      explain: "Calidad de código."
+      explain: "El unit test prueba una función aislada; el de integración, varias piezas juntas; un mock es un doble que imita una dependencia real, como una API; el linter revisa el código sin ejecutarlo."
     },
     {
       id: "pgL4g", level: 4, type: "order",
       q: "Ordena el flujo de una feature en equipo:",
       items: ["branch", "commits", "pull request/review", "merge a main"],
       answer: [0, 1, 2, 3],
-      explain: "Evita commits directo a main en equipo."
+      explain: "Primero creas una rama para aislar tu trabajo, haces commits en ella, abres un pull request para revisión y solo al aprobarse se fusiona a main. Así main se mantiene estable."
     },
     {
       id: "pgL4h", level: 4, type: "tf",
@@ -417,7 +423,7 @@ addWorld({
         "Disco lleno por logs que nunca se rotan"
       ],
       answer: 0,
-      explain: "Profiling y liberar recursos."
+      explain: "Un memory leak es memoria que el programa reserva y nunca libera; en un servicio que corre días, la RAM crece hasta ponerlo lento o provocar un OOM (out of memory). No es una fuga de datos personales."
     },
     {
       id: "pgL5b", level: 5, type: "scenario",
@@ -429,7 +435,7 @@ addWorld({
         "Reusar códigos de error con otro significado"
       ],
       answer: 0,
-      explain: "Deprecation policy clara."
+      explain: "Versionar la ruta (/v1, /v2) deja que los clientes actuales sigan funcionando mientras migran. Los cambios incompatibles van en una versión nueva, con aviso y fecha de retiro de la vieja."
     },
     {
       id: "pgL5c", level: 5, type: "fill",
@@ -448,7 +454,7 @@ addWorld({
         "Autenticar al cliente sin enviar credenciales"
       ],
       answer: 0,
-      explain: "Clave en redes no confiables."
+      explain: "Una operación idempotente deja el mismo resultado si se ejecuta una o varias veces: borrar dos veces el mismo recurso lo deja igual de borrado. Por eso puedes reintentar tras un timeout sin duplicar efectos."
     },
     {
       id: "pgL5e", level: 5, type: "identify",
@@ -460,7 +466,7 @@ addWorld({
         "Espera activa (busy-wait) sobre un flag"
       ],
       answer: 0,
-      explain: "Mejora resiliencia."
+      explain: "Con una cola o broker (RabbitMQ, Kafka) el productor deja mensajes y el consumidor los procesa a su ritmo; si el consumidor se cae, los mensajes esperan. Las llamadas HTTP síncronas acoplan a ambos."
     },
     {
       id: "pgL5f", level: 5, type: "order",
@@ -490,7 +496,7 @@ addWorld({
         "Que el certificado TLS del sitio caducó"
       ],
       answer: 0,
-      explain: "Verifica evaluación real de la flag."
+      explain: "Si apagas la flag y el bug sigue, quizá el cambio no llegó: caché de CDN o configuración sin refrescar, o la flag no controla de verdad el código que falla. Verifica qué valor evalúa la app."
     }
   ],
 
@@ -506,7 +512,7 @@ addWorld({
         "Apagar DNS global"
       ],
       answer: 0,
-      explain: "Mitiga impacto primero; post‑mortem después."
+      explain: "Con producción rota, lo primero es restaurar el servicio: un rollback al release anterior que funcionaba corta el impacto en minutos. La causa se investiga después, con calma, en el post-mortem."
     },
     {
       id: "pgB2", level: 5, type: "mc",
@@ -530,20 +536,21 @@ addWorld({
         "Merge y tag de release"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Cambios mínimos reducen riesgo en incidentes."
+      explain: "Creas la rama desde el main estable, aplicas el cambio mínimo con pruebas, pasas review y CI, y al final haces merge y etiquetas el release. Un fix pequeño es más fácil de revisar y de revertir."
     },
     {
       id: "pgB4", level: 5, type: "tf",
       q: "BOSS: console.log en prod puede filtrar datos sensibles si no se controla.",
       answer: true,
-      explain: "Evita loguear secretos; usa niveles y redacción."
+      explain: "Verdadero: un console.log olvidado puede imprimir tokens, contraseñas o datos personales en la consola del navegador o en los logs. Usa niveles de log y enmascara los datos sensibles."
     },
     {
       id: "pgB5", level: 5, type: "identify",
       q: "BOSS: ¿Qué sistema guarda historial de cambios del código?",
       options: ["Git (VCS)", "npm (paquetes)", "Jest (tests)", "Vim (editor)"],
       answer: 0,
-      explain: "Git permite blame, revert y branches de emergencia."
+      explain: "Git es un sistema de control de versiones (VCS): guarda cada commit con autor y fecha, y permite git blame, git revert y ramas. npm gestiona paquetes, Jest corre pruebas y Vim es un editor.",
+      try: "En la carpeta de un repositorio Git, abre una terminal y escribe `git log --oneline -5` para ver los últimos 5 commits con su hash corto y mensaje."
     }
   ]
 });

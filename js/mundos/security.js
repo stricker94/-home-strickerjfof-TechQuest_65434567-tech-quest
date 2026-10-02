@@ -24,13 +24,13 @@ addWorld({
         "Adivinar contraseñas por fuerza bruta"
       ],
       answer: 0,
-      explain: "Correos/SMS/webs falsas imitan marcas legítimas."
+      explain: "El phishing es ingeniería social: correos, SMS o sitios falsos que imitan a marcas legítimas para que entregues contraseñas o datos. Saturar un servidor con tráfico sería un ataque DoS."
     },
     {
       id: "sec02", level: 1, type: "tf",
       q: "Una contraseña larga y única por sitio es mejor que reutilizar '123456'.",
       answer: true,
-      explain: "Usa gestor de contraseñas + MFA."
+      explain: "Verdadero: una contraseña larga y distinta en cada sitio resiste la fuerza bruta y evita que una filtración abra tus otras cuentas. Usa un gestor de contraseñas y activa MFA."
     },
     {
       id: "sec03", level: 1, type: "mc",
@@ -42,7 +42,7 @@ addWorld({
         "Método de filtrado antispam"
       ],
       answer: 0,
-      explain: "Algo que sabes + tienes / eres."
+      explain: "MFA es autenticación multifactor: combina al menos dos tipos de factor, como algo que sabes (contraseña), algo que tienes (teléfono o llave) o algo que eres (huella)."
     },
     {
       id: "sec04", level: 1, type: "identify",
@@ -54,14 +54,14 @@ addWorld({
         "Comunicado anunciado antes en la intranet"
       ],
       answer: 0,
-      explain: "Verifica dominio, hover del link y canales oficiales."
+      explain: "Urgencia, un enlace que no lleva al dominio oficial y un remitente raro son señales clásicas. Pasa el cursor sobre el enlace sin hacer clic y confirma por un canal oficial."
     },
     {
       id: "sec05", level: 1, type: "fill",
       q: "Término corto en inglés (contracción de 'malicious software') para software malicioso:",
       answer: "malware",
       accept: ["malware", "Malware"],
-      explain: "Malware incluye virus, troyanos, ransomware, spyware…"
+      explain: "Malware viene de malicious software y abarca cualquier programa dañino: virus, gusanos, troyanos, ransomware, spyware y más."
     },
     {
       id: "sec06", level: 1, type: "mc",
@@ -73,7 +73,7 @@ addWorld({
         "Aumentar la memoria RAM disponible"
       ],
       answer: 0,
-      explain: "Parches corrigen fallos explotables."
+      explain: "Los parches corrigen vulnerabilidades conocidas que un atacante podría explotar. Pero no sustituyen los backups ni recuperan archivos que un ransomware ya cifró."
     },
     {
       id: "sec07", level: 1, type: "tf",
@@ -91,7 +91,7 @@ addWorld({
         "Se la envías por el chat interno de la empresa"
       ],
       answer: 0,
-      explain: "Soporte legítimo no pide tu password."
+      explain: "Soporte legítimo nunca necesita tu contraseña. Cuelga y confirma con la mesa de ayuda por su número oficial; que sepa tu nombre y puesto no prueba nada, es un truco común de ingeniería social."
     },
     {
       id: "sec09", level: 1, type: "mc",
@@ -103,7 +103,7 @@ addWorld({
         "Filtrar tráfico entre VLANs del switch"
       ],
       answer: 0,
-      explain: "Defensa en profundidad: endpoint + red + identidad."
+      explain: "Un antivirus o EDR vigila el endpoint (la computadora) para detectar y bloquear malware y comportamientos sospechosos. Es una capa más: no reemplaza los backups ni el firewall."
     },
     {
       id: "sec10", level: 1, type: "order",
@@ -129,7 +129,7 @@ addWorld({
         "Mina criptomonedas con tu CPU"
       ],
       answer: 0,
-      explain: "Backups offline/inmutables son críticos."
+      explain: "El ransomware cifra tus archivos y exige un pago por la clave para descifrarlos. Para recuperarte sin pagar necesitas backups offline o inmutables; registrar teclas es lo que hace un keylogger."
     },
     {
       id: "sec12", level: 2, type: "scenario",
@@ -141,7 +141,7 @@ addWorld({
         "Instalar drivers del USB"
       ],
       answer: 0,
-      explain: "USB baiting es un vector real."
+      explain: "Dejar memorias USB tiradas para que alguien las conecte (USB baiting) es un vector real de malware. No la conectes en ningún equipo, menos en un servidor como el DC; repórtala a TI."
     },
     {
       id: "sec13", level: 2, type: "mc",
@@ -153,20 +153,20 @@ addWorld({
         "Heredar los permisos del jefe directo"
       ],
       answer: 0,
-      explain: "Reduce el blast radius de una cuenta comprometida."
+      explain: "Mínimo privilegio es dar a cada cuenta solo los permisos que necesita para su tarea. Si la comprometen, el daño queda limitado; dar de más y quitar después de un incidente llega tarde."
     },
     {
       id: "sec14", level: 2, type: "tf",
       q: "Una VPN corporativa cifra el tráfico hacia la red de la empresa.",
       answer: true,
-      explain: "Útil en Wi‑Fi públicos; no sustituye buen juicio."
+      explain: "Verdadero: la VPN crea un túnel cifrado entre tu equipo y la red de la empresa, muy útil en Wi-Fi públicas. Aun así, no te protege si caes en un phishing."
     },
     {
       id: "sec15", level: 2, type: "fill",
       q: "Ataque que satura un servicio para tumbarlo (sigla):",
       answer: "DDoS",
       accept: ["DDoS", "ddos", "DoS", "dos"],
-      explain: "Denial of Service / Distributed DoS."
+      explain: "Un DoS (Denial of Service) satura un servicio con peticiones hasta dejarlo inaccesible; si el tráfico viene de muchos equipos a la vez, como una botnet, es un DDoS (Distributed DoS)."
     },
     {
       id: "sec16", level: 2, type: "match",
@@ -177,7 +177,7 @@ addWorld({
         { left: "Shoulder surfing", right: "Mirar tu pantalla/teclado" },
         { left: "Tailgating", right: "Entrar detrás de alguien sin badge" }
       ],
-      explain: "Amenazas técnicas y físicas."
+      explain: "Phishing es engaño para robar datos y malware es software dañino; shoulder surfing (mirar tu pantalla) y tailgating (colarse detrás de alguien) son ataques físicos de ingeniería social."
     },
     {
       id: "sec17", level: 2, type: "mc",
@@ -189,7 +189,7 @@ addWorld({
         "Desactivar MFA"
       ],
       answer: 0,
-      explain: "SIM swap debilita SMS; preferir app o hardware key."
+      explain: "Los códigos por SMS se pueden robar con SIM swapping. Una app TOTP, que genera los códigos en tu teléfono, o una llave FIDO2 son más fuertes; la llave además resiste el phishing."
     },
     {
       id: "sec18", level: 2, type: "order",
@@ -213,7 +213,7 @@ addWorld({
         "Solo afecta a sitios HTTP, no a HTTPS"
       ],
       answer: 0,
-      explain: "Revisa permisos y reputación."
+      explain: "Con permiso para leer y cambiar datos en todos los sitios, la extensión puede ver lo que escribes y robar sesiones, incluso en HTTPS. Estar en la tienda oficial no garantiza que sea segura."
     },
     {
       id: "sec20", level: 2, type: "tf",
@@ -233,7 +233,7 @@ addWorld({
         "Más VLANs automáticamente seguras"
       ],
       answer: 0,
-      explain: "Reduce servicios expuestos y parchea."
+      explain: "La superficie de ataque es el conjunto de puntos por donde pueden atacarte: puertos, servicios, apps y cuentas. Mientras más amplia, más riesgo; redúcela apagando lo innecesario y parchando."
     },
     {
       id: "sec22", level: 3, type: "scenario",
@@ -245,7 +245,7 @@ addWorld({
         "Reinstalar el navegador del usuario"
       ],
       answer: 0,
-      explain: "Contención de identidad + forense ligero."
+      explain: "Hay que contener la identidad: revocar tokens y sesiones, rotar secretos y revisar logs. Cambiar solo la contraseña no basta, porque un token ya emitido puede seguir siendo válido."
     },
     {
       id: "sec23", level: 3, type: "mc",
@@ -257,21 +257,22 @@ addWorld({
         "Que USB es seguro"
       ],
       answer: 0,
-      explain: "Verifica identidad, dispositivo y contexto."
+      explain: "Zero Trust significa no confiar en nada solo por estar dentro de la red: cada acceso se verifica con identidad, estado del dispositivo y contexto. Ni la LAN ni la VPN dan confianza por sí solas."
     },
     {
       id: "sec24", level: 3, type: "fill",
       q: "Sigla de lista de control de acceso (inglés):",
       answer: "ACL",
       accept: ["ACL", "acl"],
-      explain: "ACLs en firewalls/filesystems limitan quién hace qué."
+      explain: "ACL (Access Control List) es una lista de reglas que define quién puede acceder a un recurso y con qué permisos. Se usa en firewalls, routers y sistemas de archivos.",
+      try: "En cmd escribe `icacls \"%USERPROFILE%\"` y mira qué usuarios y grupos tienen permisos sobre tu carpeta personal: F es control total, M modificar y RX leer y ejecutar."
     },
     {
       id: "sec25", level: 3, type: "order",
       q: "Ordena respuesta a incidente (IR) simplificada:",
       items: ["Identificar/contener", "Erradicar", "Recuperar", "Lecciones aprendidas"],
       answer: [0, 1, 2, 3],
-      explain: "NIST/SANS condensado para help desk."
+      explain: "Primero identificas y contienes para frenar el daño, luego erradicas la causa, después recuperas los sistemas y al final documentas lecciones aprendidas. Es el ciclo de NIST/SANS resumido."
     },
     {
       id: "sec26", level: 3, type: "match",
@@ -282,7 +283,7 @@ addWorld({
         { left: "Hardening", right: "Desactivar servicios innecesarios" },
         { left: "Patching", right: "Aplicar actualizaciones de seguridad" }
       ],
-      explain: "Controles preventivos clave."
+      explain: "En reposo protege datos guardados (BitLocker cifra el disco) y en tránsito los que viajan (TLS, VPN). Hardening reduce lo expuesto apagando servicios y patching corrige fallos con actualizaciones."
     },
     {
       id: "sec27", level: 3, type: "tf",
@@ -300,7 +301,7 @@ addWorld({
         "Retrasos en el envío por el tamaño del adjunto"
       ],
       answer: 0,
-      explain: "DLP y concienciación mitigan shadow IT."
+      explain: "Sacar datos sensibles como la nómina a una cuenta personal es una fuga de datos y viola la política, aunque no haya mala intención. Controles DLP y capacitación ayudan a evitarlo."
     },
     {
       id: "sec29", level: 3, type: "mc",
@@ -312,7 +313,7 @@ addWorld({
         "Generar contraseñas aleatorias"
       ],
       answer: 0,
-      explain: "Con salt + algoritmo moderno (bcrypt/argon2)."
+      explain: "Un hash es de una sola vía: se guarda el hash y al iniciar sesión se compara con el hash de lo que escribes, sin descifrar nada. Debe llevar salt y un algoritmo lento como bcrypt o Argon2."
     },
     {
       id: "sec30", level: 3, type: "identify",
@@ -324,7 +325,7 @@ addWorld({
         "RFC 1918 / RFC 4193"
       ],
       answer: 0,
-      explain: "Son ejemplos: ayudan a organizar controles y auditorías."
+      explain: "ISO 27001 y NIST CSF son marcos para gestionar riesgos y organizar controles de seguridad, y sirven de base para auditorías. ISO 8601 es formato de fechas e IEEE 802.3 es Ethernet."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -338,13 +339,13 @@ addWorld({
         "Administra el cableado y los switches del edificio"
       ],
       answer: 0,
-      explain: "Security Operations Center."
+      explain: "Un SOC (Security Operations Center) es el equipo que vigila alertas de seguridad, a menudo 24/7 con un SIEM, y coordina la respuesta a incidentes. Altas de usuarios e inventario son tareas de TI."
     },
     {
       id: "secL4b", level: 4, type: "tf",
       q: "El principle of least privilege aplica también a tokens OAuth y service accounts.",
       answer: true,
-      explain: "Scopes mínimos y rotación."
+      explain: "Verdadero: un token o una cuenta de servicio también puede ser robado, así que debe tener solo los scopes y permisos mínimos y sus secretos deben rotarse con regularidad."
     },
     {
       id: "secL4c", level: 4, type: "scenario",
@@ -356,14 +357,14 @@ addWorld({
         "Formatearlo en tu PC y reutilizarlo"
       ],
       answer: 0,
-      explain: "USB baiting."
+      explain: "Es USB baiting: una memoria con etiqueta atractiva para que alguien la conecte. No la conectes en ningún equipo, ni con antivirus ni en RH; entrégala a seguridad o TI para que la analicen."
     },
     {
       id: "secL4d", level: 4, type: "fill",
       q: "Sigla de gestión de identidad y acceso:",
       answer: "IAM",
       accept: ["IAM", "iam"],
-      explain: "Identity and Access Management."
+      explain: "IAM (Identity and Access Management) agrupa los procesos y herramientas que gestionan identidades y permisos: altas, bajas, MFA, roles y quién puede acceder a qué."
     },
     {
       id: "secL4e", level: 4, type: "mc",
@@ -375,7 +376,8 @@ addWorld({
         "Acelerar la entrega de correo"
       ],
       answer: 0,
-      explain: "Endurece el email del dominio."
+      explain: "SPF dice qué servidores pueden enviar correo de tu dominio, DKIM firma los mensajes y DMARC indica qué hacer si fallan. Juntos reducen el spoofing, pero no cifran el contenido.",
+      try: "En cmd escribe `nslookup -type=txt google.com` y busca el registro que empieza con v=spf1: es el SPF que dice qué servidores pueden enviar correo de ese dominio."
     },
     {
       id: "secL4f", level: 4, type: "match",
@@ -386,7 +388,7 @@ addWorld({
         { left: "WAF", right: "Protección apps web" },
         { left: "VPN", right: "Túnel cifrado remoto" }
       ],
-      explain: "Controles."
+      explain: "El SIEM centraliza y correlaciona logs para generar alertas, el EDR detecta y responde en cada equipo, el WAF filtra ataques a apps web y la VPN crea un túnel cifrado para el acceso remoto."
     },
     {
       id: "secL4g", level: 4, type: "order",
@@ -418,7 +420,7 @@ addWorld({
         "Tu equipo mediante un USB abandonado"
       ],
       answer: 0,
-      explain: "Verifica firmas y SBOMs."
+      explain: "En un ataque a la cadena de suministro comprometen a un proveedor, una librería o una actualización en la que confías para llegar a ti. Verificar firmas y tener un SBOM ayudan a reducir el riesgo."
     },
     {
       id: "secL5b", level: 5, type: "scenario",
@@ -437,7 +439,7 @@ addWorld({
       q: "Sigla de análisis de comportamiento de usuarios/entidades:",
       answer: "UEBA",
       accept: ["UEBA", "ueba"],
-      explain: "User and Entity Behavior Analytics."
+      explain: "UEBA (User and Entity Behavior Analytics) aprende el comportamiento normal de usuarios y equipos y alerta ante anomalías, como un login de madrugada desde otro país o descargas masivas."
     },
     {
       id: "secL5d", level: 5, type: "mc",
@@ -449,14 +451,14 @@ addWorld({
         "Acelerar DNS con resolución local"
       ],
       answer: 0,
-      explain: "Tiene trade-offs de rotación."
+      explain: "Con pinning, la app solo acepta el certificado o la clave pública que espera, así que un MITM con certificado de otra CA falla. La contra: complica la rotación de certificados."
     },
     {
       id: "secL5e", level: 5, type: "identify",
       q: "Estándar de cifrado de discos en Windows empresarial común:",
       options: ["BitLocker", "Notepad", "Paint", "Solitaire"],
       answer: 0,
-      explain: "Con TPM + escrow de claves."
+      explain: "BitLocker es el cifrado de disco incluido en Windows Pro y Enterprise. Suele usar el TPM para proteger la clave y guardar la clave de recuperación en AD o Entra ID por si hay que desbloquear."
     },
     {
       id: "secL5f", level: 5, type: "order",
@@ -468,13 +470,13 @@ addWorld({
         "Documentar gaps"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Ensayar antes del incidente real."
+      explain: "Un tabletop es un simulacro de mesa: defines el escenario, asignas roles y canales de comunicación, el equipo decide si aislar o restaurar y al final documentas los huecos encontrados para corregirlos."
     },
     {
       id: "secL5g", level: 5, type: "tf",
       q: "Exponer Elasticsearch/Redis sin auth a Internet es una mala práctica grave.",
       answer: true,
-      explain: "Muchas brechas empiezan así."
+      explain: "Verdadero: hay bots que escanean Internet buscando Elasticsearch o Redis abiertos para robar, borrar o secuestrar los datos. Ponlos en red privada, con autenticación y firewall."
     },
     {
       id: "secL5h", level: 5, type: "scenario",
@@ -486,7 +488,7 @@ addWorld({
         "Quitar HttpOnly para vigilar la cookie desde JavaScript"
       ],
       answer: 0,
-      explain: "Session theft es real."
+      explain: "Una cookie robada permite entrar sin contraseña ni MFA. Tokens de corta vida ligados al dispositivo, logout global y MFA extra en acciones sensibles limitan el daño; quitar HttpOnly lo empeora."
     }
   ],
 
@@ -502,7 +504,7 @@ addWorld({
         "Esperar a que el proveedor de correo lo detecte, sin avisar a nadie"
       ],
       answer: 0,
-      explain: "Comunicación + bloqueo + identidad."
+      explain: "Primero contén: avisa a los usuarios, bloquea el dominio y las URLs en correo, proxy y DNS, y resetea credenciales y sesiones de quien interactuó. Reenviar el correo a todos solo lo propaga."
     },
     {
       id: "secB2", level: 5, type: "mc",
@@ -514,7 +516,7 @@ addWorld({
         "Apagar los logs para que el atacante no detecte la respuesta"
       ],
       answer: 0,
-      explain: "Contención y recuperación probada."
+      explain: "Aísla primero los equipos afectados para frenar el cifrado, preserva evidencias y restaura desde un backup limpio y probado. Restaurar sin aislar deja que el ransomware vuelva a cifrar."
     },
     {
       id: "secB3", level: 5, type: "order",
@@ -532,7 +534,7 @@ addWorld({
       id: "secB4", level: 5, type: "tf",
       q: "BOSS: El logging centralizado ayuda a detectar y investigar incidentes.",
       answer: true,
-      explain: "SIEM/consultas correlacionan eventos."
+      explain: "Verdadero: juntar en un SIEM los logs de servidores, equipos y nube permite correlacionar eventos, detectar patrones y reconstruir la línea de tiempo de un incidente."
     },
     {
       id: "secB5", level: 5, type: "fill",
@@ -582,7 +584,7 @@ addWorld({
         "tarjeta",
         "tarjeta de coordenadas"
       ],
-      explain: "Token/app/llave física complementan la password."
+      explain: "Algo que tienes es un objeto en tu poder: un token, tu teléfono con app autenticadora o una llave FIDO2. Se combina con algo que sabes (contraseña) o algo que eres (huella)."
     }
   ]
 });

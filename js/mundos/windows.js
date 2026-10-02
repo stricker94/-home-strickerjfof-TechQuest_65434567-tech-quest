@@ -24,7 +24,8 @@ addWorld({
         "Monitor de recursos (Resource Monitor)"
       ],
       answer: 1,
-      explain: "Event Viewer (eventvwr.msc) registra Application, Security y System. Útil para diagnosticar fallos."
+      explain: "Event Viewer (eventvwr.msc) registra Application, Security y System. Útil para diagnosticar fallos.",
+      try: "Presiona Win+R, escribe `eventvwr.msc` y abre Registros de Windows > Sistema para ver los errores y advertencias recientes."
     },
     {
       id: "wn02", level: 1, type: "mc",
@@ -36,21 +37,24 @@ addWorld({
         "Monitor de confiabilidad"
       ],
       answer: 1,
-      explain: "El Administrador de tareas (taskmgr) muestra procesos, rendimiento, inicio y usuarios."
+      explain: "El Administrador de tareas (taskmgr) muestra procesos, rendimiento, inicio y usuarios.",
+      try: "Presiona Win+R, escribe `taskmgr` y abre la pestaña Rendimiento para ver el uso de CPU y memoria en tiempo real."
     },
     {
       id: "wn03", level: 1, type: "fill",
       q: "Comando en cmd/PowerShell para ver la IP local (forma corta):",
       answer: "ipconfig",
       accept: ["ipconfig", "ipconfig /all"],
-      explain: "ipconfig muestra adaptadores e IPs. /all añade DNS, MAC y DHCP."
+      explain: "ipconfig muestra adaptadores e IPs. /all añade DNS, MAC y DHCP.",
+      try: "En cmd escribe `ipconfig /all` y busca tu dirección IPv4, la puerta de enlace y los servidores DNS del adaptador activo."
     },
     {
       id: "wn04", level: 1, type: "mc",
       q: "En PowerShell, ¿qué cmdlet lista servicios?",
       options: ["Get-Service", "Get-Process", "Get-Content", "Set-Location"],
       answer: 0,
-      explain: "Get-Service lista servicios. Start-Service / Stop-Service / Restart-Service los controlan."
+      explain: "Get-Service lista servicios. Start-Service / Stop-Service / Restart-Service los controlan.",
+      try: "En PowerShell escribe `Get-Service | Where-Object Status -eq Running` para ver solo los servicios en ejecución."
     },
     {
       id: "wn05", level: 1, type: "order",
@@ -69,14 +73,15 @@ addWorld({
       q: "¿Qué comando prueba conectividad ICMP a un host?",
       options: ["ping", "dir", "cls", "copy"],
       answer: 0,
-      explain: "ping envía ecos ICMP. Si falla, revisa red, firewall o DNS."
+      explain: "ping envía paquetes ICMP Echo Request y mide si llegan respuestas y en cuánto tiempo. Si falla, revisa red, firewall (muchos bloquean ICMP) o DNS si usaste un nombre.",
+      try: "En cmd escribe `ping -n 4 8.8.8.8` y fíjate en el tiempo de respuesta en ms y en el porcentaje de paquetes perdidos."
     },
     {
       id: "wnL1a", level: 1, type: "mc",
       q: "¿Qué atajo abre el Administrador de tareas?",
       options: ["Ctrl+Shift+Esc", "Ctrl+Shift+Supr", "Win+Shift+S", "Ctrl+Alt+Tab"],
       answer: 0,
-      explain: "Ctrl+Shift+Esc abre Task Manager directamente."
+      explain: "Ctrl+Shift+Esc abre el Administrador de tareas directo, sin pasar por la pantalla de seguridad que muestra Ctrl+Alt+Supr. Win+Shift+S, en cambio, abre la herramienta de recortes."
     },
     {
       id: "wnL1b", level: 1, type: "tf",
@@ -89,14 +94,16 @@ addWorld({
       q: "Comando para listar archivos en cmd:",
       answer: "dir",
       accept: ["dir", "dir /w", "dir /b", "dir /a", "dir /p", "dir .", "dir /s", "dir /a-d"],
-      explain: "dir es el equivalente aproximado a ls."
+      explain: "dir lista archivos y carpetas del directorio actual en cmd, como ls en Linux. Con /a incluye ocultos y de sistema, /b muestra solo nombres y /s recorre subcarpetas.",
+      try: "En cmd escribe `dir` en tu carpeta de usuario y luego `dir /a`: aparecerán archivos ocultos como NTUSER.DAT."
     },
     {
       id: "wnL1d", level: 1, type: "identify",
       q: "¿Qué comando muestra la versión y compilación (build) de Windows en una ventana?",
       options: ["winver", "mspaint", "notepad", "calc"],
       answer: 0,
-      explain: "winver abre 'Acerca de Windows' con versión y build. Para más detalle: systeminfo."
+      explain: "winver abre 'Acerca de Windows' con versión y build. Para más detalle: systeminfo.",
+      try: "Presiona Win+R y escribe `winver` para ver tu versión de Windows y el número de compilación (build)."
     },
 
     // ——— Nivel 2: Intermedio (10 preguntas) ———
@@ -128,14 +135,16 @@ addWorld({
         "Muestra el contenido de un archivo"
       ],
       answer: 0,
-      explain: "Get-Process es el equivalente moderno a tasklist. Stop-Process termina un proceso."
+      explain: "Get-Process es el equivalente moderno a tasklist. Stop-Process termina un proceso.",
+      try: "En PowerShell escribe `Get-Process | Sort-Object CPU -Descending | Select-Object -First 5` para ver los 5 procesos que más CPU han usado."
     },
     {
       id: "wn10", level: 2, type: "fill",
       q: "Comando para liberar la concesión (lease) DHCP del adaptador:",
       answer: "ipconfig /release",
       accept: ["ipconfig /release", "ipconfig /release *", "ipconfig -release"],
-      explain: "Después suele usarse ipconfig /renew para pedir una nueva concesión. /flushdns limpia la caché DNS y route print muestra las rutas."
+      explain: "Después suele usarse ipconfig /renew para pedir una nueva concesión. /flushdns limpia la caché DNS y route print muestra las rutas.",
+      try: "En cmd escribe `ipconfig /all` y busca DHCP habilitado y las líneas de la concesión: ahí ves cuándo la obtuviste y cuándo vence."
     },
     {
       id: "wn11", level: 2, type: "mc",
@@ -159,7 +168,8 @@ addWorld({
         "En el Visor de eventos únicamente"
       ],
       answer: 0,
-      explain: "Usuarios y grupos locales (lusrmgr.msc) o Configuración. En dominio se usan AD/GP."
+      explain: "Usuarios y grupos locales (lusrmgr.msc) o Configuración. En dominio se usan AD/GP.",
+      try: "En cmd escribe `net user` para listar las cuentas locales del equipo y `net user %USERNAME%` para ver los detalles de la tuya."
     },
     {
       id: "wnL2a", level: 2, type: "mc",
@@ -171,14 +181,15 @@ addWorld({
         "Escanea el equipo en busca de malware"
       ],
       answer: 0,
-      explain: "System File Checker. Útil tras corrupción de componentes."
+      explain: "sfc (System File Checker) revisa los archivos protegidos de Windows y reemplaza los dañados; se ejecuta como administrador. Para sectores dañados del disco se usa chkdsk, no sfc."
     },
     {
       id: "wnL2b", level: 2, type: "scenario",
       q: "Un servicio crítico está detenido. Herramienta GUI clásica:",
       options: ["services.msc", "devmgmt.msc", "diskmgmt.msc", "lusrmgr.msc"],
       answer: 0,
-      explain: "También: Get-Service / Restart-Service en PowerShell."
+      explain: "services.msc abre la consola de Servicios, donde ves estado y tipo de inicio y puedes iniciar o reiniciar uno. En PowerShell: Get-Service y Restart-Service. devmgmt.msc es para dispositivos.",
+      try: "En PowerShell escribe `Get-Service Spooler` y fíjate en la columna Status: Running significa que la cola de impresión está activa."
     },
     {
       id: "wnL2c", level: 2, type: "order",
@@ -197,7 +208,8 @@ addWorld({
       q: "Cmdlet de PowerShell para leer el contenido de un archivo de texto:",
       answer: "Get-Content",
       accept: ["Get-Content", "gc", "cat", "type"],
-      explain: "Get-Content lee archivos (alias gc, cat, type). Con -Tail 20 -Wait sigue un log en vivo."
+      explain: "Get-Content lee archivos (alias gc, cat, type). Con -Tail 20 -Wait sigue un log en vivo.",
+      try: "En PowerShell escribe `Get-Content C:\\Windows\\System32\\drivers\\etc\\hosts -Tail 5` para leer las últimas 5 líneas del archivo hosts."
     },
 
     // ——— Nivel 3: Avanzado (10 preguntas) ———
@@ -205,7 +217,8 @@ addWorld({
       id: "wn13", level: 3, type: "tf",
       q: "Win+R → services.msc abre la consola de servicios.",
       answer: true,
-      explain: "services.msc es el snap-in clásico para iniciar/detener/reiniciar servicios."
+      explain: "services.msc es el snap-in clásico para iniciar/detener/reiniciar servicios.",
+      try: "Presiona Win+R, escribe `services.msc` y busca Cola de impresión para ver su estado y tipo de inicio, sin cambiar nada."
     },
     {
       id: "wn14", level: 3, type: "scenario",
@@ -217,7 +230,8 @@ addWorld({
         "ipconfig /release"
       ],
       answer: 0,
-      explain: "ipconfig /flushdns vacía el resolver cache de Windows."
+      explain: "ipconfig /flushdns vacía la caché de resolución DNS de Windows y obliga a consultar de nuevo. /displaydns solo la muestra y netsh winsock reset restablece el catálogo de Winsock, no el DNS.",
+      try: "En cmd escribe `ipconfig /displaydns | more` para ver los nombres que Windows tiene en caché: esa es la lista que /flushdns vacía."
     },
     {
       id: "wn15", level: 3, type: "mc",
@@ -266,14 +280,16 @@ addWorld({
         "Tras cambiar el DNS, vaciar la caché de resolución y volver a probar"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Si hay IP pero no nombres, el problema suele ser DNS: revisa qué DNS usa el equipo, prueba la resolución con nslookup, cambia a un DNS alternativo si falla y limpia la caché para descartar respuestas viejas."
+      explain: "Si hay IP pero no nombres, el problema suele ser DNS: revisa qué DNS usa el equipo, prueba la resolución con nslookup, cambia a un DNS alternativo si falla y limpia la caché para descartar respuestas viejas.",
+      try: "En cmd escribe `nslookup google.com` y fíjate en qué servidor DNS respondió y qué direcciones IP devolvió."
     },
     {
       id: "wn18", level: 3, type: "mc",
       q: "¿Qué herramienta abre el Editor del Registro?",
       options: ["regedit", "mspaint", "calc", "notepad únicamente"],
       answer: 0,
-      explain: "regedit edita el registro. Cámbialo solo con respaldo y conocimiento: errores pueden romper el sistema."
+      explain: "regedit edita el registro. Cámbialo solo con respaldo y conocimiento: errores pueden romper el sistema.",
+      try: "En cmd escribe `reg query \"HKCU\\Control Panel\\Desktop\" /v Wallpaper` para leer un valor del registro sin modificar nada."
     },
     {
       id: "wnL3a", level: 3, type: "mc",
@@ -314,7 +330,8 @@ addWorld({
         { left: "eventvwr.msc", right: "Visor de eventos" },
         { left: "lusrmgr.msc", right: "Usuarios y grupos locales" }
       ],
-      explain: "Las consolas .msc aceleran la administración."
+      explain: "Cada .msc abre una consola MMC: diskmgmt para discos y particiones, devmgmt para dispositivos y drivers, eventvwr para registros de eventos y lusrmgr para usuarios y grupos locales.",
+      try: "Presiona Win+R, escribe `devmgmt.msc` y revisa si algún dispositivo tiene un triángulo amarillo, señal de un problema con su driver."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -334,7 +351,8 @@ addWorld({
       id: "wnL4b", level: 4, type: "tf",
       q: "'Get-WinEvent' consulta el Visor de eventos desde PowerShell.",
       answer: true,
-      explain: "Más potente que Get-EventLog legacy."
+      explain: "Verdadero: Get-WinEvent lee los registros del Visor de eventos, incluidos los de aplicaciones y servicios. Es más potente que Get-EventLog, que solo ve los registros clásicos y no existe en PowerShell 7.",
+      try: "En PowerShell escribe `Get-WinEvent -LogName System -MaxEvents 5` para ver los 5 eventos más recientes del registro Sistema."
     },
     {
       id: "wnL4c", level: 4, type: "scenario",
@@ -346,7 +364,7 @@ addWorld({
         "Quitar al usuario del grupo Administradores y reiniciar"
       ],
       answer: 0,
-      explain: "Documenta SID y carpetas antes de tocar."
+      explain: "Respalda o renombra la carpeta del perfil dañado, anota su SID y quita su entrada en ProfileList (con respaldo) para que Windows cree uno nuevo; luego copia los datos. La SAM guarda cuentas, no perfiles."
     },
     {
       id: "wnL4d", level: 4, type: "fill",
@@ -376,7 +394,7 @@ addWorld({
         "Bloquear la sesión del equipo tras un tiempo inactivo"
       ],
       answer: 0,
-      explain: "Reduce malware y software no autorizado."
+      explain: "AppLocker y WDAC (hoy App Control for Business) definen qué ejecutables, scripts e instaladores pueden correr, por editor, ruta o hash. Así frenan malware y software no autorizado."
     },
     {
       id: "wnL4f", level: 4, type: "match",
@@ -387,7 +405,8 @@ addWorld({
         { left: "gpedit.msc", right: "Editor de directivas local" },
         { left: "compmgmt.msc", right: "Administración de equipos" }
       ],
-      explain: "MMC habituales."
+      explain: "Consolas MMC de uso diario: wf.msc gestiona reglas del firewall, certmgr.msc los certificados del usuario actual, gpedit.msc las directivas del equipo local (no existe en Home) y compmgmt.msc agrupa varias herramientas.",
+      try: "Presiona Win+R, escribe `certmgr.msc` y abre Entidades de certificación raíz de confianza para ver en qué CA confía tu usuario."
     },
     {
       id: "wnL4g", level: 4, type: "order",
@@ -419,7 +438,7 @@ addWorld({
         "Certificado TLS caducado"
       ],
       answer: 0,
-      explain: "Actualiza/rollback drivers; Memory Diagnostic también."
+      explain: "DRIVER_IRQL_NOT_LESS_OR_EQUAL indica que un driver en modo kernel accedió a memoria paginable con un IRQL demasiado alto. Actualiza o revierte el driver que señala el dump y descarta la RAM con Diagnóstico de memoria."
     },
     {
       id: "wnL5b", level: 5, type: "scenario",
@@ -431,14 +450,15 @@ addWorld({
         "Desactivar la auditoría de inicios de sesión"
       ],
       answer: 0,
-      explain: "Tiering de administración reduce movimiento lateral."
+      explain: "Restringir NTLM y usar Kerberos dificulta el pass-the-hash; LAPS da una clave de admin local única a cada equipo y separar cuentas admin por niveles frena el movimiento lateral. Una clave compartida lo facilita."
     },
     {
       id: "wnL5c", level: 5, type: "fill",
       q: "Cmdlet para reiniciar un equipo remoto (uno común):",
       answer: "Restart-Computer",
       accept: ["Restart-Computer", "restart-computer"],
-      explain: "Restart-Computer -ComputerName host"
+      explain: "Restart-Computer reinicia el equipo local o uno remoto con -ComputerName, por ejemplo Restart-Computer -ComputerName PC01 -Force; necesitas permisos de administrador en el equipo destino.",
+      try: "En PowerShell escribe `Get-Command Restart-Computer -Syntax` para ver sus parámetros, como -ComputerName y -Force, sin reiniciar nada."
     },
     {
       id: "wnL5d", level: 5, type: "mc",
@@ -450,7 +470,7 @@ addWorld({
         "La cola de impresión frente a drivers de terceros"
       ],
       answer: 0,
-      explain: "Parte del stack de seguridad basado en virtualización."
+      explain: "Credential Guard usa VBS para guardar hashes NTLM y tickets Kerberos en un proceso aislado (LSAIso), fuera del alcance de quien lee la memoria de LSASS. Verificar el bootloader es tarea de Secure Boot."
     },
     {
       id: "wnL5e", level: 5, type: "identify",
@@ -462,7 +482,7 @@ addWorld({
         "Monitor de rendimiento / Monitor de recursos / typeperf"
       ],
       answer: 0,
-      explain: "pktmon es moderno en Windows 10+."
+      explain: "pktmon (integrado en Windows 10 y 11) y netsh trace capturan paquetes con herramientas de Microsoft; Message Analyzer ya fue retirado. tracert o Test-NetConnection solo prueban conectividad."
     },
     {
       id: "wnL5f", level: 5, type: "order",
@@ -474,13 +494,13 @@ addWorld({
         "Lecciones + hardening"
       ],
       answer: [0, 1, 2, 3],
-      explain: "No pagues como primera opción automática."
+      explain: "Primero aíslas el equipo para que el cifrado no se propague; luego defines alcance y guardas muestras; restauras desde un backup limpio verificado y cierras con lecciones y hardening. Pagar no garantiza nada."
     },
     {
       id: "wnL5g", level: 5, type: "tf",
       q: "Un GPO con WMI filter puede aplicar solo a ciertos OS/hardware.",
       answer: true,
-      explain: "Útil para targeting fino."
+      explain: "Verdadero: un filtro WMI evalúa una consulta WQL en cada equipo (por ejemplo, versión del sistema operativo o modelo) y la GPO solo se aplica donde el resultado es verdadero."
     },
     {
       id: "wnL5h", level: 5, type: "scenario",
@@ -492,7 +512,7 @@ addWorld({
         "Spooler detenido en el servidor de impresión central"
       ],
       answer: 0,
-      explain: "Revisa Point and Print / Deployed Printers."
+      explain: "Si solo falla una OU, sospecha de algo asignado a esa OU: la GPO que despliega impresoras o restringe Point and Print, o permisos de la cola. Tóner agotado o Spooler caído afectarían a todos."
     }
   ],
 
@@ -550,7 +570,8 @@ addWorld({
         "Administración de discos + Desfragmentador"
       ],
       answer: 0,
-      explain: "Minidumps y Reliability Monitor ayudan a correlacionar drivers."
+      explain: "Minidumps y Reliability Monitor ayudan a correlacionar drivers.",
+      try: "Presiona Win+R y escribe `perfmon /rel` para abrir el Monitor de confiabilidad y ver los errores críticos de cada día."
     }
   ]
 });

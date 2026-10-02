@@ -19,14 +19,16 @@ addWorld({
       q: "¿Qué comando lista el contenido de un directorio?",
       options: ["ls", "cd", "pwd", "cat"],
       answer: 0,
-      explain: "ls (list) muestra archivos y carpetas. Usa -l para formato largo y -a para incluir ocultos."
+      explain: "ls (list) muestra archivos y carpetas. Usa -l para formato largo y -a para incluir ocultos.",
+      try: "En una terminal de Linux o WSL escribe `ls -la` en tu home y fíjate en los archivos que empiezan con punto: son los ocultos que -a muestra."
     },
     {
       id: "lx02", level: 1, type: "mc",
       q: "¿Qué comando cambia el directorio de trabajo actual?",
       options: ["mv", "cd", "cp", "rm"],
       answer: 1,
-      explain: "cd (change directory) te mueve entre carpetas, con ruta absoluta (cd /etc) o relativa (cd Documentos)."
+      explain: "cd (change directory) te mueve entre carpetas, con ruta absoluta (cd /etc) o relativa (cd Documentos).",
+      try: "En una terminal de Linux o WSL escribe `cd /etc`, luego `pwd` para confirmar dónde estás y regresa a tu home con `cd ~`."
     },
     {
       id: "lx03", level: 1, type: "fill",
@@ -42,7 +44,8 @@ addWorld({
         "mkdir 'proyectos'",
         "mkdir \"proyectos\""
       ],
-      explain: "mkdir crea directorios. mkdir -p crea rutas anidadas si no existen."
+      explain: "mkdir crea directorios. mkdir -p crea rutas anidadas si no existen.",
+      try: "En una terminal de Linux o WSL escribe `mkdir -p /tmp/prueba/a/b` y luego `ls -R /tmp/prueba` para ver las carpetas anidadas que creó -p."
     },
     {
       id: "lx04", level: 1, type: "mc",
@@ -54,7 +57,8 @@ addWorld({
         "Cambiar el propietario y el grupo del archivo"
       ],
       answer: 1,
-      explain: "r = read. En archivos permite leer; en directorios, listar entradas."
+      explain: "r = read. En archivos permite leer; en directorios, listar entradas.",
+      try: "En una terminal de Linux o WSL escribe `ls -l /etc/passwd` y mira la primera columna: cada r indica permiso de lectura para dueño, grupo y otros."
     },
     {
       id: "lx05", level: 1, type: "order",
@@ -62,11 +66,12 @@ addWorld({
       items: [
         "sudo apt update",
         "sudo apt install nombre-paquete",
-        "Confirmar con Y si se pide",
+        "Confirmar si lo pide (Y, o S si apt está en español)",
         "Verificar con apt list --installed | grep nombre"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Primero actualizas índices (update), luego instalas, confirmas y opcionalmente verificas."
+      explain: "Primero actualizas índices (update), luego instalas, confirmas y opcionalmente verificas.",
+      try: "En Ubuntu o WSL con Ubuntu escribe `apt list --installed | grep bash` y verás el paquete instalado con su versión (ignora el aviso WARNING de apt)."
     },
     {
       id: "lx06", level: 1, type: "mc",
@@ -78,20 +83,23 @@ addWorld({
         "Dueño: rwx; grupo: r-x; otros: ---"
       ],
       answer: 1,
-      explain: "7=rwx, 5=r-x. El dueño puede todo; grupo/otros leen y ejecutan. Típico en scripts."
+      explain: "7=rwx, 5=r-x. El dueño puede todo; grupo/otros leen y ejecutan. Típico en scripts.",
+      try: "En Linux o WSL ejecuta `touch /tmp/demo.sh`, luego `chmod 755 /tmp/demo.sh` y revisa con `ls -l /tmp/demo.sh` que diga rwxr-xr-x."
     },
     {
       id: "lxL1a", level: 1, type: "mc",
       q: "¿Qué comando muestra la ruta del directorio actual?",
       options: ["pwd", "ls", "cd", "whoami"],
       answer: 0,
-      explain: "pwd = print working directory."
+      explain: "pwd (print working directory) imprime la ruta absoluta de la carpeta donde estás. whoami no muestra rutas: solo dice con qué usuario estás trabajando.",
+      try: "En una terminal de Linux o WSL escribe `pwd`, luego `cd /tmp` y `pwd` otra vez para ver cómo cambia la ruta."
     },
     {
       id: "lxL1b", level: 1, type: "tf",
       q: "El comando 'man ls' muestra la ayuda del comando ls.",
       answer: true,
-      explain: "man abre el manual. También: ls --help."
+      explain: "Verdadero: man ls abre la página del manual de ls con todas sus opciones; avanzas con las flechas y sales con q. Para un resumen rápido también sirve ls --help.",
+      try: "En una terminal de Linux o WSL escribe `man ls`, avanza con las flechas y sal con q; compara con `ls --help`, que imprime un resumen."
     },
     {
       id: "lxL1c", level: 1, type: "fill",
@@ -105,7 +113,8 @@ addWorld({
         "cp ./archivo.txt /tmp/",
         "cp ./archivo.txt /tmp/archivo.txt"
       ],
-      explain: "cp origen destino. Usa -r para copiar directorios."
+      explain: "cp copia con el formato cp origen destino; si el destino es una carpeta como /tmp, el archivo conserva su nombre. Para copiar carpetas completas agrega -r.",
+      try: "En Linux o WSL ejecuta `echo hola > /tmp/nota.txt`, `mkdir -p /tmp/copias` y `cp /tmp/nota.txt /tmp/copias`; con `ls /tmp/copias` verás la copia."
     },
     {
       id: "lxL1d", level: 1, type: "mc",
@@ -117,7 +126,8 @@ addWorld({
         "Lista el contenido del directorio padre"
       ],
       answer: 0,
-      explain: ".. es el directorio padre."
+      explain: ".. representa el directorio padre, así que cd .. te sube un nivel. Para ir a tu home se usa cd o cd ~, y para ir a la raíz, cd /.",
+      try: "En una terminal de Linux o WSL escribe `cd /usr/share`, luego `cd ..` y `pwd`: verás que subiste a /usr."
     },
 
     // ——— Nivel 2: Intermedio (10 preguntas) ———
@@ -126,14 +136,16 @@ addWorld({
       q: "¿Qué herramienta o comando usas para ver procesos en ejecución?",
       options: ["ps / top / htop", "df / du / lsblk", "ip / ss / ping", "chmod / chown / umask"],
       answer: 0,
-      explain: "ps lista procesos; top/htop muestran uso en tiempo real. kill termina un proceso por PID."
+      explain: "ps lista procesos; top/htop muestran uso en tiempo real. kill termina un proceso por PID.",
+      try: "En una terminal de Linux o WSL escribe `ps aux | head` para ver procesos y luego `top` para verlos en vivo; sal de top con la tecla q."
     },
     {
       id: "lx08", level: 2, type: "mc",
       q: "¿Dónde suelen estar los archivos de configuración del sistema en Linux?",
       options: ["/home", "/etc", "/tmp", "/dev"],
       answer: 1,
-      explain: "/etc contiene configs del sistema (red, servicios, usuarios, etc.)."
+      explain: "/etc contiene configs del sistema (red, servicios, usuarios, etc.).",
+      try: "En una terminal de Linux o WSL escribe `ls /etc` y busca archivos conocidos como hosts, hostname o passwd."
     },
     {
       id: "lx09", level: 2, type: "match",
@@ -144,7 +156,8 @@ addWorld({
         { left: "rm", right: "Elimina archivos" },
         { left: "whoami", right: "Muestra el usuario actual" }
       ],
-      explain: "pwd = print working directory; cat concatena/muestra; rm remueve; whoami indica tu usuario."
+      explain: "pwd = print working directory; cat concatena/muestra; rm remueve; whoami indica tu usuario.",
+      try: "En una terminal de Linux o WSL escribe `whoami`, `pwd` y `cat /etc/hostname` y compara lo que devuelve cada uno."
     },
     {
       id: "lx10", level: 2, type: "fill",
@@ -160,14 +173,16 @@ addWorld({
         "sudo chmod 644 ./config.txt",
         "sudo chmod 0644 ./config.txt"
       ],
-      explain: "644 = dueño rw, grupo/otros solo lectura. Común en archivos de configuración."
+      explain: "644 = dueño rw, grupo/otros solo lectura. Común en archivos de configuración.",
+      try: "En Linux o WSL ejecuta `touch /tmp/config.txt`, luego `chmod 644 /tmp/config.txt` y revisa con `ls -l /tmp/config.txt` que diga rw-r--r--."
     },
     {
       id: "lx11", level: 2, type: "mc",
       q: "¿Qué comando muestra información de un usuario y sus grupos?",
       options: ["id", "ls", "df", "ping"],
       answer: 0,
-      explain: "id muestra UID, GID y grupos. También: groups, getent passwd."
+      explain: "id muestra UID, GID y grupos. También: groups, getent passwd.",
+      try: "En una terminal de Linux o WSL escribe `id` y fíjate en tu uid, tu gid y la lista de grupos a los que perteneces."
     },
     {
       id: "lx12", level: 2, type: "mc",
@@ -179,7 +194,8 @@ addWorld({
         "El área de intercambio (swap) del sistema"
       ],
       answer: 1,
-      explain: "Todo cuelga de /. No hay letras de unidad como en Windows; /home, /var, /usr están bajo /."
+      explain: "Todo cuelga de /. No hay letras de unidad como en Windows; /home, /var, /usr están bajo /.",
+      try: "En una terminal de Linux o WSL escribe `ls /` y verás que home, etc, usr y var cuelgan todos de la raíz."
     },
     {
       id: "lxL2a", level: 2, type: "mc",
@@ -191,14 +207,16 @@ addWorld({
         "Cuenta cuántas líneas de log.txt contienen 'error'"
       ],
       answer: 0,
-      explain: "grep filtra líneas. -i ignora mayúsculas."
+      explain: "grep muestra las líneas que coinciden con un patrón y -i ignora mayúsculas, así que encuentra error, Error y ERROR. Para invertir la búsqueda se usa -v y para contar líneas, -c.",
+      try: "En una terminal de Linux o WSL escribe `grep -i ROOT /etc/passwd` y compara con `grep ROOT /etc/passwd`, que no encuentra nada por las mayúsculas."
     },
     {
       id: "lxL2b", level: 2, type: "scenario",
       q: "Necesitas ver quién está conectado al servidor. ¿Comando típico?",
       options: ["who / w", "mkdir", "apt update", "chmod 777"],
       answer: 0,
-      explain: "who y w muestran sesiones activas."
+      explain: "who lista los usuarios con sesión abierta, su terminal y la hora de entrada; w muestra lo mismo más lo que ejecuta cada uno y la carga del sistema.",
+      try: "En una terminal de Linux escribe `w` y revisa las columnas USER y WHAT; arriba verás el uptime y la carga (en WSL la lista puede salir vacía)."
     },
     {
       id: "lxL2c", level: 2, type: "fill",
@@ -212,14 +230,16 @@ addWorld({
         "sudo chown ana:ana file.txt",
         "sudo chown ana: file.txt"
       ],
-      explain: "chown usuario archivo. A menudo requiere sudo."
+      explain: "chown cambia el dueño con el formato chown usuario archivo (o usuario:grupo para cambiar también el grupo). Normalmente requiere sudo, porque solo root puede cambiar el dueño de un archivo.",
+      try: "En una terminal de Linux o WSL escribe `ls -l /etc/hostname` y fíjate en la tercera y cuarta columna: dueño y grupo, lo que chown cambia."
     },
     {
       id: "lxL2d", level: 2, type: "order",
       q: "Ordena crear y entrar a ~/labs/demo:",
       items: ["cd ~", "mkdir -p labs/demo", "cd labs/demo", "pwd"],
       answer: [0, 1, 2, 3],
-      explain: "mkdir -p crea la ruta; luego entras y verificas."
+      explain: "Partes de tu home con cd ~ para que la ruta relativa funcione; mkdir -p crea labs y demo de una sola vez, luego entras con cd labs/demo y pwd confirma la ruta final.",
+      try: "En una terminal de Linux o WSL ejecuta `cd ~`, `mkdir -p labs/demo`, `cd labs/demo` y `pwd` para ver la ruta completa."
     },
 
     // ——— Nivel 3: Avanzado (10 preguntas) ———
@@ -227,7 +247,8 @@ addWorld({
       id: "lx13", level: 3, type: "tf",
       q: "En Linux, el usuario root tiene UID 1000.",
       answer: false,
-      explain: "Falso: root siempre tiene UID 0. Los UID desde 1000 (en la mayoría de distros) son usuarios normales."
+      explain: "Falso: root siempre tiene UID 0. Los UID desde 1000 (en la mayoría de distros) son usuarios normales.",
+      try: "En una terminal de Linux o WSL escribe `id -u root` (devuelve 0) y luego `id -u` para ver tu propio UID."
     },
     {
       id: "lx14", level: 3, type: "mc",
@@ -239,7 +260,8 @@ addWorld({
         "Revisa y repara el sistema de archivos del disco"
       ],
       answer: 0,
-      explain: "df = disk free. -h muestra tamaños en K/M/G."
+      explain: "df (disk free) muestra el espacio usado y libre de cada sistema de archivos montado; -h lo expresa en K, M y G. Para el tamaño de carpetas se usa du y para la RAM, free.",
+      try: "En una terminal de Linux o WSL escribe `df -h` y fíjate en la columna Use% (o Uso%) de la línea montada en /."
     },
     {
       id: "lx15", level: 3, type: "fill",
@@ -257,28 +279,32 @@ addWorld({
         "sudo tail -n10 /var/log/syslog",
         "sudo tail -10 /var/log/syslog"
       ],
-      explain: "tail muestra el final del archivo. -f sigue el log en vivo."
+      explain: "tail muestra por defecto las últimas 10 líneas de un archivo; con -n eliges cuántas y con -f sigues el log en vivo (sales con Ctrl+C). Leer syslog puede requerir sudo.",
+      try: "En una terminal de Linux o WSL escribe `tail -n 5 /etc/passwd` y compara con `cat /etc/passwd`: tail solo muestra el final."
     },
     {
       id: "lx16", level: 3, type: "scenario",
       q: "Escenario: necesitas matar el proceso con PID 4421. ¿Qué comando usas?",
       options: ["kill 4421", "rm 4421", "chmod 4421", "apt remove 4421"],
       answer: 0,
-      explain: "kill envía una señal (por defecto TERM). kill -9 fuerza SIGKILL si no responde."
+      explain: "kill envía una señal (por defecto TERM). kill -9 fuerza SIGKILL si no responde.",
+      try: "En Linux o WSL ejecuta `sleep 300 &` para crear un proceso de prueba, mira su PID con `echo $!` y termínalo con `kill $!`."
     },
     {
       id: "lx17", level: 3, type: "mc",
       q: "¿Qué archivo contiene la lista de cuentas de usuario locales del sistema?",
       options: ["/etc/passwd", "/etc/hosts", "/etc/fstab", "/etc/hostname"],
       answer: 0,
-      explain: "/etc/passwd describe cuentas; las contraseñas hasheadas van en /etc/shadow."
+      explain: "/etc/passwd describe cuentas; las contraseñas hasheadas van en /etc/shadow.",
+      try: "En una terminal de Linux o WSL escribe `getent passwd $USER` y ubica en la línea tu UID, tu carpeta home y tu shell, separados por dos puntos."
     },
     {
       id: "lx18", level: 3, type: "identify",
       q: "¿Qué comando muestra el uso de memoria RAM y swap?",
       options: ["free", "mkdir", "ping", "lpstat"],
       answer: 0,
-      explain: "free -h resume memoria. También puedes verlo en top/htop."
+      explain: "free muestra la RAM y la swap totales, usadas y libres; con free -h se lee en M y G. La columna available (disponible) estima cuánta memoria pueden usar nuevos programas.",
+      try: "En una terminal de Linux o WSL escribe `free -h` y compara la fila de memoria con la de swap; fíjate en la columna available (o disponible)."
     },
     {
       id: "lxL3a", level: 3, type: "mc",
@@ -290,7 +316,8 @@ addWorld({
         "Proceso huérfano que fue adoptado por init (PID 1)"
       ],
       answer: 0,
-      explain: "Los zombies ocupan una entrada en la tabla de procesos hasta que el padre recolecta el estado."
+      explain: "Los zombies ocupan una entrada en la tabla de procesos hasta que el padre recolecta el estado.",
+      try: "En una terminal de Linux o WSL escribe `ps -eo pid,stat,cmd` y revisa STAT: S es dormido, R en ejecución y Z sería un zombie."
     },
     {
       id: "lxL3b", level: 3, type: "scenario",
@@ -432,13 +459,15 @@ addWorld({
         "netstat -tlpn",
         "netstat -lnpt"
       ],
-      explain: "ss es el moderno; -tulpn muestra TCP/UDP listening con procesos."
+      explain: "ss es el moderno; -tulpn muestra TCP/UDP listening con procesos.",
+      try: "En una terminal de Linux o WSL escribe `ss -tuln` y fíjate en la columna Local Address:Port: son los puertos en escucha de tu equipo."
     },
     {
       id: "lxL3d", level: 3, type: "tf",
       q: "systemctl restart nginx reinicia el servicio nginx en sistemas con systemd.",
       answer: true,
-      explain: "systemctl controla unidades: start/stop/restart/status/enable."
+      explain: "systemctl controla unidades: start/stop/restart/status/enable.",
+      try: "En Linux o WSL con systemd escribe `systemctl list-units --type=service --state=running` para ver qué servicios están corriendo."
     },
 
     // ——— Nivel 4: Experto (8 preguntas) ———
@@ -452,7 +481,8 @@ addWorld({
         "Ejecuta el comando en segundo plano tras 10 segundos"
       ],
       answer: 0,
-      explain: "nice ajusta la prioridad; valores altos = menos prioridad."
+      explain: "nice arranca un comando con otra prioridad: el valor va de -20 (más prioridad) a 19 (menos), así que -n 10 cede CPU a los demás procesos. No fija un porcentaje máximo de CPU.",
+      try: "En Linux o WSL ejecuta `nice -n 10 sleep 60 &` y luego `ps -o pid,ni,cmd` para ver el valor 10 en la columna NI."
     },
     {
       id: "lxL4b", level: 4, type: "tf",
@@ -485,7 +515,8 @@ addWorld({
         "du -hd 1",
         "du -h -d 1 ."
       ],
-      explain: "du resume uso de disco; -h legible, -s resumen."
+      explain: "du (disk usage) calcula cuánto ocupan archivos y carpetas; -h usa K, M y G y -s da un solo total por argumento, por eso du -sh * resume cada elemento. df, en cambio, mide sistemas de archivos completos.",
+      try: "En una terminal de Linux o WSL escribe `du -sh /usr/*` y compara qué carpeta ocupa más espacio."
     },
     {
       id: "lxL4d", level: 4, type: "scenario",
@@ -497,7 +528,7 @@ addWorld({
         "Borrar todo /var/lib para ganar espacio de inmediato"
       ],
       answer: 0,
-      explain: "Mide antes de borrar; prioriza logs rotados y caches."
+      explain: "Primero mide con df -h y du qué llena el disco y luego libera con cuidado logs rotados, cachés y temporales. Reiniciar no ataca la causa y borrar /var/lib destruye datos de paquetes y servicios."
     },
     {
       id: "lxL4e", level: 4, type: "mc",
@@ -509,7 +540,7 @@ addWorld({
         "Capacidades POSIX de binarios (como setcap)"
       ],
       answer: 0,
-      explain: "Las ACL permiten permisos más granulares que ugo clásico."
+      explain: "setfacl agrega ACL: permisos para usuarios o grupos específicos además del esquema clásico dueño/grupo/otros, por ejemplo setfacl -m u:ana:r archivo. Se consultan con getfacl."
     },
     {
       id: "lxL4f", level: 4, type: "order",
@@ -532,7 +563,8 @@ addWorld({
         { left: "ulimit -n", right: "Límite de file descriptors" },
         { left: "strace", right: "Rastrear syscalls de un proceso" }
       ],
-      explain: "Herramientas de ops Linux."
+      explain: "crontab -e edita las tareas programadas de tu usuario; systemctl enable deja un servicio listo para arrancar al iniciar; ulimit -n muestra o ajusta el máximo de archivos abiertos; strace rastrea syscalls.",
+      try: "En una terminal de Linux o WSL escribe `crontab -l` para ver tus tareas programadas (si no tienes, lo dirá) y `ulimit -n` para ver tu límite."
     },
     {
       id: "lxL4h", level: 4, type: "tf",
@@ -552,7 +584,8 @@ addWorld({
         "Permisos de archivos para los grupos de /etc/group"
       ],
       answer: 0,
-      explain: "cgroups aíslan recursos; base de contenedores."
+      explain: "Los cgroups agrupan procesos y les ponen límites de CPU, memoria e I/O; v2 usa una sola jerarquía unificada. El aislamiento de red y PID lo dan los namespaces; juntos son la base de los contenedores.",
+      try: "En una terminal de Linux o WSL escribe `stat -fc %T /sys/fs/cgroup`; si responde cgroup2fs, tu sistema usa cgroups v2."
     },
     {
       id: "lxL5b", level: 5, type: "scenario",
@@ -564,14 +597,15 @@ addWorld({
         "Ampliar la swap y /boot para que el kernel no falle"
       ],
       answer: 0,
-      explain: "Conserva kernels previos en GRUB."
+      explain: "Arranca desde GRUB con el kernel anterior (por eso conviene conservarlos), revisa logs y revierte el módulo o driver culpable. kernel.panic=0 no evita el panic: solo hace que el equipo no se reinicie.",
+      try: "En una terminal de Linux o WSL escribe `uname -r` para ver qué versión de kernel está corriendo, el dato que comparas al volver a uno anterior."
     },
     {
       id: "lxL5c", level: 5, type: "fill",
       q: "Herramienta para inspeccionar tráfico en interfaz (clásica):",
       answer: "tcpdump",
       accept: ["tcpdump", "wireshark", "tshark", "sudo tcpdump"],
-      explain: "tcpdump captura paquetes; requiere privilegios."
+      explain: "tcpdump captura y muestra paquetes de una interfaz desde la terminal, por ejemplo sudo tcpdump -i eth0 port 53; necesita privilegios para capturar. Wireshark es su equivalente gráfico."
     },
     {
       id: "lxL5d", level: 5, type: "mc",
@@ -583,7 +617,7 @@ addWorld({
         "Aislar por completo el proceso con namespaces y cgroups"
       ],
       answer: 0,
-      explain: "Útil en recovery; no es sandbox completo como namespaces."
+      explain: "chroot cambia el directorio raíz que ve un proceso; se usa mucho en recuperación para entrar a un sistema montado desde un live USB. No es un sandbox completo: eso lo dan namespaces y cgroups."
     },
     {
       id: "lxL5e", level: 5, type: "identify",
@@ -602,7 +636,8 @@ addWorld({
         "Aplicar fix (kill, tune, hardware)"
       ],
       answer: [0, 1, 2, 3],
-      explain: "Load alto no siempre es CPU: mira %wa y procesos en estado D; según el caso, profundiza con la herramienta adecuada antes de actuar."
+      explain: "Load alto no siempre es CPU: mira %wa y procesos en estado D; según el caso, profundiza con la herramienta adecuada antes de actuar.",
+      try: "En una terminal de Linux o WSL escribe `uptime` y fíjate en los tres números de load average: promedios de 1, 5 y 15 minutos."
     },
     {
       id: "lxL5g", level: 5, type: "tf",
@@ -680,7 +715,8 @@ addWorld({
         "service nginx status",
         "sudo service nginx status"
       ],
-      explain: "systemctl status|restart|stop|start son el estándar en distros modernas."
+      explain: "systemctl status|restart|stop|start son el estándar en distros modernas.",
+      try: "En Linux o WSL con systemd escribe `systemctl status systemd-journald` y revisa la línea Active: debe decir active (running)."
     }
   ]
 });
