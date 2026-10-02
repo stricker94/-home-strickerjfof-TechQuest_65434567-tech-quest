@@ -175,24 +175,66 @@
   <div id="sr-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/data.js"></script>
-  <script src="js/content-expand.js"></script>
-  <script src="js/levels-expand.js"></script>
-  <script src="js/levels5-expand.js"></script>
+  <!-- Un archivo por mundo, en el orden en que se desbloquean -->
+  <script src="js/mundos/linux.js"></script>
+  <script src="js/mundos/windows.js"></script>
+  <script src="js/mundos/printers.js"></script>
+  <script src="js/mundos/networks.js"></script>
+  <script src="js/mundos/programming.js"></script>
+  <script src="js/mundos/support.js"></script>
+  <script src="js/mundos/security.js"></script>
+  <script src="js/mundos/hardware.js"></script>
+  <script src="js/mundos/cloud.js"></script>
+  <script src="js/mundos/database.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>
   <script>
-    // Si game.js no arrancó (navegador anterior a Chrome 80 / Safari 13.1, o un error de escritura en js/),
-    // se avisa en pantalla en vez de dejar un menú cuyos botones no responden. Escrito en ES5 a propósito
+    // Avisa en pantalla si un archivo de js/ no se cargó (un error de escritura hace que el navegador lo ignore
+    // entero) o si el juego no arrancó (navegador anterior a Chrome 80 / Safari 13.1), en vez de dejar un menú
+    // al que le faltan mundos o cuyos botones no responden. Escrito en ES5 a propósito
     window.addEventListener("load", function () {
-      if (window.techQuestReady) return;
+      function existe(nombre) {
+        // Un const cuyo archivo falló a medias queda sin iniciar y typeof lanza un error
+        try { return eval("typeof " + nombre) !== "undefined"; } catch (e) { return false; }
+      }
+      var nucleo = { "js/data.js": "addWorld", "js/audio.js": "TechAudio", "js/progress.js": "Progress", "js/ui.js": "UI" };
+      var cargados = window.techQuestLoaded || {};
+      var fallidos = [];
+      var scripts = document.querySelectorAll("script[src]");
+      for (var i = 0; i < scripts.length; i++) {
+        var src = scripts[i].getAttribute("src");
+        var ok = src.indexOf("js/mundos/") === 0 ? !!cargados[src]
+          : src === "js/game.js" ? !!window.techQuestReady
+          : nucleo[src] ? existe(nucleo[src]) : true;
+        if (!ok) fallidos.push(src);
+      }
+      // Si falla js/data.js fallan todos los mundos, y si falla audio, progreso o ui también falla game.js:
+      // se nombra solo el primero de esos archivos, que es el que hay que arreglar
+      var primero = null;
+      fallidos = fallidos.filter(function (f) {
+        if (f === "js/data.js") return (primero = f);
+        if (f.indexOf("js/mundos/") === 0) return primero !== "js/data.js";
+        if (primero) return false;
+        return (primero = f);
+      });
+      if (!fallidos.length && window.techQuestReady) return;
       var menu = document.getElementById("screen-menu");
       if (!menu) return;
       var p = document.createElement("p");
       p.className = "panel load-error";
       p.setAttribute("role", "alert");
-      p.textContent = "El juego no pudo arrancar. Actualiza el navegador (Chrome o Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+) o prueba con otro. Si editaste archivos de js/, revisa la sección 8 de INSTRUCCIONES.md.";
+      var archivos = fallidos.length ? (fallidos.length > 1 ? "No se pudieron cargar " : "No se pudo cargar ") + fallidos.join(", ") : "";
+      if (!window.techQuestReady) {
+        // Un navegador viejo solo falla en js/game.js; un error de escritura puede estar en cualquiera
+        p.textContent = "El juego no pudo arrancar" + (archivos ? " (" + archivos + ")" : "") +
+          ". Si editaste archivos de js/, ejecuta node herramientas/validar-preguntas.js: te dice el archivo y la línea." +
+          " Si no, actualiza el navegador (Chrome o Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+) o prueba con otro." +
+          " Más ayuda en la sección 8 de INSTRUCCIONES.md.";
+      } else {
+        p.textContent = archivos + ": faltan sus preguntas en el juego. Suele ser una coma o una comilla de más o de menos: ejecuta node herramientas/validar-preguntas.js, que te dice la línea (sección 8 de INSTRUCCIONES.md).";
+      }
       menu.insertBefore(p, menu.firstChild);
     });
   </script>

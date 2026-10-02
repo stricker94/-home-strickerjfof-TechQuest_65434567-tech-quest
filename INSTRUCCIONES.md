@@ -98,53 +98,86 @@ Luego abre <http://localhost:8000> en el navegador y detén el servidor con `Ctr
 
 ## 6. Añadir o corregir preguntas
 
-Las preguntas están en cuatro archivos de `js/` que el navegador carga en este orden: `data.js`, `content-expand.js`, `levels-expand.js` y `levels5-expand.js`.
+Las preguntas están en la carpeta `js/mundos/`, **un archivo por mundo**, todos con el mismo formato:
 
-1. **Para corregir una pregunta**, busca su `id` (por ejemplo `lx13`) en la carpeta `js/` y edítala donde esté.
-2. **Para añadir una pregunta**, ponla en `js/levels5-expand.js`:
-   - Mundos `linux`, `windows`, `printers`, `networks`, `programming`, `support`, `security` y `hardware`: dentro del bloque `add("<mundo>", [ ... ])`.
-   - Mundos `cloud` y `database`: dentro de la lista `"questions": [ ... ]` de su `pushWorld({ ... })`.
-   - Preguntas de **Boss** (excepción: no todas van en `levels5-expand.js`): añádelas a la lista del Boss de ese mundo.
-     - Linux, Windows, Impresoras, Redes, Programación y Soporte: `setBoss("<mundo>", [` en `js/content-expand.js`.
-     - Ciberseguridad y Hardware: la lista `boss: [` dentro de `pushWorld({ id: "security" ... })` o `pushWorld({ id: "hardware" ... })` en `js/levels-expand.js`.
-     - Cloud y Base de datos: la lista `"boss": [` de su `pushWorld({ ... })` en `js/levels5-expand.js`.
+| Archivo | Mundo |
+|---|---|
+| `linux.js` | Linux básico |
+| `windows.js` | Windows intermedio |
+| `printers.js` | Impresoras |
+| `networks.js` | Redes e infraestructura |
+| `programming.js` | Programación básica |
+| `support.js` | Soporte IT |
+| `security.js` | Ciberseguridad |
+| `hardware.js` | Hardware / ensamblado |
+| `cloud.js` | Cloud / servicios |
+| `database.js` | Base de datos básica |
 
-     Ponles `"level": 5`. No salen en Práctica, Aventura, Cronómetro ni Maratón: solo en el modo **Boss** de ese mundo (en el orden de la lista) y en **Repasar errores** si las fallas.
+Dentro de cada archivo, primero van las preguntas de los niveles (dentro de `questions: [`, separadas por comentarios como `// ——— Nivel 3: Avanzado ———`) y al final las del Boss (dentro de `boss: [`).
+
+1. **Para corregir una pregunta**, abre el archivo de su mundo y busca su `id` (por ejemplo `lx13`) con `Ctrl+F`.
+2. **Para añadir una pregunta**, pégala en el archivo de su mundo, dentro de `questions: [`, debajo del comentario de su nivel. El nivel lo decide el campo `level` de la pregunta; el comentario solo sirve para encontrarla.
+   - Preguntas de **Boss**: dentro de `boss: [`, al final del archivo, con `level: 5`. No salen en Práctica, Aventura, Cronómetro ni Maratón: solo en el modo **Boss** de ese mundo (en el orden de la lista) y en **Repasar errores** si las fallas.
 3. Sigue estas reglas en cada pregunta:
    - `id` **único** en todo el juego (por ejemplo `lxL5z`).
-   - `level` **siempre** de 1 a 5. Si lo omites en una pregunta de `js/levels5-expand.js`, el juego la pone en el nivel 1 y el validador la marca como ERROR.
+   - `level` **siempre**, un número de 1 a 5 (sin comillas). Sin él la pregunta no sale en ningún nivel, y el validador lo marca como ERROR.
    - `explain`: una o dos frases que expliquen la respuesta.
    - Escribe los nombres de los campos tal cual (`accept`, no `acepta`): un campo mal escrito el juego lo ignora, y el validador lo señala.
    - Guarda los archivos de `js/` con codificación **UTF-8** (en el Bloc de notas: **Guardar como → Codificación: UTF-8**). Con otra codificación los acentos salen como «�».
-4. Usa el formato del tipo de pregunta. Cada pregunta va entre llaves `{ ... }` y **se separa de la siguiente con una coma**; por eso los ejemplos terminan en `},`. Pega la pregunta justo después del `[` que abre la lista (o justo después de la `},` de otra pregunta) y la coma ya queda en su sitio. Copia solo el ejemplo que necesites; las líneas que empiezan con `//` son comentarios.
+   - Los textos van entre comillas rectas `"..."`. Si el texto lleva comillas dobles, escríbelas como `\"` o usa comillas simples dentro: `"Escribe 'hola'"`.
+4. Usa el formato del tipo de pregunta (es el mismo de los archivos). Cada pregunta va entre llaves `{ ... }` y **se separa de la siguiente con una coma**; por eso los ejemplos terminan en `},`. Pega la pregunta justo después de la `},` de otra pregunta (o del `[` que abre la lista) y la coma ya queda en su sitio. Copia solo el ejemplo que necesites; las líneas que empiezan con `//` son comentarios.
 
 ```js
 // Opción múltiple (también "identify" y "scenario"): de 2 a 4 opciones; mejor 4 (con 2 no hay pista y es un 50/50).
 // answer = posición de la correcta contando desde 0. En pantalla se barajan solas.
-{ "id": "lxL5z", "level": 5, "type": "mc", "q": "¿Qué comando muestra el uso de disco por carpeta?",
-  "options": ["du -sh *", "df -h", "free -h", "lsblk"], "answer": 0,
-  "explain": "du mide lo que ocupa cada carpeta; df muestra el espacio libre por disco." },
+{
+  id: "lxL5z", level: 5, type: "mc",
+  q: "¿Qué comando muestra el uso de disco por carpeta?",
+  options: ["du -sh *", "df -h", "free -h", "lsblk"],
+  answer: 0,
+  explain: "du mide lo que ocupa cada carpeta; df muestra el espacio libre de cada disco."
+},
 
 // Verdadero / Falso: answer es true o false, sin comillas.
-{ "id": "lxL5y", "level": 3, "type": "tf", "q": "chmod 644 archivo da permiso de ejecución al dueño.", "answer": false,
-  "explain": "Falso: 644 es rw-r--r--, nadie puede ejecutarlo; para eso se usa chmod u+x o 755." },
+{
+  id: "lxL5y", level: 3, type: "tf",
+  q: "chmod 644 archivo da permiso de ejecución al dueño.",
+  answer: false,
+  explain: "Falso: 644 es rw-r--r--, nadie puede ejecutarlo; para eso se usa chmod u+x o 755."
+},
 
-// Completar: se acepta cualquier texto de "accept" (no importan mayúsculas ni espacios de más,
+// Completar: se acepta cualquier texto de accept (no importan mayúsculas ni espacios de más,
 // pero SÍ los acentos: añade la variante con y sin acento).
-{ "id": "lxL5x", "level": 2, "type": "fill", "q": "Comando para ver cuánto tiempo lleva encendido el equipo:", "answer": "uptime",
-  "accept": ["uptime", "uptime -p"], "explain": "uptime muestra el tiempo encendido, los usuarios conectados y la carga promedio." },
+{
+  id: "lxL5x", level: 2, type: "fill",
+  q: "Comando para ver cuánto tiempo lleva encendido el equipo:",
+  answer: "uptime",
+  accept: ["uptime", "uptime -p"],
+  explain: "uptime muestra el tiempo encendido, los usuarios conectados y la carga promedio."
+},
 
 // Emparejar: al menos 3 parejas (lo habitual son 4); di qué se empareja, no solo "Empareja:".
 // Con solo 2, el juego siempre las mostraría cruzadas y se adivinarían.
-{ "id": "lxL5w", "level": 4, "type": "match", "q": "Empareja el comando con su uso:",
-  "pairs": [ { "left": "ps", "right": "Ver procesos" }, { "left": "df", "right": "Espacio en disco" },
-             { "left": "free", "right": "Memoria libre" }, { "left": "uptime", "right": "Tiempo encendido" } ],
-  "explain": "ps lista los procesos; df, el espacio de cada disco; free, la memoria libre; uptime, cuánto lleva encendido." },
+{
+  id: "lxL5w", level: 4, type: "match",
+  q: "Empareja el comando con su uso:",
+  pairs: [
+    { left: "ps", right: "Ver procesos" },
+    { left: "df", right: "Espacio en disco" },
+    { left: "free", right: "Memoria libre" },
+    { left: "uptime", right: "Tiempo encendido" }
+  ],
+  explain: "ps lista los procesos; df, el espacio de cada disco; free, la memoria libre; uptime, cuánto lleva encendido."
+},
 
 // Ordenar: al menos 3 pasos (lo habitual son 4); escríbelos ya en orden correcto y usa answer [0, 1, 2, ...]; el juego los baraja.
-{ "id": "lxL5v", "level": 3, "type": "order", "q": "Ordena la instalación con apt:",
-  "items": ["sudo apt update", "apt search paquete", "sudo apt install paquete", "Verificar la instalación"], "answer": [0, 1, 2, 3],
-  "explain": "Primero se actualiza la lista de paquetes, se busca el nombre exacto, se instala y al final se comprueba que funcione." },
+{
+  id: "lxL5v", level: 3, type: "order",
+  q: "Ordena la instalación con apt:",
+  items: ["sudo apt update", "apt search paquete", "sudo apt install paquete", "Verificar la instalación"],
+  answer: [0, 1, 2, 3],
+  explain: "Primero se actualiza la lista de paquetes, se busca el nombre exacto, se instala y al final se comprueba que funcione."
+},
 ```
 
 5. Para que las preguntas no se adivinen sin saber:
@@ -159,7 +192,8 @@ node herramientas/validar-preguntas.js
 
    - **ERRORES** son preguntas que el juego no puede calificar: corrígelos antes de publicar.
    - **AVISOS** son detalles de calidad (por ejemplo, la correcta mucho más larga que las demás).
-   - Si dice **error de escritura** con un archivo y una línea (por ejemplo `js/levels5-expand.js, línea 44`), revisa esa línea y el final de la anterior: casi siempre falta la coma entre dos preguntas (`},`), sobra una coma, o hay una comilla o un corchete sin cerrar. Mientras exista, el navegador ignora todo ese archivo y faltan mundos o niveles en el juego.
+   - Si dice **error de escritura** con un archivo y una línea (por ejemplo `js/mundos/linux.js, línea 44`), revisa esa línea y el final de la anterior: casi siempre falta la coma entre dos preguntas (`},`), sobra una coma, o hay una comilla o un corchete sin cerrar. Mientras exista, el navegador ignora todo ese archivo: ese mundo no sale en el juego y el menú avisa «No se pudo cargar js/mundos/linux.js».
+   - El validador también revisa que los demás archivos de `js/` estén bien escritos y que `index.html` cargue todos los mundos de `js/mundos/`.
 7. Compruébala contestándola bien y mal:
    - **Pregunta de nivel:** **Práctica** → su mundo y nivel. Las preguntas salen al azar: juega hasta que aparezca y usa **Reintentar** para la segunda prueba.
    - **Pregunta de Boss:** modo **Boss** → su mundo, y usa **Reintentar** para la segunda prueba. Sale en el orden de la lista, con 20 s por pregunta y 3 vidas: si la pusiste al final, no pierdas las vidas antes de llegar a ella. Linux está abierto desde el principio. Para otro mundo aún bloqueado, abre el juego en una ventana de **incógnito**, pulsa `F12` → **Console**, escribe `localStorage.setItem('techQuestUnlocks', '{"cloud":true}')` (cambia `cloud` por el id del mundo: `windows`, `printers`, `networks`, `programming`, `support`, `security`, `hardware`, `cloud` o `database`) y recarga la página. No lo hagas en una ventana normal: sustituye los mundos que ya tenías desbloqueados. Al cerrar la ventana de incógnito no queda nada guardado.
@@ -206,7 +240,7 @@ Luego abre un Pull Request en GitHub desde esa rama (al terminar, `git push` mue
 
 | Síntoma | Qué hacer |
 |---|---|
-| El menú dice «El juego no pudo arrancar», «Desafíos: 100+» o menos de 10 mundos, un nivel dice «0 desafíos» / «Este nivel aún no tiene desafíos», o los botones no responden | Suele ser una coma, comilla o llave de más o de menos en `js/`. En una **terminal** (no en el navegador), dentro de la carpeta del juego, ejecuta `node herramientas/validar-preguntas.js`: te dice el archivo y la línea. Si el validador no marca errores (solo revisa los archivos de preguntas), abre la consola del navegador (`F12` → **Console**) y lee el error en rojo: también indica el archivo y la línea. Si no editaste nada en `js/`, o la consola marca «Unexpected token '.'» en `js/game.js` (o no tienes consola, como en un iPad), el navegador es demasiado viejo para el juego (necesita Chrome/Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+): actualízalo o prueba con otro. |
+| El menú dice «No se pudo cargar js/…» o «El juego no pudo arrancar», «Desafíos: 100+» o faltan mundos, un nivel dice «0 desafíos» / «Este nivel aún no tiene desafíos», o los botones no responden | Suele ser una coma, comilla o llave de más o de menos en el archivo que nombra el aviso. En una **terminal** (no en el navegador), dentro de la carpeta del juego, ejecuta `node herramientas/validar-preguntas.js`: te dice el archivo y la línea. Si el validador no marca errores, abre la consola del navegador (`F12` → **Console**) y lee el error en rojo: también indica el archivo y la línea. Si no editaste nada en `js/`, o la consola marca «Unexpected token '.'» en `js/game.js` (o no tienes consola, como en un iPad), el navegador es demasiado viejo para el juego (necesita Chrome/Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+): actualízalo o prueba con otro. |
 | No se guarda el progreso | Sal del modo incógnito y permite el almacenamiento del sitio en el navegador. |
 | No hay sonido | Haz clic o pulsa una tecla en la página (el navegador exige una interacción) y revisa que no esté en silencio (`M`). |
 | Un nivel o mundo aparece bloqueado | En Aventura se abren en orden; usa Práctica o Cronómetro para jugar cualquiera. |

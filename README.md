@@ -63,17 +63,20 @@ Al terminar una partida puedes desplegar la lista de preguntas falladas con su r
 
 ```
 tech-quest/
-├── index.html
+├── index.html               # Pantallas y orden de carga de los archivos
 ├── README.md
 ├── INSTRUCCIONES.md         # Guía paso a paso
 ├── herramientas/
 │   └── validar-preguntas.js # node herramientas/validar-preguntas.js
+├── pruebas/
+│   └── validador.js         # node pruebas/validador.js (pruebas del validador)
 ├── css/style.css
 └── js/
-    ├── data.js              # Mundos base + logros + config
-    ├── content-expand.js    # Expansión impresoras/redes/bosses
-    ├── levels-expand.js     # Niveles 1–3 + ciberseguridad + hardware
-    ├── levels5-expand.js    # Niveles 4–5 + Cloud + Base de datos
+    ├── data.js              # Configuración, niveles, logros y addWorld()
+    ├── mundos/              # Un archivo por mundo: preguntas por nivel + Boss
+    │   ├── linux.js
+    │   ├── windows.js
+    │   └── …                # printers, networks, programming, support, security, hardware, cloud, database
     ├── audio.js
     ├── progress.js
     ├── ui.js

@@ -411,14 +411,8 @@
       sub.textContent = modeLabel + " · Progreso del mundo: " + Progress.worldProgressPct(worldId) + "%";
     }
     const maxL = (Progress.levelsPerWorld && Progress.levelsPerWorld()) || GAME_CONFIG.levelsPerWorld || 5;
-    const labels = window.LEVEL_LABELS || {
-      1: { name: "Básico", icon: "1️⃣" },
-      2: { name: "Intermedio", icon: "2️⃣" },
-      3: { name: "Avanzado", icon: "3️⃣" },
-      4: { name: "Experto", icon: "4️⃣" },
-      5: { name: "Maestro", icon: "5️⃣" }
-    };
-    const counts = typeof countLevelsForWorld === "function" ? countLevelsForWorld(worldId) : {};
+    const labels = LEVEL_LABELS;
+    const counts = countLevelsForWorld(worldId);
     UI.$("#level-grid").innerHTML = Array.from({ length: maxL }, (_, i) => i + 1)
       .map((L) => {
         const open = worldPickMode === "practice" || worldPickMode === "timer" || Progress.isLevelUnlocked(worldId, L);
@@ -493,14 +487,7 @@
   }
 
   function questionsFor(worldId, level) {
-    let qs;
-    if (typeof getQuestionsForLevel === "function" && level) {
-      qs = getQuestionsForLevel(worldId, level).slice();
-    } else {
-      const w = getWorldById(worldId);
-      qs = (w ? w.questions : []).filter((q) => (q.level || 1) === level);
-    }
-    return UI.shuffle(qs);
+    return UI.shuffle(getQuestionsForLevel(worldId, level));
   }
 
   function beginCampaign(worldId, level) {

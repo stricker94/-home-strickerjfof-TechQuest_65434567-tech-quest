@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Tech Quest — Validador de preguntas
+ * Tech Quest — Validador del juego
  *
- * Carga los archivos de datos igual que el navegador y revisa que cada pregunta
- * tenga un formato que el juego pueda calificar. No modifica nada.
+ * Lee index.html, revisa que todos sus archivos de js/ estén bien escritos, carga los mundos (js/mundos/)
+ * igual que el navegador y revisa que cada pregunta tenga un formato que el juego pueda calificar.
+ * No modifica nada.
  *
  * Uso (desde la carpeta del juego):  node herramientas/validar-preguntas.js
  * Sale con código 1 si hay ERRORES; los AVISOS no bloquean.
@@ -13,7 +14,6 @@ const path = require("path");
 const vm = require("vm");
 
 const RAIZ = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, "..");
-const ARCHIVOS = ["js/data.js", "js/content-expand.js", "js/levels-expand.js", "js/levels5-expand.js"];
 const TIPOS = ["mc", "identify", "scenario", "tf", "fill", "match", "order"];
 // Campos que el juego lee en cada tipo; cualquier otro lo ignora sin aviso (p. ej. "acepta" en vez de "accept")
 const CAMPOS_BASE = ["id", "level", "type", "q", "explain"];
@@ -21,6 +21,7 @@ const CAMPOS = {
   mc: ["options", "answer"], identify: ["options", "answer"], scenario: ["options", "answer"],
   tf: ["answer"], fill: ["answer", "accept"], match: ["pairs"], order: ["items", "answer"],
 };
+const CAMPOS_MUNDO = ["id", "name", "icon", "color", "description", "questions", "boss"];
 
 const errores = [];
 const avisos = [];
@@ -30,70 +31,113 @@ function fallo(msg) {
   console.log(`\nERRORES (1):\n  ${msg}`);
   process.exit(1);
 }
+const leer = (rel) => fs.readFileSync(path.join(RAIZ, rel), "utf8");
+const lineaDe = (src, pos) => src.slice(0, pos).split("\n").length;
+const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 
-// ——— 1. Cargar los archivos como lo hace el navegador ———
+// ——— 1. Los archivos que carga index.html, en su orden ———
+let html;
+try {
+  html = leer("index.html");
+} catch (e) {
+  fallo("no encuentro index.html. Ejecuta el validador dentro de la carpeta del juego (la que tiene index.html).");
+}
+const scripts = [];
+for (const m of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/gi)) scripts.push(m[1]);
+const esDatos = (rel) => rel === "js/data.js" || rel.startsWith("js/mundos/");
+const ARCHIVOS = scripts.filter(esDatos);
+if (ARCHIVOS[0] !== "js/data.js") fallo('index.html debe cargar primero js/data.js y después los mundos (js/mundos/...).');
 const fuentes = {};
+for (const rel of scripts) {
+  try {
+    fuentes[rel] = leer(rel);
+  } catch (e) {
+    errores.push(`index.html carga ${rel}, pero ese archivo no existe (¿nombre mal escrito o archivo borrado?)`);
+  }
+}
+// Un mundo nuevo en js/mundos/ que no está en index.html no llega al juego
+let enCarpeta = [];
+try { enCarpeta = fs.readdirSync(path.join(RAIZ, "js/mundos")).filter((f) => f.endsWith(".js")); } catch (e) {}
+for (const f of enCarpeta) {
+  if (!scripts.includes("js/mundos/" + f)) {
+    errores.push(`js/mundos/${f} no está en index.html, así que el juego no lo carga: añade <script src="js/mundos/${f}"></script> junto a los demás mundos`);
+  }
+}
+// Lo que no son datos (audio, progreso, pantallas, lógica) solo se revisa que esté bien escrito
+for (const rel of scripts.filter((r) => !esDatos(r) && fuentes[r] != null)) {
+  try {
+    new vm.Script(fuentes[rel], { filename: rel });
+  } catch (e) {
+    const m = new RegExp(escRe(rel) + ":(\\d+)").exec(String(e.stack));
+    errores.push(`${rel}${m ? ", línea " + m[1] : ""}: error de escritura (${e.message}); el navegador ignora todo el archivo y el juego no arranca`);
+  }
+}
+
+// ——— 2. Cargar los datos como lo hace el navegador ———
 const ctx = { console };
 ctx.window = ctx;
 vm.createContext(ctx);
-// De qué archivo viene cada posición de cada lista (para señalar el archivo correcto ante un hueco o un null)
-const origen = Object.create(null);
-const descripcion = (q) => (q && q.id ? q.id : "una pregunta sin id");
-function revisarNuevas(rel) {
-  let mundos;
-  try { mundos = vm.runInContext("typeof WORLDS === 'undefined' ? [] : WORLDS", ctx); } catch (e) { return; }
-  for (const w of mundos) {
-    if (!w || typeof w !== "object" || !w.id) continue;
-    const o = origen[w.id] || (origen[w.id] = { questions: [], boss: [], bossRef: null });
-    const qs = Array.isArray(w.questions) ? w.questions : [];
-    const bs = Array.isArray(w.boss) ? w.boss : [];
-    // add() hace concat (las posiciones anteriores se conservan); setBoss() sustituye la lista entera
-    if (bs !== o.bossRef) { o.boss = []; o.bossRef = bs; }
-    for (const [lista, marcas, nombre] of [[qs, o.questions, "de preguntas"], [bs, o.boss, "del Boss"]]) {
-      const desde = Math.min(marcas.length, lista.length);
-      marcas.length = desde;
-      for (let i = desde; i < lista.length; i++) {
-        marcas.push(rel);
-        // Un null rompe al cargar el archivo siguiente y el error apuntaría a ese otro archivo: se avisa aquí
-        if (i in lista && (lista[i] == null || typeof lista[i] !== "object")) {
-          const antes = i > desde ? "justo después de " + descripcion(lista[i - 1]) : "al inicio de lo que este archivo agrega";
-          fallo(`${rel}: hay un elemento vacío (${JSON.stringify(lista[i])}) en la lista ${nombre} de ${w.id}, ${antes}. Suele ser una coma de más o un null: bórralo.`);
-        }
-      }
-    }
-  }
-}
+// De qué archivo viene cada mundo (para señalar el archivo correcto ante un hueco o un null)
+const archivoDe = Object.create(null);
+// Listas tal como están escritas (addWorld descarta huecos y null para que el juego no se rompa; aquí se señalan)
+const crudas = Object.create(null);
+let llamadas = [];
 for (const rel of ARCHIVOS) {
-  try {
-    fuentes[rel] = fs.readFileSync(path.join(RAIZ, rel), "utf8");
-  } catch (e) {
-    fallo(`no encuentro ${rel}. Ejecuta el validador dentro de la carpeta del juego (la que tiene index.html).`);
-  }
+  if (fuentes[rel] == null) continue;
+  ctx.document = { currentScript: { getAttribute: () => rel } };
+  llamadas = [];
   try {
     vm.runInContext(fuentes[rel], ctx, { filename: rel });
   } catch (e) {
     // SyntaxError trae "archivo:línea" en la primera línea; los errores al ejecutar, en la pila
-    const m = new RegExp(rel.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + ":(\\d+)").exec(String(e.stack));
+    const m = new RegExp(escRe(rel) + ":(\\d+)").exec(String(e.stack));
     const escritura = e instanceof SyntaxError || e.name === "SyntaxError" || e.name === "ReferenceError";
     fallo(
       escritura
         ? `${rel}${m ? ", línea " + m[1] : ""}: error de escritura (${e.message}).\n` +
           `  Revisa esa línea y el final de la anterior. Casi siempre es una coma que falta entre preguntas ("}," ),\n` +
           `  una coma de más, una comilla o un corchete sin cerrar, comillas tipográficas “ ” o True/False con mayúscula.\n` +
-          `  Mientras exista este error, el navegador ignora TODO ${rel} (faltan mundos o niveles en el juego).`
-        : `${rel}: el archivo se leyó, pero sus datos rompen el juego al cargarlos (${e.message}).\n` +
-          `  Suele ser un null o un elemento vacío en una lista de preguntas. Mientras exista, el navegador ignora el resto de ${rel}.`
+          `  Mientras exista este error, el navegador ignora TODO ${rel} (ese mundo no sale en el juego).`
+        : `${rel}: el archivo se leyó, pero sus datos rompen el juego al cargarlos (${e.message}).`
     );
   }
-  revisarNuevas(rel);
+  if (rel === "js/data.js") {
+    if (typeof ctx.addWorld !== "function") fallo("js/data.js no define addWorld(); no se puede cargar ningún mundo.");
+    // Se anota qué archivo registra cada mundo
+    const registrar = ctx.addWorld;
+    ctx.addWorld = function (w) {
+      llamadas.push(w);
+      if (w && typeof w === "object" && typeof w.id === "string" && !crudas[w.id]) crudas[w.id] = { questions: w.questions, boss: w.boss };
+      return registrar(w);
+    };
+    continue;
+  }
+  if (!llamadas.length) {
+    errores.push(`${rel}: no registra ningún mundo; el archivo debe ser addWorld({ id: "...", name: "...", questions: [ ... ] });`);
+  }
+  for (const w of llamadas) {
+    const id = w && typeof w === "object" ? w.id : undefined;
+    if (!id || typeof id !== "string") {
+      errores.push(`${rel}: addWorld({...}) sin id (texto entre comillas); ese mundo no llega al juego`);
+    } else if (archivoDe[id]) {
+      errores.push(`${rel}: el mundo "${id}" ya lo registró ${archivoDe[id]}; el juego ignora este segundo. Cambia el id o junta las preguntas en un solo archivo`);
+    } else {
+      archivoDe[id] = rel;
+      const extra = Object.keys(w).filter((k) => !CAMPOS_MUNDO.includes(k));
+      if (extra.length) errores.push(`${rel}: campo que el juego no usa en el mundo: ${extra.join(", ")} (los válidos son ${CAMPOS_MUNDO.join(", ")}); lo que haya ahí no llega al juego`);
+      if (!Array.isArray(crudas[id].questions)) errores.push(`${rel}: el mundo "${id}" necesita questions: [ ... ] con sus preguntas`);
+      if (crudas[id].boss != null && !Array.isArray(crudas[id].boss)) errores.push(`${rel}: boss debe ser una lista [ ... ] de preguntas`);
+      for (const k of ["name", "icon", "color", "description"]) {
+        if (typeof w[k] !== "string" || !w[k].trim()) errores.push(`${rel}: al mundo "${id}" le falta ${k} (texto entre comillas)`);
+      }
+    }
+  }
 }
 vm.runInContext("this.WORLDS = WORLDS; this.GAME_CONFIG = GAME_CONFIG;", ctx);
 const WORLDS = ctx.WORLDS;
 const maxNivel = ctx.GAME_CONFIG.levelsPerWorld || 5;
-const idsMundos = WORLDS.map((w) => w.id);
 
-// ——— 2. Preguntas escritas en los archivos que no llegan al juego ———
-const lineaDe = (src, pos) => src.slice(0, pos).split("\n").length;
+// ——— Preguntas escritas en los archivos que no llegan al juego ———
 /**
  * Copia del código con los comentarios cambiados por espacios (respeta textos entre comillas y saltos de línea).
  * Si se pasa `dentro`, marca con 1 cada posición que está DENTRO de un texto entre comillas (no su comilla de apertura).
@@ -120,41 +164,27 @@ function sinComentarios(src, dentro) {
   }
   return out;
 }
-const limpias = {};
-const enTexto = {};
-for (const rel of ARCHIVOS) {
-  enTexto[rel] = new Uint8Array(fuentes[rel].length + 1);
-  limpias[rel] = sinComentarios(fuentes[rel], enTexto[rel]);
-}
 // Archivo guardado con otra codificación (ANSI/Windows-1252): cada acento o "¿" se lee como «\uFFFD» en el navegador
-for (const rel of ARCHIVOS) {
+for (const rel of Object.keys(fuentes).concat("index.html")) {
   const lineas = [];
-  fuentes[rel].split("\n").forEach((l, k) => { if (l.includes("\uFFFD")) lineas.push(k + 1); });
+  (rel === "index.html" ? html : fuentes[rel]).split("\n").forEach((l, k) => { if (l.includes("\uFFFD")) lineas.push(k + 1); });
   if (lineas.length) {
     errores.push(`${rel}, línea${lineas.length > 1 ? "s" : ""} ${lineas.slice(0, 8).join(", ")}${lineas.length > 8 ? ", …" : ""}: hay caracteres ilegibles (\uFFFD); el archivo no está guardado en UTF-8 y el juego mostraría "¿Qu\uFFFD…". Guárdalo con codificación UTF-8 y vuelve a escribir esos acentos`);
   }
 }
-for (const rel of ARCHIVOS) {
-  const src = limpias[rel];
-  // add("mundo", [...]) o setBoss("mundo", [...]) con un mundo que no existe: sus preguntas se pierden sin aviso.
-  // Solo llamadas al inicio de una línea: un add('…') dentro del texto de una pregunta no cuenta
-  for (const m of src.matchAll(/^[ \t]*(add|setBoss)\(\s*["']([^"']*)["']/gm)) {
-    if (!idsMundos.includes(m[2])) {
-      errores.push(`${rel}, línea ${lineaDe(src, m.index)}: no existe el mundo ${JSON.stringify(m[2])} en ${m[1]}(...); sus preguntas no llegan al juego. Mundos válidos: ${idsMundos.join(", ")}`);
-    }
-  }
-}
 const enJuego = new Set();
 WORLDS.forEach((w) => (w.questions || []).concat(w.boss || []).forEach((q) => q && q.id && enJuego.add(q.id)));
-for (const rel of ARCHIVOS) {
+for (const rel of ARCHIVOS.filter((r) => fuentes[r] != null)) {
+  const dentro = new Uint8Array(fuentes[rel].length + 1);
+  const limpio = sinComentarios(fuentes[rel], dentro);
   const perdidas = [];
-  for (const m of limpias[rel].matchAll(/["']?\bid["']?\s*:\s*["']([^"']+)["']\s*,\s*["']?(?:level|type)\b/g)) {
+  for (const m of limpio.matchAll(/["']?\bid["']?\s*:\s*["']([^"']+)["']\s*,\s*["']?(?:level|type)\b/g)) {
     // Un { id: '…', type: … } escrito dentro del enunciado o la explicación no es una pregunta
-    if (enTexto[rel][m.index]) continue;
+    if (dentro[m.index]) continue;
     if (!enJuego.has(m[1])) perdidas.push(m[1]);
   }
   if (perdidas.length) {
-    errores.push(`${rel}: ${perdidas.length} pregunta(s) no llegan al juego (${perdidas.slice(0, 8).join(", ")}${perdidas.length > 8 ? ", …" : ""}). Revisa el nombre del mundo en add("…") / setBoss("…") o el id de pushWorld`);
+    errores.push(`${rel}: ${perdidas.length} pregunta(s) no llegan al juego (${perdidas.slice(0, 8).join(", ")}${perdidas.length > 8 ? ", …" : ""}). Deben ir dentro de questions: [ ... ] o boss: [ ... ] de un mundo con id único`);
   }
 }
 
@@ -186,17 +216,16 @@ for (const w of WORLDS) {
   let opcion = 0;
   let correctaMasLarga = 0;
 
-  for (const [lista, dondeEsta] of [[w.questions || [], "nivel"], [w.boss || [], "boss"]]) {
+  const cruda = crudas[w.id] || w;
+  const comoLista = (v) => (Array.isArray(v) ? v : []);
+  for (const [lista, dondeEsta] of [[comoLista(cruda.questions), "nivel"], [comoLista(cruda.boss), "boss"]]) {
     for (let i = 0; i < lista.length; i++) {
       const q = lista[i];
       const nombreLista = dondeEsta === "boss" ? "del Boss" : "de preguntas";
       if (!q || typeof q !== "object") {
-        const marcas = (origen[w.id] || {})[dondeEsta === "boss" ? "boss" : "questions"] || [];
-        const archivo = marcas[i] ? marcas[i] + ", " : "";
-        const previa = i > 0 && marcas[i - 1] === marcas[i] && lista[i - 1] && lista[i - 1].id
-          ? "después de " + lista[i - 1].id
-          : i === 0 ? "al inicio de la lista" : "al inicio de lo que agrega ese archivo";
-        errores.push(`${archivo}${w.id}: hay un hueco en la lista ${nombreLista}, ${previa} (¿dos comas seguidas ",,"?). Borra la coma sobrante`);
+        const archivo = archivoDe[w.id] ? archivoDe[w.id] + ", " : "";
+        const previa = i > 0 && lista[i - 1] && lista[i - 1].id ? "después de " + lista[i - 1].id : i === 0 ? "al inicio de la lista" : "después de otro hueco";
+        errores.push(`${archivo}${w.id}: hay un hueco en la lista ${nombreLista}, ${previa} (¿dos comas seguidas ",,", o un null?). Borra la coma sobrante`);
         continue;
       }
       total++;
@@ -211,7 +240,9 @@ for (const w of WORLDS) {
       if (!q.q || !String(q.q).trim()) err("falta el enunciado (q)");
       if (!q.explain) aviso("sin explicación (explain)");
       else if (/^\s*(\.{3}|…)\s*$/.test(q.explain)) aviso('explicación de relleno ("..."): escribe una o dos frases');
-      if (!(Number.isInteger(q.level) && q.level >= 1 && q.level <= maxNivel)) {
+      if (q.level == null) {
+        err(`falta level (el nivel, un número de 1 a ${maxNivel}); sin él la pregunta no sale en ningún nivel`);
+      } else if (!(Number.isInteger(q.level) && q.level >= 1 && q.level <= maxNivel)) {
         err(`nivel inválido: ${txt(q.level)} (usa un número de 1 a ${maxNivel}${typeof q.level === "string" ? ", sin comillas" : ""})`);
       }
       if (dondeEsta === "nivel") {
