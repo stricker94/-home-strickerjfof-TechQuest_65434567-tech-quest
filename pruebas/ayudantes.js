@@ -161,4 +161,20 @@ function idDeTipo(page, tipo, condicion) {
 
 const leer = (page, selector) => page.locator(selector).innerText();
 
-module.exports = { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer };
+/** Desde el menú: Aventura → mundo → nivel. */
+async function aventura(page, mundo = "linux", nivel = 1) {
+  await clic(page, '#screen-menu [data-action="play"]');
+  await clic(page, `[data-action="pick-world"][data-world="${mundo}"]`);
+  await clic(page, `[data-action="pick-level"][data-level="${nivel}"]`);
+}
+
+/** Desde la pantalla final, vuelve al menú. */
+const alMenu = (page) => clic(page, '#screen-end [data-action="menu"]');
+
+/** Recarga la página y espera a que el juego arranque. */
+async function recargar(page) {
+  await page.reload();
+  await page.waitForFunction(() => window.techQuestReady === true);
+}
+
+module.exports = { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer, aventura, alMenu, recargar };

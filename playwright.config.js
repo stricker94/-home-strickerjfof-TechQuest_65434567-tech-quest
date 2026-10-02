@@ -8,6 +8,8 @@ module.exports = defineConfig({
   timeout: 120000,
   expect: { timeout: 5000 },
   fullyParallel: true,
+  // En GitHub las máquinas tienen pocos núcleos: dos a la vez mantiene estables las pruebas con tiempos
+  workers: process.env.CI ? 2 : undefined,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {

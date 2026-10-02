@@ -1,11 +1,5 @@
 // Partida: Aventura, estrellas, siguiente nivel, tu respuesta, pistas, teclado, reloj y salir.
-const { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer } = require("./ayudantes");
-
-async function aventura(page, mundo = "linux", nivel = 1) {
-  await clic(page, '#screen-menu [data-action="play"]');
-  await clic(page, `[data-action="pick-world"][data-world="${mundo}"]`);
-  await clic(page, `[data-action="pick-level"][data-level="${nivel}"]`);
-}
+const { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer, aventura } = require("./ayudantes");
 
 test("menú nuevo: Continuar aventura lleva a Linux nivel 1", async ({ page }) => {
   await abrir(page);

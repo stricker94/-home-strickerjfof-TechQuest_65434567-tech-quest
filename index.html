@@ -275,11 +275,13 @@
       }
       var nucleo = { "js/data.js": "addWorld", "js/audio.js": "TechAudio", "js/progress.js": "Progress", "js/ui.js": "UI" };
       var cargados = window.techQuestLoaded || {};
+      // Los archivos de datos (un mundo, los tickets) avisan con addWorld/addTicket que se cargaron
+      function esDatos(src) { return src.indexOf("js/mundos/") === 0 || src === "js/tickets.js"; }
       var fallidos = [];
       var scripts = document.querySelectorAll("script[src]");
       for (var i = 0; i < scripts.length; i++) {
         var src = scripts[i].getAttribute("src");
-        var ok = src.indexOf("js/mundos/") === 0 ? !!cargados[src]
+        var ok = esDatos(src) ? !!cargados[src]
           : src === "js/game.js" ? !!window.techQuestReady
           : nucleo[src] ? existe(nucleo[src]) : true;
         if (!ok) fallidos.push(src);
@@ -289,7 +291,7 @@
       var primero = null;
       fallidos = fallidos.filter(function (f) {
         if (f === "js/data.js") return (primero = f);
-        if (f.indexOf("js/mundos/") === 0) return primero !== "js/data.js";
+        if (esDatos(f)) return primero !== "js/data.js";
         if (primero) return false;
         return (primero = f);
       });
