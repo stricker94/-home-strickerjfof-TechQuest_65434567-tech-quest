@@ -73,6 +73,41 @@ for (const rel of scripts.filter((r) => !esDatos(r) && fuentes[r] != null)) {
   }
 }
 
+// ——— La versión instalable (sw.js) guarda para jugar sin conexión todo lo que carga el juego ———
+const existe = (rel) => fs.existsSync(path.join(RAIZ, rel));
+if (existe("sw.js")) {
+  const sw = leer("sw.js");
+  let lista = null;
+  try {
+    const c = { self: { addEventListener() {}, location: { origin: "" } }, caches: {}, fetch() {}, Request: function () {}, Response: {} };
+    vm.createContext(c);
+    vm.runInContext(sw + "\n;this.__archivos = ARCHIVOS;", c, { filename: "sw.js" });
+    lista = c.__archivos;
+  } catch (e) {
+    const m = /sw\.js:(\d+)/.exec(String(e.stack));
+    errores.push(`sw.js${m ? ", línea " + m[1] : ""}: error de escritura (${e.message}); el juego instalado no funcionaría sin conexión`);
+  }
+  if (Array.isArray(lista)) {
+    const necesarios = ["index.html"].concat(scripts);
+    for (const m of html.matchAll(/<link\b[^>]*\bhref\s*=\s*["']([^"':]+)["'][^>]*>/gi)) necesarios.push(m[1]);
+    if (existe("manifest.webmanifest")) {
+      necesarios.push("manifest.webmanifest");
+      try {
+        const man = JSON.parse(leer("manifest.webmanifest"));
+        (man.icons || []).forEach((i) => i && i.src && necesarios.push(i.src));
+      } catch (e) {
+        errores.push(`manifest.webmanifest: no es JSON válido (${e.message}); el juego no se podría instalar`);
+      }
+    }
+    for (const f of new Set(necesarios)) {
+      if (!lista.includes(f)) errores.push(`sw.js: falta "${f}" en ARCHIVOS; el juego instalado no lo tendría sin conexión`);
+    }
+    for (const f of lista) {
+      if (f !== "./" && !existe(f)) errores.push(`sw.js: ARCHIVOS incluye "${f}", que no existe; la instalación sin conexión fallaría entera`);
+    }
+  }
+}
+
 // ——— 2. Cargar los datos como lo hace el navegador ———
 const ctx = { console };
 ctx.window = ctx;

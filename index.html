@@ -5,8 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Tech Quest — juego educativo de IT para Josué. Linux, Windows, impresoras, redes, programación, soporte, ciberseguridad, hardware, cloud y bases de datos." />
   <meta name="theme-color" content="#0a0e17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Tech Quest" />
   <title>Tech Quest — Aventura IT</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <script>
+    // App instalable (manifest) solo desde una dirección web: con doble clic (file://) el navegador lo bloquearía
+    // y dejaría un error rojo en la consola que confunde al buscar otros errores. Escrito en ES5 a propósito
+    if (/^https?:$/.test(location.protocol)) {
+      var tqManifest = document.createElement("link");
+      tqManifest.rel = "manifest";
+      tqManifest.href = "manifest.webmanifest";
+      document.head.appendChild(tqManifest);
+    }
+  </script>
 </head>
 <body>
   <div class="app">

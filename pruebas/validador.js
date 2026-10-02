@@ -19,10 +19,12 @@ const base = {};
 function copiar(rel) {
   const abs = path.join(RAIZ, rel);
   if (fs.statSync(abs).isDirectory()) fs.readdirSync(abs).forEach((f) => copiar(path.join(rel, f)));
-  else if (/\.(js|html|json|webmanifest)$/.test(rel)) base[rel.split(path.sep).join("/")] = fs.readFileSync(abs, "utf8");
+  else if (/\.(js|html|json|webmanifest|css|svg)$/.test(rel)) base[rel.split(path.sep).join("/")] = fs.readFileSync(abs, "utf8");
+  // Las imágenes solo tienen que existir: basta con un archivo vacío con su nombre
+  else if (/\.png$/.test(rel)) base[rel.split(path.sep).join("/")] = "";
 }
 ["index.html", "js"].forEach(copiar);
-for (const extra of ["sw.js", "manifest.webmanifest"]) if (fs.existsSync(path.join(RAIZ, extra))) copiar(extra);
+for (const extra of ["sw.js", "manifest.webmanifest", "css", "icons"]) if (fs.existsSync(path.join(RAIZ, extra))) copiar(extra);
 
 function validar(cambiar) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tq-validador-"));
@@ -56,6 +58,9 @@ const casos = [
   ["index.html carga un archivo que no existe", (f) => { f["index.html"] = f["index.html"].replace('<script src="js/mundos/linux.js"></script>', '<script src="js/mundos/linux.js"></script>\n  <script src="js/mundos/linuxx.js"></script>'); }, 1, /carga js\/mundos\/linuxx\.js, pero ese archivo no existe/],
   ["error de escritura en game.js", (f) => { f["js/game.js"] = f["js/game.js"].replace("function init() {", "function init() {{"); }, 1, /js\/game\.js, línea \d+: error de escritura/],
   ["error de escritura en ui.js", (f) => { f["js/ui.js"] = f["js/ui.js"] + "\n})("; }, 1, /js\/ui\.js, línea \d+: error de escritura/],
+  ["sw.js sin un mundo que carga index.html", (f) => { f["sw.js"] = f["sw.js"].replace('  "js/mundos/cloud.js",\n', ""); }, 1, /sw\.js: falta "js\/mundos\/cloud\.js" en ARCHIVOS/],
+  ["sw.js con un archivo que no existe", (f) => { f["sw.js"] = f["sw.js"].replace('"js/data.js",', '"js/data.js",\n  "js/viejo.js",'); }, 1, /ARCHIVOS incluye "js\/viejo\.js", que no existe/],
+  ["manifest roto", (f) => { f["manifest.webmanifest"] = "{ nombre: x }"; }, 1, /manifest\.webmanifest: no es JSON válido/],
   ["dos archivos con el mismo id de mundo", (f) => { f[LINUX] = f[LINUX].replace('id: "linux",', 'id: "windows",'); }, 1, /el mundo "windows" ya lo registró/],
   ["un archivo de mundo sin addWorld", (f) => { f[LINUX] = "// vacío\n"; }, 1, /linux\.js: no registra ningún mundo/],
   ["campo del mundo mal escrito (preguntas)", (f) => { f[LINUX] = f[LINUX].replace("questions: [", "preguntas: ["); }, 1, /campo que el juego no usa en el mundo: preguntas/],
