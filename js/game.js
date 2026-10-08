@@ -97,7 +97,8 @@
       else pushRunEntry();
     });
     window.addEventListener("beforeunload", (e) => {
-      if (!inRun) return;
+      // En el modo de prueba no hay nada que perder: recargar tras editar una pregunta no pregunta nada
+      if (!inRun || state.noSave) return;
       e.preventDefault();
       e.returnValue = "";
     });
@@ -293,6 +294,7 @@
         TechAudio.playClick();
         if (confirm("¿Borrar todo tu progreso, logros, estadísticas y récord? Esto no se puede deshacer, salvo que antes descargues un respaldo (botón «Descargar respaldo»).")) {
           Progress.resetAll();
+          clearRunSnapshot();
           renderStats();
           refreshMenu();
           UI.toast("Progreso reiniciado.");
@@ -326,7 +328,7 @@
         break;
       case "menu":
         TechAudio.playClick();
-        if (inRun) clearRunSnapshot();
+        if (inRun && !state.noSave) clearRunSnapshot();
         inRun = false;
         clearTimer();
         refreshMenu();
@@ -402,7 +404,8 @@
   }
 
   function quitToMenu() {
-    clearRunSnapshot();
+    // La prueba de preguntas no guarda ni borra nada: si había una partida para reanudar, sigue ahí
+    if (!state.noSave) clearRunSnapshot();
     inRun = false;
     clearTimer();
     refreshMenu();
@@ -811,7 +814,8 @@
       const w = getWorldById(t.world);
       const best = Progress.getTicketBest(t.id);
       const n = t.steps.length;
-      const stateTxt = best >= n ? "✔ Resuelto sin fallos" : best > 0 ? "Mejor: " + best + "/" + n + " pasos bien" : "Sin intentar";
+      const stateTxt = best >= n ? "✔ Resuelto sin fallos"
+        : best > 0 || Progress.hasTicketResult(t.id) ? "Mejor: " + best + "/" + n + " pasos bien" : "Sin intentar";
       return `<button type="button" class="level-card ticket-card ${best >= n ? "cleared" : ""}" style="--accent:${w ? w.color : "#ff7755"}"
         data-action="pick-ticket" data-ticket="${UI.escapeHtml(t.id)}">
         <span class="level-icon">${UI.escapeHtml(t.icon || "🎫")}</span>
@@ -891,6 +895,8 @@
     let snap;
     try { snap = JSON.parse(sessionStorage.getItem(RUN_KEY)); } catch (_) { return null; }
     if (!snap || snap.v !== 1 || !Array.isArray(snap.ids) || !snap.ids.length || typeof snap.next !== "number") return null;
+    // Empezada antes de reiniciar el progreso o cargar un respaldo: ya no guardaría nada, así que no se ofrece
+    if ((snap.saveId || "") !== Progress.saveId()) return null;
     let pool;
     if (snap.mode === "ticket") {
       const t = TICKETS.find((x) => x.id === snap.ticketId);
@@ -972,6 +978,7 @@
       const when = obj.fecha && !isNaN(Date.parse(obj.fecha)) ? new Date(obj.fecha).toLocaleString("es-MX") : "fecha desconocida";
       if (!confirm("¿Cargar el respaldo del " + when + "? Reemplaza todo el progreso de este navegador.")) return;
       const n = Progress.importBackup(obj);
+      clearRunSnapshot();
       renderStats();
       refreshMenu();
       UI.toast(n > 0 ? "Respaldo cargado." : "El respaldo estaba vacío: progreso en cero.");
@@ -1067,6 +1074,12 @@
       (state.ticket ? "Paso " + (state.qIndex + 1) + " de " + state.totalQ + " · " : "") +
       typeLabel(q.type) + (state.mode === "test" ? " · " + q.id : ""));
     UI.setText("#question-text", q.q);
+    // En un ticket, el lector de pantalla oye también el caso y lo anotado, no solo la pregunta
+    const qText = UI.$("#question-text");
+    if (qText) {
+      if (state.ticket) qText.setAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
+      else qText.removeAttribute("aria-describedby");
+    }
     const ticketBox = UI.$("#ticket-box");
     if (ticketBox) {
       ticketBox.hidden = !state.ticket;
@@ -1120,6 +1133,12 @@
     }
     // El foco va a la pregunta nueva (el campo de texto lo toma en "completar"), no se pierde en <body>
     if (q.type !== "fill") UI.$("#question-text")?.focus({ preventScroll: true });
+    // En un ticket lo anotado crece en cada paso: si en una pantalla baja deja las respuestas fuera de la
+    // vista, la pregunta sube arriba (el caso sigue encima, a un desplazamiento)
+    if (state.ticket && state.qIndex > 0) {
+      const first = area.firstElementChild;
+      if (first && first.getBoundingClientRect().bottom > window.innerHeight) UI.$(".question-meta")?.scrollIntoView({ block: "start" });
+    }
 
     armTimer();
   }
@@ -1320,7 +1339,8 @@
     state.hintCost = GAME_CONFIG.pointsHintPenalty;
     if (runSaves()) Progress.recordHint();
     UI.updateHUD(hud());
-    saveRunSnapshot();
+    // Sin guardar la partida aquí: si se recarga antes de responder, «Reanudar» vuelve a esta pregunta
+    // con la pista sin gastar (la que se vio no se puede volver a mostrar igual: las opciones se barajan)
     // Una pista por pregunta: el botón vuelve a activarse en la siguiente si quedan. Se marca con
     // aria-disabled en vez de disabled para que, si tenía el foco, no caiga a <body> (y un segundo
     // Enter no envíe la respuesta a medias)
@@ -1695,7 +1715,7 @@
 
   function endGame(victory) {
     clearTimer();
-    clearRunSnapshot();
+    if (!state.noSave) clearRunSnapshot();
     inRun = false;
     // Progreso reiniciado en otra pestaña durante la partida: este resultado no se guarda en el progreso nuevo
     const saves = runSaves();
@@ -1744,14 +1764,19 @@
         else if (wi >= 0 && wi < WORLDS.length - 1 && Progress.isUnlocked(WORLDS[wi + 1].id)) state.nextLevel = { worldId: WORLDS[wi + 1].id, level: 1 };
       }
       if (state.mode === "daily") {
-        const d = Progress.getDaily();
+        // Empezado antes de la medianoche y terminado después: cuenta para el día en que se empezó
+        const late = state.dailyDay === Progress.addDays(Progress.today(), -1);
+        const d = Progress.getDaily(late ? state.dailyDay : null);
         if (d && d.day === state.dailyDay && !d.done) {
           Progress.saveDaily(Object.assign(d, { done: true, correct: state.correctCount, total: totalAns }));
-          const streak = Progress.recordDailyDone();
+          const streak = Progress.recordDailyDone(d.day);
           if (streak >= 7) grant("daily7");
-          dailyNote = "Reto de hoy completado · 🔥 " + streak + (streak === 1 ? " día seguido" : " días seguidos") + ". Vuelve mañana por otro.";
+          dailyNote = (late ? "Reto de ayer completado (lo terminaste pasada la medianoche)" : "Reto de hoy completado") +
+            " · 🔥 " + streak + (streak === 1 ? " día seguido" : " días seguidos") +
+            (late ? ". Hoy ya tienes uno nuevo." : ". Vuelve mañana por otro.");
         } else if (d && d.day === state.dailyDay) {
-          dailyNote = "Ya habías completado el reto de hoy: esta vez fue práctica. Vuelve mañana por otro.";
+          dailyNote = "Ya habías completado el reto de " + (late ? "ayer" : "hoy") + ": esta vez fue práctica." +
+            (late ? " Hoy ya tienes uno nuevo." : " Vuelve mañana por otro.");
         } else dailyNote = "Este reto era de otro día: no suma a la racha.";
       }
       if (state.mode === "ticket" && state.ticket) {

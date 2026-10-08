@@ -16,6 +16,7 @@ module.exports = defineConfig({
     baseURL: "http://127.0.0.1:8765/",
     actionTimeout: 8000,
     trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   webServer: {
     command: "node pruebas/servidor.js 8765",

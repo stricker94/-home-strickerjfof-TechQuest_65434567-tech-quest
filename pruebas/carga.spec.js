@@ -27,6 +27,8 @@ test("un mundo con un error de escritura: lo nombra y el resto del juego funcion
   await expect(aviso(page)).toHaveAttribute("role", "alert");
   expect(await page.evaluate(() => window.techQuestReady)).toBe(true);
   expect(await page.evaluate(() => WORLDS.map((w) => w.id))).not.toContain("printers");
+  // Un clic justo al abrir lo ignora el bloqueo de doble clic (350 ms): se espera a que pase
+  await page.waitForFunction(() => UI.sinceScreen() > 400);
   await page.click('#screen-menu [data-action="play"]');
   await expect(page.locator('[data-world="linux"]')).toBeVisible();
 });

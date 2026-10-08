@@ -65,6 +65,46 @@ test("fallar un paso: se ve lo que descubriste igual, no va al repaso y se guard
   await expect(page.locator(`[data-ticket="${caso.id}"] .level-state`)).toHaveText(`Mejor: ${n - 1}/${n} pasos bien`);
 });
 
+test("un ticket jugado con 0 pasos bien ya no dice «Sin intentar»", async ({ page }) => {
+  const caso = CASOS[0];
+  await abrir(page);
+  await abrirTicket(page, caso.id);
+  await jugarHastaElFinal(page, () => false);
+  await expect(page.locator("#end-unlock")).toHaveText(`Pasos bien: 0 de ${caso.steps.length}`);
+  await clic(page, "#btn-pick-again");
+  await expect(page.locator(`[data-ticket="${caso.id}"] .level-state`)).toHaveText(`Mejor: 0/${caso.steps.length} pasos bien`);
+  await expect(page.locator(`[data-ticket="${CASOS[1].id}"] .level-state`)).toHaveText("Sin intentar");
+});
+
+test("móvil 320×640: en cada paso la pregunta y la primera respuesta se ven sin desplazar, y el lector oye el caso", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  // El caso con más notas: el que más empuja la pregunta hacia abajo
+  const caso = CASOS.slice().sort((a, b) => b.steps.map((s) => s.reveal || "").join("").length - a.steps.map((s) => s.reveal || "").join("").length)[0];
+  await abrir(page);
+  await abrirTicket(page, caso.id);
+  for (let i = 0; i < caso.steps.length; i++) {
+    await expect(page.locator("#question-text")).toHaveText(caso.steps[i].q);
+    await expect(page.locator("#question-text")).toHaveAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
+    const r = await page.evaluate(() => ({
+      pregunta: document.querySelector("#question-text").getBoundingClientRect().top,
+      respuesta: document.querySelector("#challenge-area button, #challenge-area input").getBoundingClientRect().top,
+      alto: window.innerHeight,
+    }));
+    expect(r.pregunta, `paso ${i + 1}`).toBeGreaterThanOrEqual(0);
+    // En el paso 1 se empieza por leer el caso; desde el 2, lo anotado no debe tapar las respuestas
+    if (i > 0) expect(r.respuesta, `paso ${i + 1}`).toBeLessThan(r.alto - 40);
+    else expect(r.pregunta, "paso 1").toBeLessThan(r.alto);
+    await responder(page, true);
+    await tecla(page, "Enter");
+  }
+  // Fuera de los tickets la pregunta no lleva esa descripción
+  await alMenu(page);
+  await clic(page, '#screen-menu [data-action="play"]');
+  await clic(page, '[data-action="pick-world"][data-world="linux"]');
+  await clic(page, '[data-action="pick-level"][data-level="1"]');
+  await expect(page.locator("#question-text")).not.toHaveAttribute("aria-describedby", /.+/);
+});
+
 test("recargar a mitad de un ticket: «Reanudar» sigue en el mismo paso con lo descubierto", async ({ page }) => {
   const caso = CASOS.find((c) => c.steps[0].reveal && c.steps[1].reveal);
   await abrir(page);

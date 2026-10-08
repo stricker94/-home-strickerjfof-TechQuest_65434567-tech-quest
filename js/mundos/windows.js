@@ -169,7 +169,7 @@ addWorld({
       ],
       answer: 0,
       explain: "Usuarios y grupos locales (lusrmgr.msc) o Configuración. En dominio se usan AD/GP.",
-      try: "En cmd escribe `net user` para listar las cuentas locales del equipo y `net user %USERNAME%` para ver los detalles de la tuya."
+      try: "En cmd escribe `net user` para listar las cuentas locales del equipo y `net user %USERNAME%` para ver los detalles de la tuya si es una cuenta local. En una PC del trabajo unida a un dominio, tu cuenta es del dominio: usa `net user %USERNAME% /domain`."
     },
     {
       id: "wnL2a", level: 2, type: "mc",

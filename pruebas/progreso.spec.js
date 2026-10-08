@@ -144,6 +144,28 @@ test("reto del día: mismas preguntas todo el día, racha de días y se pierde s
   await expect(page.locator("#menu-streak-pill")).toBeHidden();
 });
 
+test("reto del día empezado antes de medianoche y terminado después: cuenta para ese día y la racha sigue", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-10-05T23:55:00"));
+  await abrir(page, "index.html", { techQuestDayStreak: { last: "2026-10-04", count: 5, best: 5 } });
+  await expect(page.locator("#menu-streak")).toHaveText("5");
+  await clic(page, "#btn-daily");
+  for (let n = 0; n < 9; n++) {
+    await responder(page, true);
+    await tecla(page, "Enter");
+  }
+  await page.clock.setFixedTime(new Date("2026-10-06T00:02:00"));
+  await responder(page, true);
+  await tecla(page, "Enter");
+  await expect(page.locator("#end-unlock")).toHaveText("Reto de ayer completado (lo terminaste pasada la medianoche) · 🔥 6 días seguidos. Hoy ya tienes uno nuevo.");
+  await alMenu(page);
+  await expect(page.locator("#menu-streak")).toHaveText("6");
+  // El de hoy está por hacer y suma uno más
+  await expect(page.locator("#daily-label")).toHaveText("");
+  await clic(page, "#btn-daily");
+  await jugarHastaElFinal(page);
+  await expect(page.locator("#end-unlock")).toHaveText("Reto de hoy completado · 🔥 7 días seguidos. Vuelve mañana por otro.");
+});
+
 test("racha de 7 días da el logro «Constancia»", async ({ page }) => {
   await page.clock.setFixedTime(DIA(5));
   await abrir(page, "index.html", { techQuestDayStreak: { last: "2026-10-04", count: 6, best: 6 } });
@@ -261,6 +283,67 @@ test("recargar en el resultado de la última pregunta: «Reanudar» muestra el f
   expect(await page.evaluate(() => Progress.getLevelStars("linux", 1))).toBe(3);
 });
 
+test("una pista pedida justo antes de recargar no se pierde: «Reanudar» la devuelve", async ({ page }) => {
+  await abrir(page);
+  const mc = await idDeTipo(page, "mc", "q.options.length === 4");
+  await forzarPreguntas(page, [mc, mc]);
+  await aventura(page);
+  await expect(page.locator("#hud-hints")).toHaveText("2");
+  await tecla(page, "h");
+  await expect(page.locator("#hud-hints")).toHaveText("1");
+  await recargar(page);
+  await clic(page, "#btn-resume");
+  await expect(page.locator("#hud-progress")).toHaveText("1 / 2");
+  await expect(page.locator("#hud-hints")).toHaveText("2");
+  await expect(page.locator("#hint-box")).toBeHidden();
+  await tecla(page, "h");
+  await expect(page.locator("#options .option-btn.eliminated")).toHaveCount(1);
+  await expect(page.locator("#hud-hints")).toHaveText("1");
+});
+
+for (const accion of ["reiniciar el progreso", "cargar un respaldo"]) {
+  test(`${accion} descarta la partida que había para reanudar`, async ({ page }, info) => {
+    await abrir(page);
+    await clic(page, '#screen-menu [data-action="stats"]');
+    const [descarga] = await Promise.all([page.waitForEvent("download"), clic(page, '[data-action="backup-download"]')]);
+    const archivo = info.outputPath("respaldo.json");
+    await descarga.saveAs(archivo);
+    await clic(page, '#screen-stats [data-action="menu"]');
+    await aventura(page);
+    await responder(page, true);
+    await tecla(page, "Enter");
+    await recargar(page);
+    await expect(page.locator("#btn-resume")).toBeVisible();
+    await clic(page, '#screen-menu [data-action="stats"]');
+    if (accion === "reiniciar el progreso") await clic(page, '[data-action="reset-progress"]');
+    else {
+      // Como contenido y no como ruta: Chromium no lee el archivo si la carpeta de la prueba lleva acentos
+      await page.setInputFiles("#backup-file", { name: "respaldo.json", mimeType: "application/json", buffer: fs.readFileSync(archivo) });
+      await expect(page.locator("#tq-toast")).toHaveText("El respaldo estaba vacío: progreso en cero.");
+    }
+    await clic(page, '#screen-stats [data-action="menu"]');
+    await expect(page.locator("#btn-resume")).toBeHidden();
+    await expect(page.locator("#btn-continue")).toHaveClass(/btn-primary/);
+  });
+}
+
+test("reiniciar en otra pestaña con una partida para reanudar en esta: ya no se ofrece", async ({ page, context }) => {
+  await abrir(page);
+  await aventura(page);
+  await responder(page, true);
+  await tecla(page, "Enter");
+  const otra = await context.newPage();
+  otra.on("dialog", (d) => d.accept());
+  await otra.goto("index.html");
+  await otra.waitForFunction(() => window.techQuestReady === true && UI.sinceScreen() > 400);
+  await otra.click('#screen-menu [data-action="stats"]');
+  await otra.waitForTimeout(400);
+  await otra.click('[data-action="reset-progress"]');
+  await otra.close();
+  await recargar(page);
+  await expect(page.locator("#btn-resume")).toBeHidden();
+});
+
 test("salir al menú con «Salir» borra la partida guardada: no se ofrece reanudar", async ({ page }) => {
   await abrir(page);
   await aventura(page);
@@ -279,6 +362,8 @@ test("reiniciar el progreso en otra pestaña: la partida empezada antes ya no gu
   otra.on("dialog", (d) => d.accept());
   await otra.goto("index.html");
   await otra.waitForFunction(() => window.techQuestReady === true);
+  // Esta pestaña no tiene la ayuda de ayudantes.js: se espera a mano el bloqueo de doble clic (350 ms)
+  await otra.waitForFunction(() => UI.sinceScreen() > 400);
   await otra.click('#screen-menu [data-action="stats"]');
   await otra.waitForTimeout(400);
   await otra.click('[data-action="reset-progress"]');
@@ -286,6 +371,25 @@ test("reiniciar el progreso en otra pestaña: la partida empezada antes ya no gu
   await jugarHastaElFinal(page, () => true);
   await expect(page.locator("#end-unlock")).toHaveText("El progreso se reinició (o se cargó un respaldo) durante esta partida: este resultado no se guardó.");
   expect(await page.evaluate(() => Progress.isLevelCleared("linux", 1))).toBe(false);
+});
+
+test("progreso guardado antes de añadir un mundo al final: si ya terminaste el anterior, el nuevo está abierto", async ({ page }) => {
+  await abrir(page);
+  // Lo que guardaba la versión sin el último mundo para quien lo terminó todo: nadie desbloqueó el mundo nuevo
+  const { nuevo, nombre } = await page.evaluate(() => {
+    const viejos = WORLDS.slice(0, -1);
+    const clears = {}, unlocks = {};
+    viejos.forEach((w) => { clears[w.id] = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1 }; unlocks[w.id] = true; });
+    localStorage.setItem("techQuestLevelClears", JSON.stringify(clears));
+    localStorage.setItem(GAME_CONFIG.storageUnlocks, JSON.stringify(unlocks));
+    const w = WORLDS[WORLDS.length - 1];
+    return { nuevo: w.id, nombre: w.icon + " " + w.name };
+  });
+  await recargar(page);
+  await expect(page.locator("#btn-continue")).toBeVisible();
+  await expect(page.locator("#continue-label")).toHaveText(nombre + " · Nivel 1");
+  await clic(page, '#screen-menu [data-action="play"]');
+  await expect(page.locator(`[data-world="${nuevo}"]`)).toHaveAttribute("data-action", "pick-world");
 });
 
 test("datos guardados dañados: el juego arranca y se puede jugar", async ({ page }) => {

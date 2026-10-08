@@ -179,14 +179,13 @@ test("Cronómetro: al acabarse el tiempo dice que no respondiste y quita una vid
   await clic(page, '[data-world="linux"]');
   await clic(page, '[data-level="1"]');
   await expect(page.locator("#feedback-title")).toHaveText("¡Tiempo agotado!", { timeout: 6000 });
-  await expect(page.locator("#feedback-detail")).toContainText("Vidas: 2");
-  const q = await page.evaluate(() => null);
-  const tipo = await page.evaluate(() => document.querySelector("#question-type").textContent);
-  if (!/Emparejar|Ordenar/.test(tipo)) await expect(page.locator("#feedback-yours")).toHaveText("Tu respuesta: no respondiste a tiempo");
-  // Las teclas justo después del tiempo agotado se ignoran (el jugador quizá seguía escribiendo)
+  // Las teclas justo después del tiempo agotado se ignoran (el jugador quizá seguía escribiendo).
+  // Se pulsa enseguida, antes de las demás comprobaciones: el margen es de 1 segundo
   await page.keyboard.press("Enter");
   expect(await pantalla(page)).toBe("screen-feedback");
-  expect(q).toBeNull();
+  await expect(page.locator("#feedback-detail")).toContainText("Vidas: 2");
+  const tipo = await page.evaluate(() => document.querySelector("#question-type").textContent);
+  if (!/Emparejar|Ordenar/.test(tipo)) await expect(page.locator("#feedback-yours")).toHaveText("Tu respuesta: no respondiste a tiempo");
 });
 
 test("Esc y Atrás piden confirmar; Cancelar sigue jugando y Aceptar vuelve al menú", async ({ page }) => {

@@ -67,6 +67,8 @@ Luego abre <http://localhost:8000> en el navegador y detén el servidor con `Ctr
 6. Cada vez que fusiones cambios, GitHub actualiza la dirección sola en uno o dos minutos. El juego instalado toma la versión nueva la próxima vez que lo abras con internet (si no la ves, cierra y vuelve a abrir la app, o recarga la página).
 
 > El progreso se guarda por separado según cómo abras el juego: con doble clic, con `localhost` y con la dirección web son partidas guardadas distintas. Usa siempre la misma forma, o pasa tu progreso de una a otra con un respaldo (paso 5).
+>
+> En **iPhone o iPad**, la app agregada a inicio también guarda su progreso aparte del de Safari. Si ya jugabas en Safari, antes de instalarla ve a **Stats → 💾 Descargar respaldo** y luego, en la app, **Stats → 📂 Cargar respaldo**.
 
 ## 4. Jugar
 
@@ -108,7 +110,7 @@ Luego abre <http://localhost:8000> en el navegador y detén el servidor con `Ctr
 - Récord, niveles, estrellas, mundos, logros, estadísticas, racha del Reto del día, tickets y errores pendientes se guardan **en este navegador** (localStorage). No se comparten entre navegadores ni computadoras.
 - **Respaldo:** menú → **Stats** → **💾 Descargar respaldo** guarda todo tu progreso en un archivo `tech-quest-respaldo-AAAA-MM-DD.json` (queda en tu carpeta de Descargas). Para recuperarlo en otro navegador, otra computadora o la dirección web: **Stats** → **📂 Cargar respaldo** y elige ese archivo. Pide confirmar porque **reemplaza** el progreso que haya en ese navegador. Conviene descargar uno de vez en cuando: si el navegador borra sus datos, el progreso se pierde.
 - **Reiniciar todo:** menú → **Stats** → **🗑️ Reiniciar progreso**. Conserva solo la preferencia de sonido. Descarga antes un respaldo si quieres poder volver atrás.
-- **Partida a medias:** si recargas o cierras sin querer en plena partida, al volver en esa misma pestaña el menú ofrece **⏯️ Reanudar partida**. Salir con **Salir** o `Esc` la da por terminada.
+- **Partida a medias:** si recargas la página en plena partida (o reabres la pestaña recién cerrada con `Ctrl+Mayús+T`), el menú ofrece **⏯️ Reanudar partida**. Si cierras la pestaña o la app, esa partida se pierde. Salir con **Salir** o `Esc` la da por terminada, y reiniciar el progreso o cargar un respaldo también la descarta.
 - Con el almacenamiento del sitio bloqueado, el juego funciona, pero el progreso solo dura mientras la página siga abierta: se pierde al recargarla (`F5`) o al cerrarla.
 - En modo incógnito o privado, el progreso se borra al terminar la sesión privada (según el navegador, al cerrar la pestaña o al cerrar todas las ventanas privadas).
 - Si reinicias el progreso o cargas un respaldo mientras el juego está abierto en otra pestaña con una partida empezada, el resultado de esa partida ya no se guarda (lo avisa la pantalla final).
@@ -135,7 +137,7 @@ Dentro de cada archivo, primero van las preguntas de los niveles (dentro de `que
 
 1. **Para corregir una pregunta**, abre el archivo de su mundo y busca su `id` (por ejemplo `lx13`) con `Ctrl+F`.
 2. **Para añadir una pregunta**, pégala en el archivo de su mundo, dentro de `questions: [`, debajo del comentario de su nivel. El nivel lo decide el campo `level` de la pregunta; el comentario solo sirve para encontrarla.
-   - Preguntas de **Boss**: dentro de `boss: [`, al final del archivo, con `level: 5`. No salen en Práctica, Aventura, Cronómetro ni Maratón: solo en el modo **Boss** de ese mundo (en el orden de la lista) y en **Repasar errores** si las fallas.
+   - Preguntas de **Boss**: dentro de `boss: [`, al final del archivo, con `level: 5`. No salen en Práctica, Aventura, Cronómetro ni Maratón: solo en el modo **Boss** de ese mundo (en el orden de la lista) y, si las fallas, en **Repasar errores** y en el **Reto del día**.
 3. Sigue estas reglas en cada pregunta:
    - `id` **único** en todo el juego (por ejemplo `lxL5z`).
    - `level` **siempre**, un número de 1 a 5 (sin comillas). Sin él la pregunta no sale en ningún nivel, y el validador lo marca como ERROR.
@@ -218,7 +220,7 @@ node herramientas/validar-preguntas.js
 
 **Añadir un mundo nuevo** (por ejemplo `js/mundos/macos.js`):
 
-1. Copia un archivo de mundo, renómbralo y cambia arriba su `id` (único, en minúsculas y sin espacios), `name`, `icon` (un emoji), `color` (por ejemplo `"#33d1c6"`) y `description`. Deja al menos 5 preguntas por nivel (1 a 5) y, si quieres, preguntas de Boss.
+1. Copia un archivo de mundo, renómbralo y cambia arriba su `id` (único, en minúsculas y sin espacios), `name`, `icon` (un emoji), `color` (por ejemplo `"#33d1c6"`) y `description`. Luego **borra las preguntas copiadas** y escribe las tuyas, con ids nuevos (por ejemplo con el prefijo `mac`): al menos 5 por nivel (1 a 5) y, si quieres, preguntas de Boss.
 2. En `index.html`, añade `<script src="js/mundos/macos.js"></script>` después del último mundo y **antes** de `<script src="js/tickets.js"></script>`. Los mundos se desbloquean en el orden de esa lista.
 3. En `sw.js`, añade `"js/mundos/macos.js",` a la lista `ARCHIVOS` (si no, la versión instalada no lo tendría sin internet).
 4. Ejecuta el validador: avisa si falta alguno de estos pasos.
@@ -310,7 +312,7 @@ Luego abre un Pull Request en GitHub desde esa rama (al terminar, `git push` mue
 
 El juego tiene pruebas que lo juegan solas en un navegador: cada nivel de cada mundo, cada Boss, cada ticket, el teclado, las pistas, el reloj, el progreso entre días, el respaldo, la versión sin internet, etc. Están en la carpeta `pruebas/`.
 
-- **En GitHub corren solas** en cada Pull Request y en cada cambio a `main` (pestaña **Actions** del repositorio, o junto al botón de fusionar). Si algo falla, en esa ejecución hay un archivo `resultados-de-las-pruebas` con capturas de lo que salió mal.
+- **En GitHub corren solas** en cada Pull Request y en cada cambio a `main` (pestaña **Actions** del repositorio, o junto al botón de fusionar). Si algo falla, en esa ejecución hay un archivo `resultados-de-las-pruebas` con una captura de la pantalla de cada prueba fallida y su grabación paso a paso (el archivo `trace.zip`; se ve arrastrándolo a [trace.playwright.dev](https://trace.playwright.dev)).
 - **En tu computadora** (opcional; necesitas [Node.js](https://nodejs.org) 18 o más nuevo), en una terminal abierta en la carpeta del juego:
 
 ```bash

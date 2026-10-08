@@ -62,6 +62,10 @@ const Progress = (() => {
   function getUnlocks() {
     const u = Object.assign(defaultUnlocks(), parse(GAME_CONFIG.storageUnlocks, {}));
     if (WORLDS[0]) u[WORLDS[0].id] = true;
+    // Un mundo también está abierto si el último nivel del anterior ya está superado: así un mundo
+    // añadido al final (p. ej. Identidad) se abre para quien ya había terminado el que antes era el último
+    const maxL = levelsPerWorld();
+    WORLDS.forEach((w, i) => { if (i > 0 && !u[w.id] && isLevelCleared(WORLDS[i - 1].id, maxL)) u[w.id] = true; });
     return u;
   }
 
@@ -278,10 +282,10 @@ const Progress = (() => {
   // ——— Reto del día y racha de días ———
   const DAILY_KEY = "techQuestDaily";
   const DAY_STREAK_KEY = "techQuestDayStreak";
-  /** { day, ids, done, correct, total } del reto de hoy, o null si aún no se generó. */
-  function getDaily() {
+  /** { day, ids, done, correct, total } del reto de hoy (o del día indicado), o null si aún no se generó. */
+  function getDaily(day) {
     const d = parse(DAILY_KEY, null);
-    if (!d || d.day !== today() || !Array.isArray(d.ids)) return null;
+    if (!d || d.day !== (day || today()) || !Array.isArray(d.ids)) return null;
     return { day: d.day, ids: d.ids.filter((x) => typeof x === "string"), done: !!d.done, correct: Number(d.correct) || 0, total: Number(d.total) || 0 };
   }
   function saveDaily(d) { save(DAILY_KEY, d); }
@@ -293,11 +297,15 @@ const Progress = (() => {
     const alive = s.last === day || s.last === addDays(day, -1);
     return { count: alive ? count : 0, best: Math.max(count, Math.floor(Number(s.best) || 0)), doneToday: s.last === day };
   }
-  /** Marca el reto de hoy como hecho; devuelve la racha actual. */
-  function recordDailyDone() {
+  /**
+   * Marca como hecho el reto de hoy (o el del día indicado: el de ayer si se terminó pasada la medianoche);
+   * devuelve la racha actual.
+   */
+  function recordDailyDone(day) {
     const s = parse(DAY_STREAK_KEY, {});
-    const day = today();
-    if (s.last === day) return getDayStreak().count;
+    day = day || today();
+    // Ya contado (o ya se contó el día siguiente: el de ayer terminado tarde no cambia la racha)
+    if (s.last === day || s.last === addDays(day, 1)) return getDayStreak().count;
     const count = s.last === addDays(day, -1) ? (Math.floor(Number(s.count) || 0) + 1) : 1;
     save(DAY_STREAK_KEY, { last: day, count, best: Math.max(count, Math.floor(Number(s.best) || 0)) });
     return count;
@@ -306,6 +314,8 @@ const Progress = (() => {
   // ——— Tickets: mejor resultado por caso { idCaso: aciertos } ———
   const TICKETS_KEY = "techQuestTickets";
   function getTicketBest(id) { return Math.max(0, Math.floor(Number(parse(TICKETS_KEY, {})[id]) || 0)); }
+  /** Si ese ticket ya se jugó hasta el final alguna vez (aunque con 0 pasos bien). */
+  function hasTicketResult(id) { return Object.prototype.hasOwnProperty.call(parse(TICKETS_KEY, {}), id); }
   function saveTicketResult(id, correct) {
     const t = parse(TICKETS_KEY, {});
     t[id] = Math.max(getTicketBest(id), correct);
@@ -409,7 +419,7 @@ const Progress = (() => {
     getMistakes, addMistake, removeMistake, recordReviewHit, isMistakeDue, resetAll, saveId,
     getLevelStars, saveLevelStars, countStars,
     getDaily, saveDaily, getDayStreak, recordDailyDone, today, addDays,
-    getTicketBest, saveTicketResult,
+    getTicketBest, hasTicketResult, saveTicketResult,
     exportBackup, checkBackup, importBackup,
     readRaw, writeRaw
   };

@@ -1,5 +1,5 @@
 // Modos: Maratón (Mi nivel / Todo), Práctica, modo de prueba (?pregunta=) y Simulador de tickets.
-const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, aventura, alMenu } = require("./ayudantes");
+const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, aventura, alMenu, recargar } = require("./ayudantes");
 
 const idsDeLaPartida = (page) => page.evaluate(() => JSON.parse(sessionStorage.getItem("techQuestRun")).ids);
 
@@ -65,6 +65,24 @@ test("modo de prueba: ?pregunta=id abre esa pregunta con su id, con pista y sin 
   const despues = await page.evaluate(() => Object.keys(localStorage).filter((k) => k !== "techQuestSaveId").sort());
   expect(despues).toEqual(antes);
   expect(await page.evaluate(() => Object.keys(Progress.getMistakes()))).toEqual([]);
+});
+
+test("modo de prueba en la misma pestaña que una partida a medias: no la borra y recargar no pregunta nada", async ({ page }) => {
+  await abrir(page);
+  await aventura(page);
+  await responder(page, true);
+  await tecla(page, "Enter");
+  await page.goto("index.html?pregunta=lx01");
+  await page.waitForFunction(() => window.techQuestReady === true);
+  await expect(page.locator("#hud-world")).toHaveText("🧪 Modo de prueba");
+  page.dialogos.length = 0;
+  await recargar(page);
+  expect(page.dialogos).toEqual([]);
+  await responder(page, true);
+  await tecla(page, "Enter");
+  await clic(page, '#screen-end [data-action="menu"]');
+  await expect(page.locator("#btn-resume")).toBeVisible();
+  await expect(page.locator("#resume-label")).toHaveText("🐧 Linux básico · Nv.1 · pregunta 2 de 10");
 });
 
 test("modo de prueba: varias ids, un prefijo con * y aviso de las que no existen", async ({ page }) => {
