@@ -4,18 +4,46 @@
 const TechAudio = (() => {
   let ctx = null;
   let muted = false;
+  // Todos los sonidos pasan por esta ganancia: silenciar corta también las notas ya programadas
+  let master = null;
+  // Si Web Audio falla (constructor que lanza, API bloqueada…), el juego sigue sin sonido: el sonido es decorativo
+  let broken = false;
 
   function getCtx() {
-    if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      ctx = new AC();
+    if (broken) return null;
+    try {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = muted ? 0 : 1;
+        master.connect(ctx.destination);
+      }
+      wake(ctx);
+      return ctx;
+    } catch (_) {
+      broken = true;
+      ctx = null;
+      master = null;
+      return null;
     }
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
-    return ctx;
   }
+
+  // Safari/iOS deja el contexto en "interrupted" tras una llamada, Siri o una alarma: se reanuda igual que "suspended"
+  function wake(c) {
+    if (c && c.state !== "running" && c.state !== "closed") {
+      const r = c.resume();
+      if (r && typeof r.catch === "function") r.catch(() => {});
+    }
+  }
+
+  // Al volver a la pestaña o a la app se intenta reanudar, sin crear el contexto antes del primer gesto
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      try { wake(ctx); } catch (_) {}
+    }
+  });
 
   function loadMute() {
     try {
@@ -38,6 +66,15 @@ const TechAudio = (() => {
   function setMuted(v) {
     muted = !!v;
     saveMute();
+    if (ctx && master) {
+      try {
+        const g = master.gain;
+        const t = ctx.currentTime;
+        g.cancelScheduledValues(t);
+        g.setValueAtTime(g.value, t);
+        g.setTargetAtTime(muted ? 0 : 1, t, 0.01);
+      } catch (_) {}
+    }
   }
 
   function toggleMute() {
@@ -46,43 +83,49 @@ const TechAudio = (() => {
   }
 
   function tone(freq, start, dur, type, gainVal, slideTo) {
+    if (muted) return;
     const c = getCtx();
-    if (!c || muted) return;
-    const osc = c.createOscillator();
-    const g = c.createGain();
-    osc.type = type || "square";
-    osc.frequency.setValueAtTime(freq, c.currentTime + start);
-    if (slideTo != null) {
-      osc.frequency.linearRampToValueAtTime(slideTo, c.currentTime + start + dur);
-    }
-    g.gain.setValueAtTime(0.0001, c.currentTime + start);
-    g.gain.exponentialRampToValueAtTime(gainVal, c.currentTime + start + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
-    osc.connect(g);
-    g.connect(c.destination);
-    osc.start(c.currentTime + start);
-    osc.stop(c.currentTime + start + dur + 0.05);
+    if (!c) return;
+    try {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type || "square";
+      osc.frequency.setValueAtTime(freq, c.currentTime + start);
+      if (slideTo != null) {
+        osc.frequency.linearRampToValueAtTime(slideTo, c.currentTime + start + dur);
+      }
+      g.gain.setValueAtTime(0.0001, c.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(gainVal, c.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(c.currentTime + start);
+      osc.stop(c.currentTime + start + dur + 0.05);
+    } catch (_) {}
   }
 
   function noiseBurst(start, dur, gainVal) {
+    if (muted) return;
     const c = getCtx();
-    if (!c || muted) return;
-    const len = Math.floor(c.sampleRate * dur);
-    const buf = c.createBuffer(1, len, c.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    const g = c.createGain();
-    const f = c.createBiquadFilter();
-    f.type = "bandpass";
-    f.frequency.value = 1200;
-    g.gain.setValueAtTime(gainVal, c.currentTime + start);
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
-    src.connect(f);
-    f.connect(g);
-    g.connect(c.destination);
-    src.start(c.currentTime + start);
+    if (!c) return;
+    try {
+      const len = Math.floor(c.sampleRate * dur);
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = 1200;
+      g.gain.setValueAtTime(gainVal, c.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
+      src.connect(f);
+      f.connect(g);
+      g.connect(master);
+      src.start(c.currentTime + start);
+    } catch (_) {}
   }
 
   function playClick() {
@@ -112,11 +155,13 @@ const TechAudio = (() => {
     tone(233, 0.48, 0.45, "sawtooth", 0.12, 180);
   }
 
-  function playAchievement() {
-    tone(659.25, 0, 0.1, "triangle", 0.11);
-    tone(783.99, 0.1, 0.1, "triangle", 0.11);
-    tone(987.77, 0.2, 0.12, "triangle", 0.12);
-    tone(1318.5, 0.35, 0.28, "square", 0.1);
+  /** delay: segundos de espera, para sonar después del sonido de acierto o de nivel completado. */
+  function playAchievement(delay) {
+    const d = delay || 0;
+    tone(659.25, d, 0.1, "triangle", 0.11);
+    tone(783.99, d + 0.1, 0.1, "triangle", 0.11);
+    tone(987.77, d + 0.2, 0.12, "triangle", 0.12);
+    tone(1318.5, d + 0.35, 0.28, "square", 0.1);
   }
 
   function playTick() {

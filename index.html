@@ -5,8 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Tech Quest — juego educativo de IT para Josué. Linux, Windows, impresoras, redes, programación, soporte, ciberseguridad, hardware, cloud y bases de datos." />
   <meta name="theme-color" content="#0a0e17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Tech Quest" />
   <title>Tech Quest — Aventura IT</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <script>
+    // App instalable (manifest) solo desde una dirección web: con doble clic (file://) el navegador lo bloquearía
+    // y dejaría un error rojo en la consola que confunde al buscar otros errores. Escrito en ES5 a propósito
+    if (/^https?:$/.test(location.protocol)) {
+      var tqManifest = document.createElement("link");
+      tqManifest.rel = "manifest";
+      tqManifest.href = "manifest.webmanifest";
+      document.head.appendChild(tqManifest);
+    }
+  </script>
 </head>
 <body>
   <div class="app">
@@ -25,15 +39,22 @@
           <span class="pill">Desafíos: <strong id="menu-total-q">100+</strong></span>
           <span class="pill">Mundos: <strong id="menu-worlds">10</strong></span>
           <span class="pill">Logros: <strong id="menu-ach-count">0 / 17</strong></span>
+          <span class="pill" id="menu-streak-pill" hidden>🔥 <strong id="menu-streak">0</strong> <span id="menu-streak-unit">días seguidos</span></span>
         </div>
-        <div id="menu-badges" class="menu-badges" aria-label="Logros"></div>
+        <div id="menu-badges" class="menu-badges" role="group" aria-label="Logros"></div>
+        <div class="btn-row continue-row">
+          <button type="button" class="btn btn-primary btn-wide" id="btn-resume" data-action="resume" hidden>⏯️ Reanudar partida <small id="resume-label"></small></button>
+          <button type="button" class="btn btn-primary btn-wide" id="btn-continue" data-action="continue" hidden>▶ Continuar aventura <small id="continue-label"></small></button>
+        </div>
         <div class="btn-row modes">
-          <button type="button" class="btn btn-primary" data-action="play">▶ Aventura</button>
+          <button type="button" class="btn" data-action="play">🗺️ Aventura</button>
+          <button type="button" class="btn" id="btn-daily" data-action="daily">📅 Reto del día <small id="daily-label"></small></button>
           <button type="button" class="btn" data-action="practice">📚 Práctica</button>
           <button type="button" class="btn" data-action="marathon">🏃 Maratón</button>
           <button type="button" class="btn" data-action="timer">⏱️ Cronómetro</button>
           <button type="button" class="btn" data-action="boss">👹 Boss</button>
-          <button type="button" class="btn" id="btn-review" data-action="review">🔁 Repasar errores (<span id="menu-review-count">0</span>)</button>
+          <button type="button" class="btn" id="btn-tickets" data-action="tickets">🎫 Tickets</button>
+          <button type="button" class="btn" id="btn-review" data-action="review">🔁 Repasar errores (<span id="menu-review-count">0</span>)<small id="menu-review-wait"></small></button>
         </div>
         <div class="btn-row">
           <button type="button" class="btn btn-ghost" data-action="achievements">🏅 Logros</button>
@@ -48,18 +69,23 @@
       <div class="panel">
         <h2 class="screen-title">Cómo jugar</h2>
         <ul class="howto-list">
-          <li><strong>Aventura:</strong> cada mundo tiene <strong>5 niveles</strong> (Básico → Intermedio → Avanzado → Experto → Maestro). Completa un nivel para desbloquear el siguiente; el nivel 5 desbloquea el siguiente mundo.</li>
-          <li><strong>Mundos:</strong> 10 en total, incluyendo Ciberseguridad, Hardware, <strong>Cloud / servicios</strong> y <strong>Base de datos</strong>.</li>
+          <li><strong>Aventura:</strong> cada mundo tiene <strong>5 niveles</strong> (Básico → Intermedio → Avanzado → Experto → Maestro). Completa un nivel para desbloquear el siguiente; el nivel 5 desbloquea el siguiente mundo. <strong>Continuar aventura</strong> abre el primer nivel que te falta y, al ganar, <strong>Siguiente nivel</strong> te lleva al próximo.</li>
+          <li><strong>Estrellas:</strong> al ganar un nivel de Aventura ganas ★ (lo superaste), ★★ (85% de aciertos o más) o ★★★ (sin fallos). Se guarda tu mejor resultado.</li>
+          <li><strong>Mundos:</strong> <span id="howto-worlds">10</span> en total, incluyendo Ciberseguridad, Hardware, <strong>Cloud / servicios</strong>, <strong>Base de datos</strong> e <strong>Identidad y Microsoft 365</strong>.</li>
+          <li><strong>Reto del día:</strong> 10 preguntas sin vidas, las mismas todo el día, de los niveles que ya abriste y de tus errores. Complétalo cada día para sumar a tu racha 🔥.</li>
           <li><strong>Práctica:</strong> sin vidas ni pistas, elige cualquier mundo (ya desbloqueado o no).</li>
-          <li><strong>Maratón:</strong> 20 preguntas mezcladas de todos los mundos.</li>
+          <li><strong>Maratón:</strong> 20 preguntas mezcladas, de <strong>Mi nivel</strong> (los mundos y niveles que ya abriste) o de <strong>Todo</strong>.</li>
           <li><strong>Cronómetro:</strong> hasta 12 preguntas del nivel elegido, con tiempo límite por pregunta.</li>
           <li><strong>Boss:</strong> incidente difícil cronometrado por mundo (tras desbloquearlo).</li>
-          <li><strong>Repasar errores:</strong> practica sin vidas las preguntas que has fallado; al acertarlas salen de la lista.</li>
+          <li><strong>Tickets:</strong> resuelve un ticket de soporte paso a paso (qué preguntas, qué revisas, la causa, el arreglo y qué anotas al cerrar), sin vidas.</li>
+          <li><strong>Repasar errores:</strong> practica sin vidas hasta 20 de las preguntas que has fallado, primero las que tocan hoy. Una pregunta sale de la lista cuando la aciertas en <strong>dos días distintos</strong> (un solo acierto puede ser suerte); si la vuelves a fallar, empieza de nuevo.</li>
           <li>Tipos: opción múltiple, V/F, completar comando, emparejar, ordenar, escenarios.</li>
-          <li><strong>Vidas:</strong> 3 por partida en Aventura, Maratón, Cronómetro y Boss; cada fallo o tiempo agotado quita una y al llegar a 0 termina la partida. Práctica y Repasar errores no tienen vidas.</li>
-          <li><strong>Pistas:</strong> 2 por partida (1 en Boss; ninguna en Práctica ni en Repasar errores), una por pregunta; cuestan 30 pts al resolver la pregunta. No hay pista en V/F.</li>
-          <li>Controles: clic/táctil; <kbd>1</kbd>–<kbd>4</kbd>; <kbd>V</kbd>/<kbd>F</kbd>; <kbd>Enter</kbd>; <kbd>H</kbd> pista; <kbd>M</kbd> silencio (fuera del campo de texto de «completar»); <kbd>Esc</kbd> salir.</li>
-          <li>Progreso, récord y logros se guardan en este navegador (localStorage).</li>
+          <li><strong>Vidas:</strong> 3 por partida en Aventura, Maratón, Cronómetro y Boss; cada fallo o tiempo agotado quita una y al llegar a 0 termina la partida. Práctica, Reto del día, Tickets y Repasar errores no tienen vidas.</li>
+          <li><strong>Pistas:</strong> 2 por partida (1 en Boss; ninguna en Práctica, Reto del día, Tickets ni Repasar errores), una por pregunta; cuestan 30 pts al resolver la pregunta. No hay pista en V/F.</li>
+          <li>Controles: clic/táctil; <kbd>1</kbd>–<kbd>4</kbd>; <kbd>V</kbd>/<kbd>F</kbd>; <kbd>Enter</kbd>; <kbd>H</kbd> pista y <kbd>M</kbd> silencio (mientras escribes en «completar» son letras: usa los botones); <kbd>Esc</kbd> (o Atrás) salir de la partida, con confirmación.</li>
+          <li>Al responder, el resultado muestra <strong>tu respuesta</strong> junto a la correcta (en Emparejar y Ordenar, ✔/✘ en cada pareja o paso) y, en algunas preguntas de comandos, un <strong>Pruébalo tú</strong> para practicarlo en tu computadora.</li>
+          <li>Si recargas la página en plena partida, el menú ofrece <strong>Reanudar partida</strong> en la pregunta donde ibas (o en la siguiente, si ya la habías respondido).</li>
+          <li>Progreso, récord y logros se guardan en este navegador (localStorage). En Stats puedes <strong>descargar un respaldo</strong> y cargarlo en otro navegador o computadora.</li>
         </ul>
         <div class="btn-row"><button type="button" class="btn btn-primary" data-action="menu">← Menú</button></div>
       </div>
@@ -74,6 +100,39 @@
       </div>
     </section>
 
+
+    <!-- MARATÓN: de dónde salen las preguntas -->
+    <section id="screen-marathon" class="screen" aria-label="Maratón">
+      <div class="panel">
+        <h2 class="screen-title">🏃 Maratón</h2>
+        <p class="levels-sub">Preguntas mezcladas, 3 vidas y 2 pistas. ¿De dónde salen?</p>
+        <div class="level-grid">
+          <button type="button" class="level-card" data-action="marathon-mine" style="--accent:#00ff88">
+            <span class="level-icon">🎯</span>
+            <span class="level-name">Mi nivel</span>
+            <span class="level-count" id="marathon-mine-count"></span>
+            <span class="level-state">De los mundos y niveles que ya abriste en Aventura</span>
+          </button>
+          <button type="button" class="level-card" data-action="marathon-all" style="--accent:#5ad1ff">
+            <span class="level-icon">🌍</span>
+            <span class="level-name">Todo</span>
+            <span class="level-count" id="marathon-all-count"></span>
+            <span class="level-state">De todos los mundos y niveles</span>
+          </button>
+        </div>
+        <div class="btn-row"><button type="button" class="btn" data-action="menu">← Menú</button></div>
+      </div>
+    </section>
+
+    <!-- TICKETS -->
+    <section id="screen-tickets" class="screen" aria-label="Simulador de tickets">
+      <div class="panel">
+        <h2 class="screen-title">🎫 Simulador de tickets</h2>
+        <p class="levels-sub">Llega un ticket y lo resuelves paso a paso, como en una mesa de ayuda: qué preguntas, qué revisas primero, la causa, el arreglo y qué anotas al cerrar. Sin vidas.</p>
+        <div id="ticket-grid" class="level-grid"></div>
+        <div class="btn-row"><button type="button" class="btn" data-action="menu">← Menú</button></div>
+      </div>
+    </section>
 
     <!-- NIVELES -->
     <section id="screen-levels" class="screen" aria-label="Seleccionar nivel">
@@ -102,10 +161,15 @@
         </div>
       </div>
       <div class="panel">
+        <div id="ticket-box" class="ticket-box" hidden>
+          <p class="ticket-head" id="ticket-head"></p>
+          <p class="ticket-text" id="ticket-text"></p>
+          <ul class="ticket-notes" id="ticket-notes" aria-label="Lo que sabes del caso"></ul>
+        </div>
         <div class="question-meta"><span class="badge" id="question-type">—</span></div>
         <p id="question-text" tabindex="-1">Pregunta</p>
-        <div id="hint-box" class="hint-box" hidden></div>
         <div id="challenge-area" class="challenge-area"></div>
+        <div id="hint-box" class="hint-box" hidden></div>
         <div class="play-actions">
           <button type="button" class="btn" id="btn-hint" data-action="hint">💡 Pista (H)</button>
           <button type="button" class="btn btn-primary" id="btn-submit" data-action="submit" hidden>Comprobar</button>
@@ -121,8 +185,13 @@
         <div>
           <h2 id="feedback-title">¡Correcto!</h2>
           <p id="feedback-detail"></p>
+          <p id="feedback-yours" class="feedback-yours" hidden></p>
+          <p id="feedback-review" class="feedback-review" hidden></p>
         </div>
+        <ul id="feedback-rows" class="feedback-rows" hidden></ul>
         <p id="feedback-explain" class="explain-box"></p>
+        <p id="feedback-reveal" class="reveal-box" hidden></p>
+        <p id="feedback-try" class="try-box" hidden></p>
         <p id="feedback-ach" class="ach-toast" hidden></p>
         <div class="btn-row">
           <button type="button" class="btn btn-primary" id="btn-next-feedback" data-action="next">Continuar (Enter)</button>
@@ -141,7 +210,8 @@
         <p class="pill" style="display:inline-block">Récord local: <strong id="end-highscore">0</strong></p>
         <details id="end-mistakes" class="end-mistakes" hidden></details>
         <div class="btn-row">
-          <button type="button" class="btn btn-primary" data-action="pick-again">Elegir mundo</button>
+          <button type="button" class="btn btn-primary" id="btn-next-level" data-action="next-level" hidden>Siguiente nivel ▶</button>
+          <button type="button" class="btn btn-primary" id="btn-pick-again" data-action="pick-again">Elegir mundo</button>
           <button type="button" class="btn" id="btn-retry" data-action="retry">Reintentar</button>
           <button type="button" class="btn" data-action="menu">Menú</button>
         </div>
@@ -155,8 +225,12 @@
         <div id="stats-body"></div>
         <div class="btn-row">
           <button type="button" class="btn btn-primary" data-action="menu">← Menú</button>
+          <button type="button" class="btn" data-action="backup-download">💾 Descargar respaldo</button>
+          <button type="button" class="btn" data-action="backup-upload">📂 Cargar respaldo</button>
           <button type="button" class="btn btn-danger btn-ghost" data-action="reset-progress">🗑️ Reiniciar progreso</button>
         </div>
+        <input type="file" id="backup-file" accept=".json,application/json" hidden />
+        <p class="stats-note">Tu progreso se guarda solo en este navegador. Con un respaldo lo pasas a otro navegador, a otra computadora o al celular, o lo recuperas después de reiniciarlo.</p>
       </div>
     </section>
 
@@ -175,12 +249,72 @@
   <div id="sr-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/data.js"></script>
-  <script src="js/content-expand.js"></script>
-  <script src="js/levels-expand.js"></script>
-  <script src="js/levels5-expand.js"></script>
+  <!-- Un archivo por mundo, en el orden en que se desbloquean -->
+  <script src="js/mundos/linux.js"></script>
+  <script src="js/mundos/windows.js"></script>
+  <script src="js/mundos/printers.js"></script>
+  <script src="js/mundos/networks.js"></script>
+  <script src="js/mundos/programming.js"></script>
+  <script src="js/mundos/support.js"></script>
+  <script src="js/mundos/security.js"></script>
+  <script src="js/mundos/hardware.js"></script>
+  <script src="js/mundos/cloud.js"></script>
+  <script src="js/mundos/database.js"></script>
+  <script src="js/mundos/identity.js"></script>
+  <script src="js/tickets.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/game.js"></script>
+  <script>
+    // Avisa en pantalla si un archivo de js/ no se cargó (un error de escritura hace que el navegador lo ignore
+    // entero) o si el juego no arrancó (navegador anterior a Chrome 80 / Safari 13.1), en vez de dejar un menú
+    // al que le faltan mundos o cuyos botones no responden. Escrito en ES5 a propósito
+    window.addEventListener("load", function () {
+      function existe(nombre) {
+        // Un const cuyo archivo falló a medias queda sin iniciar y typeof lanza un error
+        try { return eval("typeof " + nombre) !== "undefined"; } catch (e) { return false; }
+      }
+      var nucleo = { "js/data.js": "addWorld", "js/audio.js": "TechAudio", "js/progress.js": "Progress", "js/ui.js": "UI" };
+      var cargados = window.techQuestLoaded || {};
+      // Los archivos de datos (un mundo, los tickets) avisan con addWorld/addTicket que se cargaron
+      function esDatos(src) { return src.indexOf("js/mundos/") === 0 || src === "js/tickets.js"; }
+      var fallidos = [];
+      var scripts = document.querySelectorAll("script[src]");
+      for (var i = 0; i < scripts.length; i++) {
+        var src = scripts[i].getAttribute("src");
+        var ok = esDatos(src) ? !!cargados[src]
+          : src === "js/game.js" ? !!window.techQuestReady
+          : nucleo[src] ? existe(nucleo[src]) : true;
+        if (!ok) fallidos.push(src);
+      }
+      // Si falla js/data.js fallan todos los mundos, y si falla audio, progreso o ui también falla game.js:
+      // se nombra solo el primero de esos archivos, que es el que hay que arreglar
+      var primero = null;
+      fallidos = fallidos.filter(function (f) {
+        if (f === "js/data.js") return (primero = f);
+        if (esDatos(f)) return primero !== "js/data.js";
+        if (primero) return false;
+        return (primero = f);
+      });
+      if (!fallidos.length && window.techQuestReady) return;
+      var menu = document.getElementById("screen-menu");
+      if (!menu) return;
+      var p = document.createElement("p");
+      p.className = "panel load-error";
+      p.setAttribute("role", "alert");
+      var archivos = fallidos.length ? (fallidos.length > 1 ? "No se pudieron cargar " : "No se pudo cargar ") + fallidos.join(", ") : "";
+      if (!window.techQuestReady) {
+        // Un navegador viejo solo falla en js/game.js; un error de escritura puede estar en cualquiera
+        p.textContent = "El juego no pudo arrancar" + (archivos ? " (" + archivos + ")" : "") +
+          ". Si editaste archivos de js/, ejecuta node herramientas/validar-preguntas.js: te dice el archivo y la línea." +
+          " Si no, actualiza el navegador (Chrome o Edge 80+, Firefox 74+, Safari 13.1+ / iOS 13.4+) o prueba con otro." +
+          " Más ayuda en la sección 8 de INSTRUCCIONES.md.";
+      } else {
+        p.textContent = archivos + ": faltan sus preguntas en el juego. Suele ser una coma o una comilla de más o de menos: ejecuta node herramientas/validar-preguntas.js, que te dice la línea (sección 8 de INSTRUCCIONES.md).";
+      }
+      menu.insertBefore(p, menu.firstChild);
+    });
+  </script>
 </body>
 </html>

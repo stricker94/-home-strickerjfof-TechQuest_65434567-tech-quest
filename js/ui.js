@@ -23,6 +23,8 @@ const UI = (() => {
         el.classList.add("screen-enter");
       }
     });
+    // El margen para el HUD fijo de Cronómetro y Boss solo hace falta durante la pregunta
+    if (id !== "screen-play") document.documentElement.style.scrollPaddingTop = "";
     // La pantalla nueva empieza arriba (si no, en móvil hereda el scroll de una lista larga)
     window.scrollTo(0, 0);
     // Si el foco quedó en una pantalla oculta, llévalo al título de la nueva para teclado y lector de pantalla
@@ -76,6 +78,17 @@ const UI = (() => {
       .replace(/'/g, "&#39;");
   }
 
+  /** "★★☆" con un nombre para lectores de pantalla ("2 de 3 estrellas"). */
+  function stars(n, max) {
+    max = max || 3;
+    return `<span class="stars" role="img" aria-label="${n} de ${max} estrellas">${"★".repeat(n)}${"☆".repeat(Math.max(0, max - n))}</span>`;
+  }
+
+  /** Escapa el texto y convierte `comando` en <code>comando</code> (para «Pruébalo tú»). */
+  function codeText(s) {
+    return escapeHtml(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+
   function shuffle(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -98,9 +111,9 @@ const UI = (() => {
   function updateHUD(st) {
     const livesWrap = $("#hud-lives-wrap");
     if (livesWrap) livesWrap.hidden = !!st.practice;
-    // Práctica y Repaso no tienen pistas: "Pistas 0" parecería que se gastaron
+    // Práctica, Repaso, Reto del día y Tickets no tienen pistas: "Pistas 0" parecería que se gastaron
     const hintsWrap = $("#hud-hints-wrap");
-    if (hintsWrap) hintsWrap.hidden = !!st.practice;
+    if (hintsWrap) hintsWrap.hidden = !st.hintsOn;
     if (!st.practice) {
       setText("#hud-lives", "❤️".repeat(Math.max(0, st.lives)) + (st.lives <= 0 ? "💀" : ""));
     }
@@ -116,9 +129,23 @@ const UI = (() => {
         timerWrap.classList.toggle("urgent", st.timeLeft <= 5);
       }
     }
+    setText("#hud-world", modeLabel(st));
+    // Con reloj, el HUD queda fijo arriba (CSS #screen-play.timed); el foco con Tab no debe quedar debajo de él
+    const play = $("#screen-play");
+    if (play) play.classList.toggle("timed", !!st.timed);
+    const hud = $("#screen-play .hud");
+    document.documentElement.style.scrollPaddingTop =
+      st.timed && hud && hud.offsetHeight ? hud.offsetHeight + 8 + "px" : "";
+  }
+
+  /** Texto del modo y el mundo de la partida (HUD y botón «Reanudar partida»). */
+  function modeLabel(st) {
     let label = "—";
-    if (st.mode === "marathon") label = "🏃 Maratón";
+    if (st.mode === "marathon") label = "🏃 Maratón" + (st.marathonScope === "mine" ? " · Mi nivel" : st.marathonScope === "all" ? " · Todo" : "");
     else if (st.mode === "review") label = "🔁 Repaso de errores";
+    else if (st.mode === "daily") label = "📅 Reto del día";
+    else if (st.mode === "test") label = "🧪 Modo de prueba";
+    else if (st.mode === "ticket") label = "🎫 Ticket" + (st.ticketTitle ? " · " + st.ticketTitle : "");
     else if (st.mode === "boss") {
       const w = getWorldById(st.worldId);
       label = "👹 Boss" + (w ? " · " + w.icon + " " + w.name : "");
@@ -132,7 +159,7 @@ const UI = (() => {
       const w = getWorldById(st.worldId);
       if (w) label = w.icon + " " + w.name + (st.level ? " · Nv." + st.level : "");
     }
-    setText("#hud-world", label);
+    return label;
   }
 
   function getHighScore() {
@@ -174,7 +201,7 @@ const UI = (() => {
   }
 
   return {
-    $, $all, showScreen, sinceScreen, setText, setHTML, escapeHtml, shuffle,
-    updateMuteButton, updateHUD, getHighScore, saveHighScore, toast, flashFeedback, announce
+    $, $all, showScreen, sinceScreen, setText, setHTML, escapeHtml, shuffle, stars, codeText,
+    updateMuteButton, updateHUD, modeLabel, getHighScore, saveHighScore, toast, flashFeedback, announce
   };
 })();
