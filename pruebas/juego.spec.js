@@ -30,13 +30,16 @@ test("ganar sin fallos: 3 estrellas, desbloqueo y «Siguiente nivel» juega el n
   await expect(page.locator('[data-level="1"] .stars')).toHaveAttribute("aria-label", "3 de 3 estrellas");
 });
 
-test("estrellas según aciertos: 1 fallo de 10 da ★★, 2 fallos dan ★ y se guarda la mejor", async ({ page }) => {
+test("estrellas según aciertos: 1 fallo da ★★, bajar del 85 % da ★ y se guarda la mejor", async ({ page }) => {
   await abrir(page);
+  // Fallos para quedar por debajo del 85 % (2 con las 10 preguntas actuales del nivel)
+  const n = await page.evaluate(() => getQuestionsForLevel("linux", 1).length);
+  const fallos = Math.floor(n * 0.15) + 1;
   await aventura(page);
-  await jugarHastaElFinal(page, (n) => n !== 0);
+  await jugarHastaElFinal(page, (k) => k !== 0);
   await expect(page.locator("#end-summary")).toContainText("Estrellas: ★★☆");
   await clic(page, "#btn-retry");
-  await jugarHastaElFinal(page, (n) => n > 1);
+  await jugarHastaElFinal(page, (k) => k >= fallos);
   await expect(page.locator("#end-summary")).toContainText("Estrellas: ★☆☆ · tu mejor: ★★☆");
   expect(await page.evaluate(() => Progress.getLevelStars("linux", 1))).toBe(2);
 });
@@ -139,19 +142,34 @@ test("pistas: cuestan 30 al resolver, no hay en V/F y H no escribe en «completa
   await expect(page.locator("#fill-input")).toBeFocused();
 });
 
-test("teclado: 1–4 responde, Enter continúa y mantener Enter no salta el resultado", async ({ page }) => {
+test("teclado: 1–4 responde y Enter continúa", async ({ page }) => {
   await abrir(page);
   const mc = await idDeTipo(page, "mc");
   await forzarPreguntas(page, [mc, mc]);
   await aventura(page);
   await responder(page, true);
-  // Enter mantenido (repetición) en el resultado no avanza
-  await page.keyboard.down("Enter");
-  await page.waitForTimeout(150);
-  await page.keyboard.up("Enter");
   expect(await pantalla(page)).toBe("screen-feedback");
   await tecla(page, "Enter");
   expect(await pantalla(page)).toBe("screen-play");
+  await expect(page.locator("#hud-progress")).toHaveText("2 / 2");
+});
+
+test("mantener Enter pulsado al enviar no salta el resultado", async ({ page }) => {
+  await abrir(page);
+  const fill = await idDeTipo(page, "fill");
+  await forzarPreguntas(page, [fill, fill]);
+  await aventura(page);
+  const q = await preguntaActual(page);
+  await page.fill("#fill-input", q.answer);
+  await esperarGuardia(page);
+  // El primer Enter envía; tras el bloqueo de 350 ms el teclado repite la tecla (repeat), y eso no avanza
+  await page.keyboard.down("Enter");
+  await expect(page.locator("#screen-feedback")).toHaveClass(/active/);
+  await page.waitForTimeout(400);
+  await page.keyboard.down("Enter");
+  await page.keyboard.up("Enter");
+  expect(await pantalla(page)).toBe("screen-feedback");
+  await tecla(page, "Enter");
   await expect(page.locator("#hud-progress")).toHaveText("2 / 2");
 });
 
@@ -178,9 +196,9 @@ test("Cronómetro: al acabarse el tiempo dice que no respondiste y quita una vid
   await clic(page, '#screen-menu [data-action="timer"]');
   await clic(page, '[data-world="linux"]');
   await clic(page, '[data-level="1"]');
-  await expect(page.locator("#feedback-title")).toHaveText("¡Tiempo agotado!", { timeout: 6000 });
   // Las teclas justo después del tiempo agotado se ignoran (el jugador quizá seguía escribiendo).
-  // Se pulsa enseguida, antes de las demás comprobaciones: el margen es de 1 segundo
+  // El margen es de 1 segundo: se detecta el aviso al instante (en cada cuadro) y se pulsa enseguida
+  await page.waitForFunction(() => document.querySelector("#feedback-title").textContent === "¡Tiempo agotado!", null, { timeout: 6000, polling: "raf" });
   await page.keyboard.press("Enter");
   expect(await pantalla(page)).toBe("screen-feedback");
   await expect(page.locator("#feedback-detail")).toContainText("Vidas: 2");

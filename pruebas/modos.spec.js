@@ -1,16 +1,17 @@
 // Modos: Maratón (Mi nivel / Todo), Práctica, modo de prueba (?pregunta=) y Simulador de tickets.
-const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, aventura, alMenu, recargar } = require("./ayudantes");
+const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, preguntasDelNivel, aventura, alMenu, recargar } = require("./ayudantes");
 
 const idsDeLaPartida = (page) => page.evaluate(() => JSON.parse(sessionStorage.getItem("techQuestRun")).ids);
 
 test("Maratón «Mi nivel» solo trae preguntas de los niveles que ya abriste", async ({ page }) => {
   await abrir(page);
+  const n = await preguntasDelNivel(page);
   await clic(page, '#screen-menu [data-action="marathon"]');
-  await expect(page.locator("#marathon-mine-count")).toHaveText("10 de 10 preguntas");
+  await expect(page.locator("#marathon-mine-count")).toHaveText(`${n} de ${n} preguntas`);
   await expect(page.locator("#marathon-all-count")).toHaveText(/^20 de \d+ preguntas$/);
   await clic(page, '[data-action="marathon-mine"]');
   await expect(page.locator("#hud-world")).toHaveText("🏃 Maratón · Mi nivel");
-  await expect(page.locator("#hud-progress")).toHaveText("1 / 10");
+  await expect(page.locator("#hud-progress")).toHaveText(`1 / ${n}`);
   const ids = await idsDeLaPartida(page);
   const permitidas = await page.evaluate(() => getWorldById("linux").questions.filter((q) => q.level === 1).map((q) => q.id));
   expect(ids.every((id) => permitidas.includes(id))).toBe(true);
@@ -82,7 +83,7 @@ test("modo de prueba en la misma pestaña que una partida a medias: no la borra 
   await tecla(page, "Enter");
   await clic(page, '#screen-end [data-action="menu"]');
   await expect(page.locator("#btn-resume")).toBeVisible();
-  await expect(page.locator("#resume-label")).toHaveText("🐧 Linux básico · Nv.1 · pregunta 2 de 10");
+  await expect(page.locator("#resume-label")).toHaveText(`🐧 Linux básico · Nv.1 · pregunta 2 de ${await preguntasDelNivel(page)}`);
 });
 
 test("modo de prueba: varias ids, un prefijo con * y aviso de las que no existen", async ({ page }) => {

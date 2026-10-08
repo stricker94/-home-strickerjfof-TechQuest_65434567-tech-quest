@@ -10,6 +10,9 @@ const MUNDOS = [...html.matchAll(/src="js\/mundos\/([a-z0-9_-]+)\.js"/g)].map((m
 for (const mundo of MUNDOS) {
   test(`${mundo}: los 5 niveles se completan en Práctica respondiendo bien`, async ({ page }) => {
     await abrir(page);
+    // Cada pregunta tarda cerca de un segundo: el tiempo límite crece con las preguntas del mundo
+    const total = await page.evaluate((w) => getWorldById(w).questions.length, mundo);
+    test.setTimeout(60000 + total * 2000);
     for (let nivel = 1; nivel <= 5; nivel++) {
       // Cada nivel empieza con las estadísticas en cero, para contar sus respuestas
       await page.evaluate(() => localStorage.clear());

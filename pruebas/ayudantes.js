@@ -167,6 +167,10 @@ function idDeTipo(page, tipo, condicion) {
 
 const leer = (page, selector) => page.locator(selector).innerText();
 
+/** Cuántas preguntas tiene un nivel (las pruebas no dan por hecho un número: se pueden añadir preguntas). */
+const preguntasDelNivel = (page, mundo = "linux", nivel = 1) =>
+  page.evaluate(([w, l]) => getQuestionsForLevel(w, l).length, [mundo, nivel]);
+
 /** Desde el menú: Aventura → mundo → nivel. */
 async function aventura(page, mundo = "linux", nivel = 1) {
   await clic(page, '#screen-menu [data-action="play"]');
@@ -183,4 +187,4 @@ async function recargar(page) {
   await page.waitForFunction(() => window.techQuestReady === true);
 }
 
-module.exports = { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer, aventura, alMenu, recargar };
+module.exports = { test, expect, abrir, clic, tecla, pantalla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, esperarGuardia, leer, preguntasDelNivel, aventura, alMenu, recargar };

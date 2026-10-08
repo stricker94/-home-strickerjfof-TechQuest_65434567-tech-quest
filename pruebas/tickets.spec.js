@@ -84,7 +84,9 @@ test("móvil 320×640: en cada paso la pregunta y la primera respuesta se ven si
   await abrirTicket(page, caso.id);
   for (let i = 0; i < caso.steps.length; i++) {
     await expect(page.locator("#question-text")).toHaveText(caso.steps[i].q);
-    await expect(page.locator("#question-text")).toHaveAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
+    // El caso se lee con la pregunta al empezar; después, cada nota nueva se anuncia en el resultado
+    if (i === 0) await expect(page.locator("#question-text")).toHaveAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
+    else await expect(page.locator("#question-text")).not.toHaveAttribute("aria-describedby", /.+/);
     const r = await page.evaluate(() => ({
       pregunta: document.querySelector("#question-text").getBoundingClientRect().top,
       respuesta: document.querySelector("#challenge-area button, #challenge-area input").getBoundingClientRect().top,
@@ -120,6 +122,8 @@ test("recargar a mitad de un ticket: «Reanudar» sigue en el mismo paso con lo 
   expect((await preguntaActual(page)).id).toBe(caso.steps[2].id);
   await expect(page.locator("#ticket-notes li")).toHaveCount(2);
   await expect(page.locator("#ticket-notes li").first()).toHaveText("📝 " + caso.steps[0].reveal);
+  // Al reanudar, el lector de pantalla vuelve a oír el caso con la pregunta
+  await expect(page.locator("#question-text")).toHaveAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
 });
 
 test("5 tickets resueltos sin fallos dan el logro «Mesa de ayuda»", async ({ page }) => {

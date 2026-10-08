@@ -1,12 +1,29 @@
 // Instalable y sin internet: manifiesto, íconos, service worker (sw.js) y abrir index.html como archivo.
 const path = require("path");
+const cp = require("child_process");
 const { test, expect, abrir, aventura, jugarHastaElFinal, recargar } = require("./ayudantes");
 
-/** Espera a que sw.js esté activo y controle la página (la primera visita lo instala; la recarga lo usa). */
+/**
+ * Espera a que sw.js esté instalado y controle la página, sin recargar: así su caché tiene solo lo que guarda
+ * al instalarse (la lista ARCHIVOS), no lo que una recarga con red habría guardado de paso.
+ */
 async function conServiceWorker(page) {
   await page.evaluate(() => navigator.serviceWorker.ready);
-  await recargar(page);
-  expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+}
+
+/** Un servidor solo para una prueba, que se puede apagar a mitad (sin red de verdad). */
+async function servidorPropio(page) {
+  const puerto = 18000 + test.info().parallelIndex;
+  const proceso = cp.spawn(process.execPath, [path.join(__dirname, "servidor.js"), String(puerto)], { stdio: "ignore" });
+  const url = `http://127.0.0.1:${puerto}/`;
+  await expect.poll(() => page.request.get(url + "index.html").then((r) => r.ok()).catch(() => false), { timeout: 10000 }).toBe(true);
+  const apagar = () => new Promise((listo) => {
+    if (proceso.exitCode !== null || proceso.signalCode !== null) return listo();
+    proceso.once("exit", () => listo());
+    proceso.kill();
+  });
+  return { url, apagar };
 }
 
 test("se puede instalar: manifiesto con íconos que existen", async ({ page }) => {
@@ -44,20 +61,29 @@ test("el service worker guarda todos los archivos que carga el juego", async ({ 
   for (const f of usados.concat(["index.html", ""])) expect(guardados, f).toContain(f);
 });
 
-test("sin internet: recarga, juega un nivel y abre el modo de prueba", async ({ page, context }) => {
-  await abrir(page);
-  await conServiceWorker(page);
-  await context.setOffline(true);
-  await recargar(page);
-  await expect(page.locator(".load-error")).toHaveCount(0);
-  expect(await page.evaluate(() => WORLDS.length)).toBeGreaterThanOrEqual(10);
-  await aventura(page);
-  await jugarHastaElFinal(page);
-  await expect(page.locator("#end-unlock")).toHaveText("Desbloqueado: Nivel 2 de Linux básico");
-  // La dirección con ?pregunta= también sale de lo guardado
-  await page.goto("index.html?pregunta=lx01");
-  await page.waitForFunction(() => window.techQuestReady === true);
-  await expect(page.locator("#hud-world")).toHaveText("🧪 Modo de prueba");
+test("sin internet: recarga, juega un nivel y abre el modo de prueba", async ({ page }) => {
+  // Con el servidor apagado de verdad (context.setOffline no frena las descargas del propio service worker)
+  const srv = await servidorPropio(page);
+  try {
+    await page.goto(srv.url + "index.html");
+    await page.waitForFunction(() => window.techQuestReady === true);
+    await conServiceWorker(page);
+    await srv.apagar();
+    // Sin servidor ni service worker, esto ni siquiera cargaría la página
+    expect(await page.evaluate((u) => fetch(u + "README.md").then(() => "red", () => "sin red"), srv.url)).toBe("sin red");
+    await recargar(page);
+    await expect(page.locator(".load-error")).toHaveCount(0);
+    expect(await page.evaluate(() => WORLDS.length)).toBeGreaterThanOrEqual(10);
+    await aventura(page);
+    await jugarHastaElFinal(page);
+    await expect(page.locator("#end-unlock")).toHaveText("Desbloqueado: Nivel 2 de Linux básico");
+    // La dirección con ?pregunta= también sale de lo guardado
+    await page.goto(srv.url + "index.html?pregunta=lx01");
+    await page.waitForFunction(() => window.techQuestReady === true);
+    await expect(page.locator("#hud-world")).toHaveText("🧪 Modo de prueba");
+  } finally {
+    await srv.apagar();
+  }
 });
 
 test("abierto como archivo (doble clic en index.html): funciona, sin manifiesto ni errores en la consola", async ({ page }) => {

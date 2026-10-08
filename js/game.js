@@ -932,7 +932,7 @@
       saveId: snap.saveId, noSave: false, noMistakes: !!snap.noMistakes, testIds: null,
       marathonScope: snap.marathonScope || null, dailyDay: snap.dailyDay || null,
       ticket: snap.ticket || null, ticketNotes: Array.isArray(snap.ticketNotes) ? snap.ticketNotes : [],
-      nextLevel: null, answered: false
+      ticketResumed: !!snap.ticket, nextLevel: null, answered: false
     });
     // Recargó en el resultado de la última pregunta (o sin vidas): la partida termina como habría terminado
     if (!state.practice && state.lives <= 0) {
@@ -1074,12 +1074,14 @@
       (state.ticket ? "Paso " + (state.qIndex + 1) + " de " + state.totalQ + " · " : "") +
       typeLabel(q.type) + (state.mode === "test" ? " · " + q.id : ""));
     UI.setText("#question-text", q.q);
-    // En un ticket, el lector de pantalla oye también el caso y lo anotado, no solo la pregunta
+    // Al empezar un ticket (o al reanudarlo), el lector de pantalla oye también el caso y lo anotado, no solo
+    // la pregunta. En los demás pasos no se repite: cada nota nueva ya se anuncia en el resultado
     const qText = UI.$("#question-text");
     if (qText) {
-      if (state.ticket) qText.setAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
+      if (state.ticket && (state.qIndex === 0 || state.ticketResumed)) qText.setAttribute("aria-describedby", "ticket-head ticket-text ticket-notes");
       else qText.removeAttribute("aria-describedby");
     }
+    state.ticketResumed = false;
     const ticketBox = UI.$("#ticket-box");
     if (ticketBox) {
       ticketBox.hidden = !state.ticket;

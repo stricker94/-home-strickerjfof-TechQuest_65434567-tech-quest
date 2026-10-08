@@ -126,8 +126,11 @@ let llamadas = [];
 // Casos de ticket tal como se escribieron (addTicket descarta los pasos vacíos y los casos sin pasos)
 const casos = [];
 let llamadasTicket = [];
+// El archivo que se está ejecutando (addTicket se prepara al leer js/data.js, pero se llama desde js/tickets.js)
+let archivoActual = null;
 for (const rel of ARCHIVOS) {
   if (fuentes[rel] == null) continue;
+  archivoActual = rel;
   ctx.document = { currentScript: { getAttribute: () => rel } };
   llamadas = [];
   llamadasTicket = [];
@@ -159,7 +162,7 @@ for (const rel of ARCHIVOS) {
       const registrarTicket = ctx.addTicket;
       ctx.addTicket = function (t) {
         llamadasTicket.push(t);
-        casos.push({ t, rel, pasos: t && typeof t === "object" ? t.steps : undefined });
+        casos.push({ t, rel: archivoActual, pasos: t && typeof t === "object" ? t.steps : undefined });
         return registrarTicket(t);
       };
     } else if (ARCHIVOS.includes(TICKETS_JS)) fallo("js/data.js no define addTicket(); no se pueden cargar los tickets.");

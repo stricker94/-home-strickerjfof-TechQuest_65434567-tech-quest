@@ -1,6 +1,6 @@
 // Progreso: repaso espaciado, reto del día y racha, respaldo, reanudar tras recargar y almacenamiento raro.
 const fs = require("fs");
-const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, aventura, alMenu, recargar } = require("./ayudantes");
+const { test, expect, abrir, clic, tecla, preguntaActual, responder, jugarHastaElFinal, forzarPreguntas, idDeTipo, preguntasDelNivel, aventura, alMenu, recargar } = require("./ayudantes");
 
 // Las fechas se fijan para probar «otro día» sin esperar (el reloj del navegador sigue corriendo)
 const DIA = (d) => new Date(`2026-10-${String(d).padStart(2, "0")}T10:00:00`);
@@ -237,48 +237,50 @@ test("respaldo: descargar, reiniciar y cargar devuelve el progreso; cancelar o u
 
 test("recargar a media partida: «Reanudar» sigue en la misma pregunta, con puntos y vidas", async ({ page }) => {
   await abrir(page);
+  const n = await preguntasDelNivel(page);
   await aventura(page);
   await responder(page, true);
   await tecla(page, "Enter");
   await responder(page, false);
   await tecla(page, "Enter");
   const puntos = await page.locator("#hud-score").innerText();
-  await expect(page.locator("#hud-progress")).toHaveText("3 / 10");
+  await expect(page.locator("#hud-progress")).toHaveText(`3 / ${n}`);
   await recargar(page);
   await expect(page.locator("#screen-menu")).toHaveClass(/active/);
   await expect(page.locator("#btn-resume")).toBeVisible();
-  await expect(page.locator("#resume-label")).toHaveText("🐧 Linux básico · Nv.1 · pregunta 3 de 10");
+  await expect(page.locator("#resume-label")).toHaveText(`🐧 Linux básico · Nv.1 · pregunta 3 de ${n}`);
   await expect(page.locator("#btn-continue")).not.toHaveClass(/btn-primary/);
   await clic(page, "#btn-resume");
-  await expect(page.locator("#hud-progress")).toHaveText("3 / 10");
+  await expect(page.locator("#hud-progress")).toHaveText(`3 / ${n}`);
   await expect(page.locator("#hud-score")).toHaveText(puntos);
   await expect(page.locator("#hud-lives")).toHaveText("❤️❤️");
 
   // Recargar en el resultado: sigue con la pregunta siguiente
   await responder(page, true);
   await recargar(page);
-  await expect(page.locator("#resume-label")).toHaveText(/pregunta 4 de 10$/);
+  await expect(page.locator("#resume-label")).toHaveText(new RegExp(`pregunta 4 de ${n}$`));
   await clic(page, "#btn-resume");
-  await expect(page.locator("#hud-progress")).toHaveText("4 / 10");
+  await expect(page.locator("#hud-progress")).toHaveText(`4 / ${n}`);
   await jugarHastaElFinal(page, () => true);
-  await expect(page.locator("#end-summary")).toContainText("Aciertos: 9/10");
+  await expect(page.locator("#end-summary")).toContainText(`Aciertos: ${n - 1}/${n}`);
   await alMenu(page);
   await expect(page.locator("#btn-resume")).toBeHidden();
 });
 
 test("recargar en el resultado de la última pregunta: «Reanudar» muestra el final y guarda el nivel", async ({ page }) => {
   await abrir(page);
+  const n = await preguntasDelNivel(page);
   await aventura(page);
-  // Responde las 10 y se queda en el resultado de la última
-  for (let n = 0; n < 10; n++) {
+  // Responde todas y se queda en el resultado de la última
+  for (let k = 0; k < n; k++) {
     await responder(page, true);
-    if (n < 9) await tecla(page, "Enter");
+    if (k < n - 1) await tecla(page, "Enter");
   }
   await recargar(page);
-  await expect(page.locator("#resume-label")).toHaveText(/pregunta 10 de 10$/);
+  await expect(page.locator("#resume-label")).toHaveText(new RegExp(`pregunta ${n} de ${n}$`));
   await clic(page, "#btn-resume");
   await expect(page.locator("#screen-end")).toHaveClass(/active/);
-  await expect(page.locator("#end-summary")).toContainText("Aciertos: 10/10");
+  await expect(page.locator("#end-summary")).toContainText(`Aciertos: ${n}/${n}`);
   expect(await page.evaluate(() => Progress.isLevelCleared("linux", 1))).toBe(true);
   expect(await page.evaluate(() => Progress.getLevelStars("linux", 1))).toBe(3);
 });
